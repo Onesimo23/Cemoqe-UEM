@@ -77,7 +77,7 @@ export function useTutors() {
 
             // Para cada curso, buscar inscrições
             const courseIds = coursesSnap.docs.map((d) => d.id);
-            
+
             if (courseIds.length === 0) {
               processedCount++;
               if (processedCount === snapshot.docs.length) {
@@ -157,8 +157,7 @@ export function useTutors() {
               course_count: courseCountMap.get(docSnap.id) || 0,
               avg_rating: data.rating || 0,
               total_students: uniqueStudents,
-              specialty:
-                data.specialty || data.area || data.category || "—",
+              specialty: data.specialty || data.area || data.category || "—",
             } as Tutor;
           });
           setTutors(list);
