@@ -1,20 +1,22 @@
 import {
-    ArrowRight,
-    Award,
-    Globe,
-    Linkedin,
-    PlayCircle,
-    Star,
-    Twitter,
-    Users,
+  ArrowRight,
+  Award,
+  Globe,
+  Linkedin,
+  PlayCircle,
+  Star,
+  Twitter,
+  Users,
 } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useBranding } from "../contexts/BrandingContext";
 import { useTutors } from "../hooks/useTutors";
 
 const InstructorsPage: React.FC = () => {
   const { tutors, loading, error } = useTutors();
   const navigate = useNavigate();
+  const { branding } = useBranding();
 
   const handleViewProfile = (uid: string) => {
     navigate(`/tutores/${uid}`);
@@ -23,18 +25,32 @@ const InstructorsPage: React.FC = () => {
   return (
     <div className="bg-white min-h-screen">
       {/* Header */}
-      <section className="bg-brand-dark text-white py-20 px-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-brand-green/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+      <section
+        style={{
+          backgroundColor: branding.appearance.primaryColor,
+        }}
+        className="text-white py-20 px-6 relative overflow-hidden"
+      >
+        <div
+          style={{ backgroundColor: `${branding.appearance.primaryColor}50` }}
+          className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"
+        ></div>
         <div className="max-w-7xl mx-auto text-center relative z-10">
           <div className="inline-flex items-center gap-2 bg-white/10 px-4 py-1.5 rounded-full mb-6 border border-white/20">
-            <Award className="w-4 h-4 text-brand-accent" />
+            <Award
+              style={{ color: branding.appearance.accentColor }}
+              className="w-4 h-4"
+            />
             <span className="text-sm font-medium tracking-wide">
               Excelência Garantida
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold mb-6">
-            Aprenda com quem <span className="text-brand-accent">lidera</span> o
-            mercado
+            Aprenda com quem{" "}
+            <span style={{ color: branding.appearance.accentColor }}>
+              lidera
+            </span>{" "}
+            o mercado
           </h1>
           <p className="text-brand-light/80 text-lg md:text-xl max-w-2xl mx-auto">
             Nossos tutores são especialistas selecionados a dedo, atuantes nas
@@ -116,20 +132,29 @@ const InstructorsPage: React.FC = () => {
                   {/* Stats */}
                   <div className="flex items-center justify-between py-4 border-t border-gray-100">
                     <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                      <Users className="w-4 h-4 text-gray-400" />
+                      <Users
+                        style={{ color: branding.appearance.accentColor }}
+                        className="w-4 h-4"
+                      />
                       <span className="font-bold">
                         {tutor.total_students || 0}
                       </span>
                       <span className="text-xs">alunos</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                      <Star className="w-4 h-4 text-brand-accent fill-current" />
+                      <Star
+                        style={{ color: branding.appearance.accentColor }}
+                        className="w-4 h-4 fill-current"
+                      />
                       <span className="font-bold">
                         {tutor.avg_rating?.toFixed(1) || "N/A"}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                      <PlayCircle className="w-4 h-4 text-gray-400" />
+                      <PlayCircle
+                        style={{ color: branding.appearance.accentColor }}
+                        className="w-4 h-4"
+                      />
                       <span className="font-bold">
                         {tutor.course_count || 0}
                       </span>
@@ -152,7 +177,8 @@ const InstructorsPage: React.FC = () => {
                     </div>
                     <button
                       onClick={() => handleViewProfile(tutor.uid)}
-                      className="text-sm font-bold text-brand-green flex items-center gap-1 hover:gap-2 transition-all hover:text-brand-dark"
+                      style={{ color: branding.appearance.primaryColor }}
+                      className="text-sm font-bold flex items-center gap-1 hover:gap-2 transition-all opacity-70 hover:opacity-100"
                     >
                       Ver Perfil <ArrowRight className="w-4 h-4" />
                     </button>
@@ -166,17 +192,25 @@ const InstructorsPage: React.FC = () => {
 
       {/* Become an Instructor CTA */}
       <section className="bg-gray-50 py-20 px-6">
-        <div className="max-w-5xl mx-auto bg-brand-green rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row">
+        <div
+          style={{ backgroundColor: branding.appearance.primaryColor }}
+          className="max-w-5xl mx-auto rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row"
+        >
           <div className="p-10 md:p-14 md:w-3/5 text-white flex flex-col justify-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
               Torne-se um Tutor na EduPrime
             </h2>
-            <p className="text-brand-light/90 text-lg mb-8 leading-relaxed">
+            <p className="text-white/80 text-lg mb-8 leading-relaxed">
               Compartilhe seu conhecimento, impacte milhares de carreiras e gere
               uma nova fonte de renda. Junte-se à nossa comunidade de
               especialistas.
             </p>
-            <button className="bg-brand-accent hover:bg-yellow-400 text-brand-dark font-bold py-4 px-8 rounded-xl w-fit transition-colors shadow-lg shadow-black/10">
+            <button
+              style={{
+                backgroundColor: branding.appearance.accentColor,
+              }}
+              className="text-brand-dark font-bold py-4 px-8 rounded-xl w-fit transition-all opacity-90 hover:opacity-100 shadow-lg shadow-black/10"
+            >
               Começar a Ensinar Hoje
             </button>
           </div>
@@ -186,7 +220,12 @@ const InstructorsPage: React.FC = () => {
               alt="Instructor teaching"
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-brand-dark/20 mix-blend-multiply"></div>
+            <div
+              style={{
+                backgroundColor: `${branding.appearance.primaryColor}33`,
+              }}
+              className="absolute inset-0 mix-blend-multiply"
+            ></div>
           </div>
         </div>
       </section>

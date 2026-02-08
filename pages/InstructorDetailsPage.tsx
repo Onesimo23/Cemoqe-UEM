@@ -12,12 +12,14 @@ import {
 } from "lucide-react";
 import React from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { useBranding } from "../contexts/BrandingContext";
 import { useTutorDetails } from "../hooks/useTutors";
 
 const InstructorDetailsPage: React.FC = () => {
   const { uid } = useParams<{ uid: string }>();
   const navigate = useNavigate();
   const { tutor, loading, error } = useTutorDetails(uid || "");
+  const { branding } = useBranding();
 
   if (!uid) {
     return <Navigate to="/tutores" replace />;
@@ -58,7 +60,12 @@ const InstructorDetailsPage: React.FC = () => {
   return (
     <div className="bg-white min-h-screen">
       {/* Header */}
-      <div className="bg-gradient-to-br from-brand-dark to-brand-dark/80 text-white py-20 px-6">
+      <div
+        style={{
+          backgroundImage: `linear-gradient(to bottom right, ${branding.appearance.primaryColor}, ${branding.appearance.primaryColor}99)`,
+        }}
+        className="text-white py-20 px-6"
+      >
         <div className="max-w-7xl mx-auto">
           <button
             onClick={() => navigate("/tutores")}
@@ -90,26 +97,53 @@ const InstructorDetailsPage: React.FC = () => {
 
               {/* Quick Stats */}
               <div className="grid grid-cols-3 gap-4 mt-8">
-                <div className="bg-white/10 rounded-lg px-4 py-3 backdrop-blur-sm">
-                  <Users className="w-5 h-5 text-brand-accent mb-2" />
-                  <p className="text-2xl font-bold">
+                <div
+                  style={{
+                    backgroundColor: `${branding.appearance.primaryColor}20`,
+                    borderLeft: `4px solid ${branding.appearance.accentColor}`,
+                  }}
+                  className="rounded-lg px-4 py-3 backdrop-blur-sm"
+                >
+                  <Users
+                    style={{ color: branding.appearance.accentColor }}
+                    className="w-5 h-5 mb-2"
+                  />
+                  <p className="text-2xl font-bold text-white">
                     {tutor.total_students || 0}
                   </p>
-                  <p className="text-xs text-brand-light">Alunos</p>
+                  <p className="text-xs text-white/80">Alunos</p>
                 </div>
-                <div className="bg-white/10 rounded-lg px-4 py-3 backdrop-blur-sm">
-                  <PlayCircle className="w-5 h-5 text-brand-accent mb-2" />
-                  <p className="text-2xl font-bold">
+                <div
+                  style={{
+                    backgroundColor: `${branding.appearance.primaryColor}20`,
+                    borderLeft: `4px solid ${branding.appearance.accentColor}`,
+                  }}
+                  className="rounded-lg px-4 py-3 backdrop-blur-sm"
+                >
+                  <PlayCircle
+                    style={{ color: branding.appearance.accentColor }}
+                    className="w-5 h-5 mb-2"
+                  />
+                  <p className="text-2xl font-bold text-white">
                     {tutor.course_count || 0}
                   </p>
-                  <p className="text-xs text-brand-light">Cursos</p>
+                  <p className="text-xs text-white/80">Cursos</p>
                 </div>
-                <div className="bg-white/10 rounded-lg px-4 py-3 backdrop-blur-sm">
-                  <Star className="w-5 h-5 text-brand-accent mb-2" />
-                  <p className="text-2xl font-bold">
+                <div
+                  style={{
+                    backgroundColor: `${branding.appearance.primaryColor}20`,
+                    borderLeft: `4px solid ${branding.appearance.accentColor}`,
+                  }}
+                  className="rounded-lg px-4 py-3 backdrop-blur-sm"
+                >
+                  <Star
+                    style={{ color: branding.appearance.accentColor }}
+                    className="w-5 h-5 mb-2"
+                  />
+                  <p className="text-2xl font-bold text-white">
                     {tutor.avg_rating?.toFixed(1) || "N/A"}
                   </p>
-                  <p className="text-xs text-brand-light">Avaliação</p>
+                  <p className="text-xs text-white/80">Avaliação</p>
                 </div>
               </div>
             </div>
