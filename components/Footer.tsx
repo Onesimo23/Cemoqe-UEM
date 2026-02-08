@@ -1,45 +1,103 @@
-import React from 'react';
-import { GraduationCap, Linkedin, Instagram, Twitter } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { GraduationCap, Instagram, Linkedin, Twitter } from "lucide-react";
+import React from "react";
+import { Link } from "react-router-dom";
+import { useBranding } from "../contexts/BrandingContext";
 
 const Footer: React.FC = () => {
+  const { branding } = useBranding();
+
   return (
     <footer className="bg-white border-t border-gray-100 py-12 px-6 md:px-12 mt-auto">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-        
         {/* Brand */}
         <div className="flex items-center gap-2">
-          <GraduationCap className="text-brand-green w-6 h-6" />
-          <span className="text-lg font-bold text-brand-dark">
-            Edu<span className="text-brand-green">Prime</span>
+          {branding.appearance.logoUrl ? (
+            <img
+              src={branding.appearance.logoUrl}
+              alt="Logo"
+              className="h-8 w-auto"
+            />
+          ) : (
+            <GraduationCap
+              className="w-6 h-6"
+              style={{ color: branding.appearance.primaryColor }}
+            />
+          )}
+          <span
+            className="text-lg font-bold"
+            style={{ color: branding.appearance.primaryColor }}
+          >
+            {branding.appearance.institutionName}
           </span>
         </div>
 
         {/* Links */}
         <div className="flex flex-wrap justify-center gap-8 text-sm text-gray-500 font-medium">
-          <Link to="/termos" className="hover:text-brand-green transition-colors">Termos</Link>
-          <Link to="/privacidade" className="hover:text-brand-green transition-colors">Privacidade</Link>
-          <a href="#" className="hover:text-brand-green transition-colors">Ajuda</a>
-          <a href="#" className="hover:text-brand-green transition-colors">Carreiras</a>
+          <Link
+            to="/termos"
+            className="hover:opacity-80 transition-opacity"
+            style={{ color: branding.appearance.primaryColor }}
+          >
+            Termos
+          </Link>
+          <Link
+            to="/privacidade"
+            className="hover:opacity-80 transition-opacity"
+            style={{ color: branding.appearance.primaryColor }}
+          >
+            Privacidade
+          </Link>
+          <a
+            href="#"
+            className="hover:opacity-80 transition-opacity"
+            style={{ color: branding.appearance.primaryColor }}
+          >
+            Ajuda
+          </a>
+          <a
+            href="#"
+            className="hover:opacity-80 transition-opacity"
+            style={{ color: branding.appearance.primaryColor }}
+          >
+            Carreiras
+          </a>
         </div>
 
         {/* Socials */}
         <div className="flex gap-4">
-          <SocialButton icon={<Linkedin className="w-4 h-4" />} />
-          <SocialButton icon={<Instagram className="w-4 h-4" />} />
-          <SocialButton icon={<Twitter className="w-4 h-4" />} />
+          <SocialButton
+            icon={<Linkedin className="w-4 h-4" />}
+            color={branding.appearance.primaryColor}
+          />
+          <SocialButton
+            icon={<Instagram className="w-4 h-4" />}
+            color={branding.appearance.primaryColor}
+          />
+          <SocialButton
+            icon={<Twitter className="w-4 h-4" />}
+            color={branding.appearance.primaryColor}
+          />
         </div>
       </div>
 
       <div className="text-center text-xs text-gray-400 mt-12">
-        © 2024 EduPrime Learning Platform. Todos os direitos reservados.
+        © 2024 {branding.appearance.institutionName}. Todos os direitos
+        reservados.
       </div>
     </footer>
   );
 };
 
-const SocialButton: React.FC<{ icon: React.ReactNode }> = ({ icon }) => (
-  <button className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-500 hover:bg-brand-green hover:text-white transition-colors">
+const SocialButton: React.FC<{ icon: React.ReactNode; color: string }> = ({
+  icon,
+  color,
+}) => (
+  <button
+    className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-white hover:opacity-90 transition-colors"
+    style={{ backgroundColor: color + "20", color: color }}
+    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = color)}
+    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = color + "20")}
+  >
     {icon}
   </button>
 );

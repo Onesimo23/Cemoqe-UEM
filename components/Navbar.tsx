@@ -1,25 +1,50 @@
-import React, { useState } from 'react';
-import { GraduationCap, Menu, X, LayoutDashboard } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { NAV_LINKS } from '../constants';
-import { useAuth } from '../contexts/AuthContext';
-import { auth } from '../services/firebase';
+import { GraduationCap, LayoutDashboard, Menu, X } from "lucide-react";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { NAV_LINKS } from "../constants";
+import { useAuth } from "../contexts/AuthContext";
+import { useBranding } from "../contexts/BrandingContext";
+import { auth } from "../services/firebase";
 
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user } = useAuth();
+  const { branding } = useBranding();
   const isAuthenticated = !!(user || auth.currentUser);
 
   return (
     <nav className="w-full bg-white py-4 px-6 md:px-12 sticky top-0 z-50 shadow-sm border-b border-gray-100">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity">
-          <div className="bg-brand-green p-1.5 rounded-lg">
-            <GraduationCap className="text-white w-6 h-6" />
-          </div>
-          <span className="text-xl font-bold text-brand-dark">
-            Edu<span className="text-brand-accent">Prime</span>
+        <Link
+          to="/"
+          className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
+        >
+          {branding.appearance.logoUrl ? (
+            <img
+              src={branding.appearance.logoUrl}
+              alt="Logo"
+              className="h-10 w-auto"
+            />
+          ) : (
+            <div className="bg-brand-green p-1.5 rounded-lg">
+              <GraduationCap className="text-white w-6 h-6" />
+            </div>
+          )}
+          <span
+            className="text-xl font-bold text-brand-dark"
+            style={{ color: branding.appearance.primaryColor }}
+          >
+            {branding.appearance.applicationName.split(" ")[0]}
+            <span
+              className="text-brand-accent"
+              style={{ color: branding.appearance.accentColor }}
+            >
+              {branding.appearance.applicationName
+                .split(" ")
+                .slice(1)
+                .join(" ")}
+            </span>
           </span>
         </Link>
 
@@ -29,7 +54,15 @@ const Navbar: React.FC = () => {
             <Link
               key={link.label}
               to={link.href}
-              className="text-gray-600 hover:text-brand-green font-medium text-sm transition-colors"
+              className="text-gray-600 font-medium text-sm transition-colors"
+              style={
+                {
+                  "--tw-text-opacity": "1",
+                  color: branding.appearance.primaryColor,
+                } as any
+              }
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
             >
               {link.label}
             </Link>
@@ -39,16 +72,24 @@ const Navbar: React.FC = () => {
         {/* CTA Buttons */}
         <div className="hidden md:flex items-center gap-4">
           {!isAuthenticated ? (
-            <Link 
+            <Link
               to="/login"
-              className="bg-brand-green hover:bg-brand-dark text-white font-semibold py-2.5 px-6 rounded-md transition-colors text-sm shadow-md shadow-green-900/10"
+              className="text-white font-semibold py-2.5 px-6 rounded-md transition-colors text-sm shadow-md"
+              style={{
+                backgroundColor: branding.appearance.primaryColor,
+                boxShadow: `0 4px 6px ${branding.appearance.primaryColor}40`,
+              }}
             >
               Login
             </Link>
           ) : (
-            <Link 
+            <Link
               to="/aluno/dashboard"
-              className="flex items-center gap-2 bg-brand-green hover:bg-brand-dark text-white font-bold py-2.5 px-6 rounded-md transition-all shadow-md shadow-green-900/10"
+              className="flex items-center gap-2 text-white font-bold py-2.5 px-6 rounded-md transition-all shadow-md"
+              style={{
+                backgroundColor: branding.appearance.primaryColor,
+                boxShadow: `0 4px 6px ${branding.appearance.primaryColor}40`,
+              }}
             >
               <LayoutDashboard className="w-4 h-4" />
               Área de Estudante
@@ -57,7 +98,7 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* Mobile Menu Toggle */}
-        <button 
+        <button
           className="md:hidden text-gray-600"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
@@ -72,7 +113,8 @@ const Navbar: React.FC = () => {
             <Link
               key={link.label}
               to={link.href}
-              className="text-gray-600 font-medium py-2 px-2 hover:bg-gray-50 rounded"
+              className="font-medium py-2 px-2 hover:bg-gray-50 rounded"
+              style={{ color: branding.appearance.primaryColor }}
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {link.label}
@@ -80,21 +122,29 @@ const Navbar: React.FC = () => {
           ))}
           <div className="h-px bg-gray-100 my-1"></div>
           {!isAuthenticated ? (
-            <Link 
+            <Link
               to="/login"
-              className="bg-brand-green text-white font-semibold py-3 rounded-md w-full text-center shadow-md shadow-green-900/10"
+              className="text-white font-semibold py-3 rounded-md w-full text-center shadow-md"
+              style={{
+                backgroundColor: branding.appearance.primaryColor,
+                boxShadow: `0 4px 6px ${branding.appearance.primaryColor}40`,
+              }}
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Login
             </Link>
           ) : (
-            <Link 
+            <Link
               to="/aluno/dashboard"
-              className="bg-brand-green text-white font-semibold py-3 rounded-md w-full text-center shadow-md shadow-green-900/10 flex items-center justify-center gap-2"
+              className="text-white font-semibold py-3 rounded-md w-full text-center shadow-md flex items-center justify-center gap-2"
+              style={{
+                backgroundColor: branding.appearance.primaryColor,
+                boxShadow: `0 4px 6px ${branding.appearance.primaryColor}40`,
+              }}
               onClick={() => setIsMobileMenuOpen(false)}
             >
-               <LayoutDashboard className="w-4 h-4" />
-               Área de Estudante
+              <LayoutDashboard className="w-4 h-4" />
+              Área de Estudante
             </Link>
           )}
         </div>
