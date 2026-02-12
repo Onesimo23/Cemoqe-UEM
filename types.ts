@@ -1,4 +1,3 @@
-
 export interface Course {
   id: string;
   title: string;
@@ -11,6 +10,8 @@ export interface Course {
   imageUrl: string;
   badgeColor?: string;
   isActive?: boolean; // Controls if it appears on public landing/course pages
+  certificatePrice?: number; // Preço do certificado em MZM (0 = gratuito)
+  currency?: string; // Moeda (padrão: MZM)
 }
 
 export interface EnrolledCourse extends Course {
@@ -25,7 +26,7 @@ export interface Lesson {
   id: string;
   title: string;
   duration: string;
-  type: 'video' | 'article' | 'quiz';
+  type: "video" | "article" | "quiz";
   isCompleted: boolean;
   isLocked: boolean;
 }

@@ -29,9 +29,17 @@ const LoginPage: React.FC = () => {
   const { user, profile, loading: authLoading } = useAuth();
 
   /**
-   * Redireciona o utilizador para o dashboard apropriado conforme o seu role
+   * Redireciona o utilizador para o dashboard apropriado conforme o seu role,
+   * ou para a página anterior se foi redirecionado do login
    */
   const redirectToDashboard = (userRole?: string | null) => {
+    // Verifica se existe um estado anterior (por exemplo, de inscrição em um curso)
+    const state = location.state as { from?: string } | undefined;
+    if (state?.from) {
+      navigate(state.from, { replace: true });
+      return;
+    }
+
     if (!userRole || !isValidRole(userRole)) {
       navigate("/", { replace: true });
       return;
@@ -305,7 +313,7 @@ const LoginPage: React.FC = () => {
                 </div>
               ) : (
                 <>
-                   UEM
+                  Entrar
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}

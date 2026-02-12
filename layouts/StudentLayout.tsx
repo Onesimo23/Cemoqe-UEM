@@ -188,7 +188,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* Header Mobile */}
         <header className="bg-white border-b border-gray-200 py-4 px-6 md:hidden flex items-center justify-between sticky top-0 z-30">
           <button
@@ -198,7 +198,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
             <Menu className="w-6 h-6" />
           </button>
           <span
-            className="font-bold text-gray-800\"
+            className="font-bold text-gray-800"
             style={{ fontFamily: branding.appearance.fontFamily }}
           >
             {branding.appearance.logoText || branding.appearance.platformName}
@@ -256,7 +256,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
           </div>
         </header>
 
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto">{children}</main>
+        <main className="flex-1 p-6 md:p-8 overflow-y-auto bg-gray-50">{children}</main>
       </div>
     </div>
   );

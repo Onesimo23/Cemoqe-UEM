@@ -1,4 +1,4 @@
-import { Clock, Star } from "lucide-react";
+import { Award, Clock, Star } from "lucide-react";
 import React from "react";
 import { Link } from "react-router-dom";
 import { useBranding } from "../contexts/BrandingContext";
@@ -26,11 +26,16 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
             alt={course.title}
             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
           />
-          <span
-            className={`absolute top-4 left-4 px-3 py-1 text-xs font-bold rounded-md shadow-sm ${course.badgeColor || "bg-white text-gray-800"}`}
-          >
-            {course.category}
-          </span>
+          <div className="absolute top-4 left-4 flex gap-2">
+            <span
+              className={`px-3 py-1 text-xs font-bold rounded-md shadow-sm ${course.badgeColor || "bg-white text-gray-800"}`}
+            >
+              {course.category}
+            </span>
+            <span className="px-3 py-1 text-xs font-bold rounded-md shadow-sm bg-brand-green text-white">
+              Gratuito
+            </span>
+          </div>
         </div>
 
         {/* Content */}
@@ -68,6 +73,17 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
               <span>{course.duration}</span>
             </div>
           </div>
+
+          {/* Certificate Price Info */}
+          {course.certificatePrice && course.certificatePrice > 0 && (
+            <div className="mb-3 p-2 bg-blue-50 border border-blue-100 rounded-lg flex items-center gap-2">
+              <Award className="w-4 h-4 text-blue-600 flex-shrink-0" />
+              <span className="text-xs text-blue-700 font-medium">
+                Certificado: {course.currency || "MZM"}{" "}
+                {course.certificatePrice.toLocaleString("pt-BR")}
+              </span>
+            </div>
+          )}
 
           {/* Relevance Bar */}
           <div className="space-y-1.5">

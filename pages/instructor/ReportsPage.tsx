@@ -36,10 +36,10 @@ const ReportsPage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!user?.uid) { 
+    if (!user?.uid) {
       setVisitsTotal(0); setRevenueMZM(0); setEnrollmentRate(0); setAvgEngagement(0);
       setCourseRevenue([]); setClassesCompleted(0); setCertificatesIssued(0); setAnswersResolved(0); setRegions([]); setEnrollPairsCount(0);
-      return; 
+      return;
     }
 
     let coursesUnsub: (() => void) | null = null;
@@ -87,13 +87,12 @@ const ReportsPage: React.FC = () => {
       enrollUnsubs = [];
 
       const courseIds: string[] = [];
-      const courseMap: Record<string, { title: string; price: number; paid: boolean }> = {};
+      const courseMap: Record<string, { title: string; certificatePrice: number }> = {};
       courseDocs.forEach(d => {
         const data: any = d.data();
         courseIds.push(d.id);
-        const price = parsePriceMZM(data?.price);
-        const paid = (data?.priceType || 'paid') !== 'free' && price > 0;
-        courseMap[d.id] = { title: data?.title || 'Curso', price, paid };
+        const certificatePrice = parsePriceMZM(data?.certificatePrice);
+        courseMap[d.id] = { title: data?.title || 'Curso', certificatePrice };
       });
 
       if (courseIds.length === 0) {
@@ -121,16 +120,16 @@ const ReportsPage: React.FC = () => {
             const ts: Date | null = data?.enrolledAt?.toDate ? data.enrolledAt.toDate() : (data?.createdAt?.toDate ? data.createdAt.toDate() : null);
             if (!course_id || !user_uid || !ts) return;
             if (ts.getTime() < since) return;
-            enrolls.set(d.id, { id: d.id, course_id, user_uid, ts });
+            enrolls.set(d.id, { id: d.id, course_id, user_uid, ts, certificatePaid: data.certificatePaid, certificatePrice: data.certificatePrice });
           });
 
-          // Receita por curso
+          // Receita por certificados pagos
           const byCourse = new Map<string, number>();
           const uniqueEnrollPairs = new Set<string>();
           enrolls.forEach((e: any) => {
             uniqueEnrollPairs.add(`${e.user_uid}::${e.course_id}`);
-            if (courseMap[e.course_id]?.paid) {
-              byCourse.set(e.course_id, (byCourse.get(e.course_id) || 0) + (courseMap[e.course_id]?.price || 0));
+            if (e.certificatePaid) {
+              byCourse.set(e.course_id, (byCourse.get(e.course_id) || 0) + (e.certificatePrice || 0));
             }
           });
           setEnrollPairsCount(uniqueEnrollPairs.size);
@@ -274,7 +273,7 @@ const ReportsPage: React.FC = () => {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-           
+
            {/* Chart Placeholder 1: Revenue */}
            <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
               <h3 className="font-bold text-slate-900 mb-8 flex items-center gap-2">

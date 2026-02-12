@@ -56,7 +56,7 @@ import AdminUsersPage from "./pages/admin/UsersManagementPage";
 const PublicLayout: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => (
-  <div className="min-h-screen flex flex-col bg-white">
+  <div className="min-h-screen flex flex-col">
     <Navbar />
     <main className="flex-grow">{children}</main>
     <Footer />

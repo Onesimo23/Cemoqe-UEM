@@ -87,26 +87,24 @@ const AdminDashboardPage: React.FC = () => {
           ...doc.data(),
         }));
 
-        // Total de Receita - Buscar de courses (cada course tem price e enrollments count)
+        // Total de Receita - Calcula apenas de certificados pagos (certificatePaid = true)
         let totalRevenue = 0;
-        const allCoursesQuery = query(
-          collection(db, "courses"),
-          limit(200), // Limita para performance
-        );
-        const allCoursesSnap = await getDocs(allCoursesQuery);
+        try {
+          const paidEnrollmentsQuery = query(
+            collection(db, "enrollments"),
+            where("certificatePaid", "==", true),
+            limit(500),
+          );
+          const paidEnrollmentsSnap = await getDocs(paidEnrollmentsQuery);
 
-        for (const courseDoc of allCoursesSnap.docs) {
-          const courseData = courseDoc.data();
-          const price = Number(courseData.price || courseData.valor || 0) || 0;
-          // Tentar diferentes campos para contar inscritos
-          const enrollmentsCount =
-            Number(
-              courseData.enrollmentsCount ||
-                courseData.total_students ||
-                courseData.students_count ||
-                0,
-            ) || 0;
-          totalRevenue += price * enrollmentsCount;
+          for (const enrollmentDoc of paidEnrollmentsSnap.docs) {
+            const enrollmentData = enrollmentDoc.data();
+            const certificatePrice =
+              Number(enrollmentData.certificatePrice || 0) || 0;
+            totalRevenue += certificatePrice;
+          }
+        } catch (error) {
+          console.error("Erro ao calcular receita de certificados:", error);
         }
 
         // Logs Recentes
