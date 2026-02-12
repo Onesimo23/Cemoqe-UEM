@@ -1,16 +1,15 @@
 import {
-  Bell,
-  BookOpen,
-  DollarSign,
-  GraduationCap,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  MessageSquare,
-  Settings,
-  TrendingUp,
-  Users,
-  X
+    Bell,
+    BookOpen,
+    DollarSign,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    MessageSquare,
+    Settings,
+    TrendingUp,
+    Users,
+    X
 } from "lucide-react";
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -103,17 +102,39 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
       >
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="bg-brand-green p-1.5 rounded-lg">
-              <GraduationCap className="text-white w-6 h-6" />
-            </div>
-            <span
-              className="text-lg font-bold"
-              style={{ fontFamily: branding.appearance.fontFamily }}
-            >
-              {branding.appearance.platformName}
-              <span className="ml-1 text-[10px] bg-brand-accent text-brand-dark px-1.5 py-0.5 rounded font-black uppercase">
-                Pro
+            {branding.appearance.logoUrl ? (
+              <img
+                src={branding.appearance.logoUrl}
+                alt="Logo"
+                className="h-10 w-auto"
+              />
+            ) : (
+              <div
+                className="p-2 rounded-lg text-white font-black flex items-center justify-center h-10 w-10"
+                style={{ backgroundColor: branding.appearance.primaryColor }}
+              >
+                {branding.appearance.logoText?.charAt(0) || "U"}
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span
+                className="text-lg font-bold leading-none"
+                style={{ fontFamily: branding.appearance.fontFamily }}
+              >
+                {branding.appearance.logoText ||
+                  branding.appearance.platformName}
               </span>
+              {branding.appearance.logoSubtext && (
+                <span
+                  className="text-[10px] font-black leading-tight"
+                  style={{ color: branding.appearance.accentColor }}
+                >
+                  {branding.appearance.logoSubtext}
+                </span>
+              )}
+            </div>
+            <span className="ml-1 text-[10px] bg-brand-accent text-brand-dark px-1.5 py-0.5 rounded font-black uppercase">
+              Pro
             </span>
           </Link>
           <button

@@ -9,7 +9,6 @@ import {
   Menu,
   Search,
   Settings,
-  ShieldAlert,
   UserCheck,
   Users,
   X
@@ -102,17 +101,42 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       >
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="bg-brand-green p-1.5 rounded-lg">
-              <ShieldAlert className="text-white w-6 h-6" />
-            </div>
-            <span
-              className="text-lg font-bold"
-              style={{ fontFamily: branding.appearance.fontFamily }}
-            >
-              {branding.appearance.platformName}
-              <span className="ml-1 text-[10px] bg-brand-accent text-brand-dark px-1.5 py-0.5 rounded font-black uppercase">
-                Admin
+            {branding.appearance.logoUrl ? (
+              <img
+                src={branding.appearance.logoUrl}
+                alt="Logo"
+                className="h-10 w-auto"
+              />
+            ) : (
+              <div
+                className="p-2 rounded-lg text-white font-black flex items-center justify-center min-w-10 h-10"
+                style={{ backgroundColor: branding.appearance.primaryColor }}
+              >
+                {branding.appearance.logoText?.charAt(0) || "U"}
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span
+                className="text-lg font-bold leading-none"
+                style={{ fontFamily: branding.appearance.fontFamily }}
+              >
+                {branding.appearance.logoText ||
+                  branding.appearance.platformName}
               </span>
+              {branding.appearance.logoSubtext && (
+                <span
+                  className="text-xs font-bold leading-tight"
+                  style={{
+                    color: branding.appearance.accentColor,
+                    fontFamily: branding.appearance.fontFamily,
+                  }}
+                >
+                  {branding.appearance.logoSubtext}
+                </span>
+              )}
+            </div>
+            <span className="ml-2 text-[10px] bg-brand-accent text-brand-dark px-1.5 py-0.5 rounded font-black uppercase">
+              Admin
             </span>
           </Link>
           <button
@@ -238,13 +262,31 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           >
             <Menu className="w-6 h-6" />
           </button>
-          <span
-            className="font-bold"
-            style={{ fontFamily: branding.appearance.fontFamily }}
-          >
-            {branding.appearance.platformName}{" "}
-            <span className="text-brand-accent">Admin</span>
-          </span>
+          <div className="flex items-center gap-2">
+            {branding.appearance.logoUrl ? (
+              <img
+                src={branding.appearance.logoUrl}
+                alt="Logo"
+                className="h-6 w-auto"
+              />
+            ) : (
+              <div
+                className="p-1 rounded text-white font-black text-xs flex items-center justify-center w-6 h-6"
+                style={{ backgroundColor: branding.appearance.primaryColor }}
+              >
+                {branding.appearance.logoText?.charAt(0) || "U"}
+              </div>
+            )}
+            <span
+              className="font-bold text-sm"
+              style={{ fontFamily: branding.appearance.fontFamily }}
+            >
+              {branding.appearance.logoText || branding.appearance.platformName}{" "}
+              <span style={{ color: branding.appearance.accentColor }}>
+                Admin
+              </span>
+            </span>
+          </div>
           <div className="w-8 h-8 bg-brand-green rounded-full flex items-center justify-center font-bold text-xs">
             AD
           </div>

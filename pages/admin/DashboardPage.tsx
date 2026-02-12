@@ -1,24 +1,24 @@
 import {
-   collection,
-   getDocs,
-   limit,
-   orderBy,
-   query,
-   where,
+  collection,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  where,
 } from "firebase/firestore";
 import {
-   AlertCircle,
-   CheckCircle2,
-   Clock,
-   DollarSign,
-   GraduationCap,
-   History,
-   MoreVertical,
-   ShieldCheck,
-   TrendingUp,
-   Users,
-   X,
-   XCircle,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  GraduationCap,
+  History,
+  MoreVertical,
+  ShieldCheck,
+  TrendingUp,
+  Users,
+  X,
+  XCircle,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import AdminLayout from "../../layouts/AdminLayout";
@@ -171,7 +171,8 @@ const AdminDashboardPage: React.FC = () => {
               Visão Geral da Rede
             </h1>
             <p className="text-slate-500 mt-1">
-              Bem-vindo ao Backoffice. Controle central do ecossistema EduPrime.
+              Bem-vindo ao Backoffice. Controle central do ecossistema UEM
+              Cursos online.
             </p>
           </div>
           <div className="flex gap-3">

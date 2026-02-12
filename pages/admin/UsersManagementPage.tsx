@@ -27,7 +27,7 @@ import {
     Shield,
     Trash2,
     UserPlus,
-    X
+    X,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { UserProfile } from "../../contexts/AuthContext";
@@ -253,7 +253,7 @@ const UsersManagementPage: React.FC = () => {
 
   const generateDefaultPassword = (name: string) => {
     const firstName = name.split(" ")[0].replace(/[^a-zA-Z]/g, "");
-    return firstName ? `Edu${firstName}@2024` : "EduPrime@2024";
+    return firstName ? `UEM${firstName}@2024` : "UEM@2024@";
   };
 
   const handleOpenModal = (user?: UserProfile) => {

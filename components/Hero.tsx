@@ -100,7 +100,7 @@ const Hero: React.FC = () => {
             <iframe
               className="w-full h-full"
               src="https://www.youtube.com/embed/S_8Z3C8i5d0?autoplay=1&rel=0"
-              title="EduPrime Demo"
+              title="UEM Cursos online Demo"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             ></iframe>

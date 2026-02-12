@@ -1,15 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { 
-  Star, 
-  Clock, 
-  Globe, 
-  Award, 
+import {
+  Star,
+  Clock,
+  Globe,
+  Award,
   File,
-  FileText, 
-  PlayCircle, 
-  Check, 
-  ChevronDown, 
+  FileText,
+  PlayCircle,
+  Check,
+  ChevronDown,
   AlertCircle,
   Smartphone,
   Infinity,
@@ -200,7 +200,7 @@ const CourseDetailsPage: React.FC = () => {
 
   return (
     <div className="bg-white min-h-screen font-sans">
-      
+
       {/* 1. Header Hero Section (Dark Background) */}
       <div className="bg-brand-dark text-white py-12 lg:py-16 px-6 relative overflow-hidden">
         {/* Abstract Background Element */}
@@ -208,7 +208,7 @@ const CourseDetailsPage: React.FC = () => {
 
         <div className="max-w-7xl mx-auto grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 relative z-10">
-            
+
             {/* Breadcrumb */}
             <div className="flex items-center gap-2 text-sm text-brand-light/70 mb-6 font-medium">
               <Link to="/cursos" className="hover:text-white transition-colors">Cursos</Link>
@@ -221,7 +221,7 @@ const CourseDetailsPage: React.FC = () => {
             <h1 className="text-3xl md:text-5xl font-extrabold mb-4 leading-tight">
               {course?.title || 'Curso'}
             </h1>
-            
+
             <p className="text-lg text-brand-light/90 mb-6 max-w-2xl leading-relaxed">
               {course?.cardDescription || 'Domine as habilidades essenciais para se destacar no mercado de trabalho com este curso completo e prático, desenhado por especialistas da indústria.'}
             </p>
@@ -262,10 +262,10 @@ const CourseDetailsPage: React.FC = () => {
       {/* 2. Main Content & Sidebar Layout */}
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="grid lg:grid-cols-3 gap-12">
-          
+
           {/* LEFT COLUMN (Content) */}
           <div className="lg:col-span-2 space-y-12">
-            
+
             {/* What you'll learn */}
             <section className="bg-gray-50 border border-gray-200 p-6 md:p-8 rounded-2xl">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">O que você aprenderá</h2>
@@ -294,7 +294,7 @@ const CourseDetailsPage: React.FC = () => {
                 <span>{Array.isArray(displayModules) ? `${displayModules.length} módulos` : 'Sem módulos'} • {Array.isArray(displayModules) ? `${(displayModules.reduce((acc: number, m: any) => acc + (Array.isArray(m?.lessons) ? m.lessons.length : 0), 0))} aulas` : '0 aulas'} • {course?.duration || '0h'} de duração total</span>
                 <button onClick={() => setExpandAll(v => !v)} className="text-brand-green font-semibold hover:underline">{expandAll ? 'Recolher tudo' : 'Expandir tudo'}</button>
               </div>
-              
+
               <div className="border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-200">
                 {Array.isArray(displayModules) && displayModules.length > 0 ? (
                   displayModules.map((mod: any, idx: number) => (
@@ -321,13 +321,13 @@ const CourseDetailsPage: React.FC = () => {
                 ) : (
                   <>
                     <p className="mb-4">
-                      Este curso foi meticulosamente planejado para levar você do nível iniciante ao avançado. 
-                      Combinamos teoria sólida com prática intensiva, garantindo que você não apenas entenda os conceitos, 
+                      Este curso foi meticulosamente planejado para levar você do nível iniciante ao avançado.
+                      Combinamos teoria sólida com prática intensiva, garantindo que você não apenas entenda os conceitos,
                       mas saiba aplicá-los em cenários do mundo real.
                     </p>
                     <p className="mb-4">
-                      Durante a jornada, você terá acesso a materiais exclusivos, exercícios práticos e um projeto final 
-                      que poderá ser adicionado imediatamente ao seu portfólio. Ideal para quem busca transição de carreira 
+                      Durante a jornada, você terá acesso a materiais exclusivos, exercícios práticos e um projeto final
+                      que poderá ser adicionado imediatamente ao seu portfólio. Ideal para quem busca transição de carreira
                       ou aprimoramento profissional.
                     </p>
                   </>
@@ -345,9 +345,9 @@ const CourseDetailsPage: React.FC = () => {
             <section className="bg-white border-t border-gray-100 pt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Seu Instrutor</h2>
               <div className="flex gap-6 items-start">
-                <img 
-                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(course?.instructor || 'Instrutor')}&background=0e7038&color=fff&size=128`} 
-                  alt={course?.instructor || 'Instrutor'} 
+                <img
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(course?.instructor || 'Instrutor')}&background=0e7038&color=fff&size=128`}
+                  alt={course?.instructor || 'Instrutor'}
                   className="w-20 h-20 rounded-full object-cover border-4 border-gray-50 shadow-sm"
                 />
                 <div>
@@ -368,7 +368,7 @@ const CourseDetailsPage: React.FC = () => {
                     </div>
                   </div>
                   <p className="text-gray-600 text-sm leading-relaxed">
-                    Com mais de 10 anos de experiência na indústria, já liderei equipes em grandes empresas de tecnologia 
+                    Com mais de 10 anos de experiência na indústria, já liderei equipes em grandes empresas de tecnologia
                     e ajudei a formar milhares de profissionais. Minha paixão é tornar conceitos complexos em algo simples e prático.
                   </p>
                 </div>
@@ -380,7 +380,7 @@ const CourseDetailsPage: React.FC = () => {
           {/* RIGHT COLUMN (Sticky Sidebar) */}
           <div className="lg:col-span-1 relative">
             <div className="lg:absolute lg:-top-64 lg:right-0 w-full lg:w-[360px] flex flex-col gap-6">
-              
+
               {/* Purchase Card */}
               <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden sticky top-24">
                 {/* Preview Image/Video Area */}
@@ -455,7 +455,7 @@ const CourseDetailsPage: React.FC = () => {
                     <FeatureRow icon={<Award className="w-4 h-4" />} text="Certificado de conclusão" />
                   </div>
                 </div>
-                
+
                 <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center text-sm font-medium text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors">
                   <span>Compartilhar</span>
                   <Share2 className="w-4 h-4" />
@@ -466,7 +466,7 @@ const CourseDetailsPage: React.FC = () => {
               <div className="bg-white border border-gray-200 p-6 rounded-xl shadow-sm hidden lg:block">
                 <h3 className="font-bold text-gray-900 mb-2">Treinando uma equipe?</h3>
                 <p className="text-sm text-gray-500 mb-4">Obtenha acesso ilimitado a mais de 5.000 cursos para sua empresa.</p>
-                <button className="text-brand-dark font-bold text-sm hover:underline">EduPrime Business</button>
+                <button className="text-brand-dark font-bold text-sm hover:underline">UEM Cursos online </button>
               </div>
 
             </div>
@@ -522,7 +522,7 @@ const AccordionItem = ({ title, details, isOpen = false, lessons = [] as any[] }
   }, [isOpen]);
   return (
     <div className="bg-white">
-      <button 
+      <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
       >

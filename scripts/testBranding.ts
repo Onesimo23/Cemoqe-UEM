@@ -18,13 +18,13 @@ const firebaseConfig = {
 const BRANDING_EXAMPLES = {
   eduPrimePadrao: {
     appearance: {
-      platformName: "EduPrime",
-      institutionName: "EduPrime Academy Group",
-      applicationName: "EduPrime LMS Portal",
-      primaryColor: "#0e7038",
-      accentColor: "#eab308",
+      platformName: "UEM Cursos online",
+      institutionName: "UEM Cursos online Academy Group",
+      applicationName: "UEM Cursos online LMS Portal",
+      primaryColor: "#0E7038",
+      accentColor: "#EAB308",
       fontFamily: "Inter",
-      logoUrl: "",
+      logoUrl: "/UEM.png",
     },
     system: {
       maintenanceMode: false,
@@ -139,7 +139,7 @@ async function testBranding(brandName: keyof typeof BRANDING_EXAMPLES) {
   }
 }
 
-// Testar com o primeiro branding (EduPrime padrão)
+// Testar com o primeiro branding (UEM Cursos online padrão)
 const brandingToTest = process.argv[2] || "eduPrimePadrao";
 if (!(brandingToTest in BRANDING_EXAMPLES)) {
   console.log("❌ Branding não encontrado. Opções disponíveis:");

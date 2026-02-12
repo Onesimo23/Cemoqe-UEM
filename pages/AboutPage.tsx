@@ -11,7 +11,7 @@ const AboutPage: React.FC = () => {
             Transformando o futuro através da <span className="text-brand-green">educação acessível</span>
           </h1>
           <p className="text-gray-500 text-xl leading-relaxed max-w-2xl mx-auto">
-            A EduPrime nasceu com uma missão simples: democratizar o conhecimento de alta qualidade e conectar profissionais às oportunidades do mercado global.
+            A UEM Cursos online nasceu com uma missão simples: democratizar o conhecimento de alta qualidade e conectar profissionais às oportunidades do mercado global.
           </p>
         </div>
       </div>
@@ -22,9 +22,9 @@ const AboutPage: React.FC = () => {
           <div className="relative">
             <div className="absolute -top-4 -left-4 w-24 h-24 bg-brand-accent/20 rounded-full blur-2xl"></div>
             <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-brand-green/20 rounded-full blur-2xl"></div>
-            <img 
-              src="https://images.unsplash.com/photo-1531482615713-2afd69097998?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-              alt="Team working on whiteboard" 
+            <img
+              src="https://images.unsplash.com/photo-1531482615713-2afd69097998?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+              alt="Team working on whiteboard"
               className="relative rounded-2xl shadow-xl z-10"
             />
           </div>
@@ -67,17 +67,17 @@ const AboutPage: React.FC = () => {
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <ValueCard 
+          <ValueCard
             icon={<Shield className="w-8 h-8 text-brand-green" />}
             title="Excelência e Qualidade"
             description="Não aceitamos o 'bom o suficiente'. Buscamos a excelência em cada detalhe do conteúdo."
           />
-          <ValueCard 
+          <ValueCard
             icon={<Globe className="w-8 h-8 text-blue-500" />}
             title="Acessibilidade Global"
             description="Conhecimento sem fronteiras. Trabalhamos para que nossa plataforma chegue a todos."
           />
-          <ValueCard 
+          <ValueCard
             icon={<Zap className="w-8 h-8 text-brand-accent" />}
             title="Inovação Constante"
             description="O mercado muda rápido, e nós também. Mantemos nosso currículo sempre atualizado."

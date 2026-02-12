@@ -1,18 +1,17 @@
 import {
-  Award,
-  Bell,
-  BookOpen,
-  GraduationCap,
-  History,
-  Home,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  MessageSquare,
-  Search,
-  Settings,
-  Star,
-  X,
+    Award,
+    Bell,
+    BookOpen,
+    History,
+    Home,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    MessageSquare,
+    Search,
+    Settings,
+    Star,
+    X
 } from "lucide-react";
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -99,12 +98,34 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
       >
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="bg-white/10 p-1.5 rounded-lg text-brand-accent">
-              <GraduationCap className="w-6 h-6" />
+            {branding.appearance.logoUrl ? (
+              <img
+                src={branding.appearance.logoUrl}
+                alt="Logo"
+                className="h-10 w-auto"
+              />
+            ) : (
+              <div
+                className="p-2 rounded-lg text-white font-black flex items-center justify-center h-10 w-10"
+                style={{ backgroundColor: branding.appearance.primaryColor }}
+              >
+                {branding.appearance.logoText?.charAt(0) || "U"}
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span className="text-lg font-bold leading-none">
+                {branding.appearance.logoText ||
+                  branding.appearance.platformName}
+              </span>
+              {branding.appearance.logoSubtext && (
+                <span
+                  className="text-xs font-bold leading-tight"
+                  style={{ color: branding.appearance.accentColor }}
+                >
+                  {branding.appearance.logoSubtext}
+                </span>
+              )}
             </div>
-            <span className="text-lg font-bold">
-              Edu<span className="text-brand-accent">Prime</span>
-            </span>
           </Link>
           <button
             onClick={() => setIsSidebarOpen(false)}
@@ -177,10 +198,10 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
             <Menu className="w-6 h-6" />
           </button>
           <span
-            className="font-bold text-gray-800"
+            className="font-bold text-gray-800\"
             style={{ fontFamily: branding.appearance.fontFamily }}
           >
-            {branding.appearance.platformName}
+            {branding.appearance.logoText || branding.appearance.platformName}
           </span>
           <img
             src={

@@ -1,6 +1,5 @@
-import { doc, onSnapshot } from "firebase/firestore";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { db } from "../services/firebase";
+import { BrandingConfig } from "../config/branding.config";
 
 export interface BrandingSettings {
   appearance: {
@@ -9,8 +8,12 @@ export interface BrandingSettings {
     applicationName: string;
     primaryColor: string;
     accentColor: string;
+    darkColor: string;
+    lightColor: string;
     fontFamily: string;
-    logoUrl: string;
+    logoUrl?: string;
+    logoText?: string;
+    logoSubtext?: string;
   };
   system: {
     maintenanceMode: boolean;
@@ -26,24 +29,20 @@ export interface BrandingSettings {
 
 const defaultBranding: BrandingSettings = {
   appearance: {
-    platformName: "EduPrime",
-    institutionName: "EduPrime Academy Group",
-    applicationName: "EduPrime LMS Portal",
-    primaryColor: "#0e7038",
-    accentColor: "#eab308",
-    fontFamily: "Inter",
-    logoUrl: "",
+    platformName: BrandingConfig.platformName,
+    institutionName: BrandingConfig.institutionName,
+    applicationName: BrandingConfig.applicationName,
+    primaryColor: BrandingConfig.primaryColor,
+    accentColor: BrandingConfig.accentColor,
+    darkColor: BrandingConfig.darkColor,
+    lightColor: BrandingConfig.lightColor,
+    fontFamily: BrandingConfig.fontFamily,
+    logoUrl: BrandingConfig.logoUrl,
+    logoText: BrandingConfig.logoText,
+    logoSubtext: BrandingConfig.logoSubtext,
   },
-  system: {
-    maintenanceMode: false,
-    publicSignups: true,
-    dynamicCache: true,
-  },
-  security: {
-    require2FA: true,
-    auditLogs: true,
-    limitedSessions: false,
-  },
+  system: BrandingConfig.system,
+  security: BrandingConfig.security,
 };
 
 interface BrandingContextType {
@@ -61,7 +60,7 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({
   const [branding, setBranding] = useState<BrandingSettings>(defaultBranding);
   const [loading, setLoading] = useState(true);
 
-  // Injetar CSS IMEDIATAMENTE com cores padrão
+  // Injetar CSS com as cores da configuração
   useEffect(() => {
     const styleId = "dynamic-branding-styles";
     let styleElement = document.getElementById(styleId) as HTMLStyleElement;
@@ -72,48 +71,16 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({
       document.head.appendChild(styleElement);
     }
 
-    // Injetar com cores padrão AGORA
     injectBrandingStyles(defaultBranding, styleElement);
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      doc(db, "settings", "system"),
-      (snapshot) => {
-        const styleElement = document.getElementById(
-          "dynamic-branding-styles",
-        ) as HTMLStyleElement;
-
-        if (snapshot.exists()) {
-          const data = snapshot.data() as any;
-          const newBranding = {
-            appearance: { ...defaultBranding.appearance, ...data.appearance },
-            system: { ...defaultBranding.system, ...data.system },
-            security: { ...defaultBranding.security, ...data.security },
-          };
-          setBranding(newBranding);
-          if (styleElement) injectBrandingStyles(newBranding, styleElement);
-        } else {
-          setBranding(defaultBranding);
-          if (styleElement) injectBrandingStyles(defaultBranding, styleElement);
-        }
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Erro ao carregar configurações de branding:", error);
-        setBranding(defaultBranding);
-        setLoading(false);
-      },
-    );
-
-    return () => unsubscribe();
+    setBranding(defaultBranding);
+    setLoading(false);
   }, []);
 
   // Atualizar título da página e favicon
   useEffect(() => {
     document.title = branding.appearance.applicationName;
 
-    // Atualizar favicon
+    // Atualizar favicon com o texto do logo ou usar a URL
     const faviconLink = document.getElementById(
       "dynamic-favicon",
     ) as HTMLLinkElement;
@@ -121,13 +88,18 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({
       if (branding.appearance.logoUrl) {
         faviconLink.href = branding.appearance.logoUrl;
       } else {
-        const svgFavicon = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23${branding.appearance.primaryColor.replace("#", "")}' width='100' height='100'/><text x='50' y='60' font-size='60' font-weight='bold' text-anchor='middle' fill='white' font-family='Arial'>E</text></svg>`;
+        // Criar favicon com a primeira letra do logoText
+        const letter = (branding.appearance.logoText || "U")
+          .charAt(0)
+          .toUpperCase();
+        const svgFavicon = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23${branding.appearance.primaryColor.replace("#", "")}' width='100' height='100'/><text x='50' y='60' font-size='60' font-weight='bold' text-anchor='middle' fill='white' font-family='Arial'>${letter}</text></svg>`;
         faviconLink.href = svgFavicon;
       }
     }
   }, [
     branding.appearance.applicationName,
     branding.appearance.logoUrl,
+    branding.appearance.logoText,
     branding.appearance.primaryColor,
   ]);
 
@@ -146,6 +118,8 @@ function injectBrandingStyles(
     :root {
       --brand-primary: ${branding.appearance.primaryColor};
       --brand-accent: ${branding.appearance.accentColor};
+      --brand-dark: ${branding.appearance.darkColor};
+      --brand-light: ${branding.appearance.lightColor};
       --brand-font: '${branding.appearance.fontFamily}', sans-serif;
     }
   `;
@@ -197,7 +171,7 @@ function injectBrandingStyles(
     }
 
     .hover\\:bg-brand-dark:hover {
-      background-color: #054e25 !important;
+      background-color: var(--brand-dark) !important;
     }
 
     .text-brand-green {

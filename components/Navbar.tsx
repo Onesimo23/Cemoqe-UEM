@@ -1,4 +1,4 @@
-import { GraduationCap, LayoutDashboard, Menu, X } from "lucide-react";
+import { LayoutDashboard, Menu, X } from "lucide-react";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { NAV_LINKS } from "../constants";
@@ -27,25 +27,36 @@ const Navbar: React.FC = () => {
               className="h-10 w-auto"
             />
           ) : (
-            <div className="bg-brand-green p-1.5 rounded-lg">
-              <GraduationCap className="text-white w-6 h-6" />
+            <div
+              className="p-2 rounded-lg text-white font-black flex items-center justify-center h-10 w-10"
+              style={{ backgroundColor: branding.appearance.primaryColor }}
+            >
+              {branding.appearance.logoText?.charAt(0) || "U"}
             </div>
           )}
-          <span
-            className="text-xl font-bold text-brand-dark"
-            style={{ color: branding.appearance.primaryColor }}
-          >
-            {branding.appearance.applicationName.split(" ")[0]}
+          <div className="flex flex-col">
             <span
-              className="text-brand-accent"
-              style={{ color: branding.appearance.accentColor }}
+              className="font-bold text-sm leading-none"
+              style={{
+                color: branding.appearance.primaryColor,
+                fontFamily: branding.appearance.fontFamily,
+              }}
             >
-              {branding.appearance.applicationName
-                .split(" ")
-                .slice(1)
-                .join(" ")}
+              {branding.appearance.logoText ||
+                branding.appearance.applicationName.split(" ")[0]}
             </span>
-          </span>
+            {branding.appearance.logoSubtext && (
+              <span
+                className="text-xs font-bold leading-tight"
+                style={{
+                  color: branding.appearance.accentColor,
+                  fontFamily: branding.appearance.fontFamily,
+                }}
+              >
+                {branding.appearance.logoSubtext}
+              </span>
+            )}
+          </div>
         </Link>
 
         {/* Desktop Links */}

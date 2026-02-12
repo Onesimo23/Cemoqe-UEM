@@ -187,7 +187,7 @@ const InstructorDetailsPage: React.FC = () => {
               <div className="bg-gray-50 rounded-lg p-8">
                 <p className="text-gray-700 leading-relaxed text-lg">
                   {tutor.bio ||
-                    "Instrutor certificado e experiente na plataforma EduPrime com um excelente histórico de ensino e satisfação dos alunos."}
+                    "Instrutor certificado e experiente na plataforma UEM Cursos online com um excelente histórico de ensino e satisfação dos alunos."}
                 </p>
               </div>
             </section>

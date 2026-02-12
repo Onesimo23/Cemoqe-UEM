@@ -125,8 +125,8 @@ const InstructorsPage: React.FC = () => {
                 {/* Bio */}
                 <div className="p-6">
                   <p className="text-gray-500 text-sm leading-relaxed mb-6">
-                    Instrutor certificado e com experiência na plataforma
-                    EduPrime.
+                    Instrutor certificado e com experiência na plataforma UEM
+                    Cursos online.
                   </p>
 
                   {/* Stats */}
@@ -198,7 +198,7 @@ const InstructorsPage: React.FC = () => {
         >
           <div className="p-10 md:p-14 md:w-3/5 text-white flex flex-col justify-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Torne-se um Tutor na EduPrime
+              Torne-se um Tutor na UEM Cursos online
             </h2>
             <p className="text-white/80 text-lg mb-8 leading-relaxed">
               Compartilhe seu conhecimento, impacte milhares de carreiras e gere

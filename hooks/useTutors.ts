@@ -252,7 +252,7 @@ export function useTutorDetails(uid: string) {
                 courses,
                 bio:
                   data.bio ||
-                  "Instrutor certificado e experiente na plataforma EduPrime.",
+                  "Instrutor certificado e experiente na plataforma UEM Cursos online.",
                 company: data.company || "",
                 specialties: data.specialties || [data.specialty || "—"],
                 createdAt: data.createdAt,
@@ -323,7 +323,7 @@ export function useTutorDetails(uid: string) {
                       courses,
                       bio:
                         data.bio ||
-                        "Instrutor certificado e experiente na plataforma EduPrime.",
+                        "Instrutor certificado e experiente na plataforma UEM Cursos online.",
                       company: data.company || "",
                       specialties: data.specialties || [data.specialty || "—"],
                       createdAt: data.createdAt,

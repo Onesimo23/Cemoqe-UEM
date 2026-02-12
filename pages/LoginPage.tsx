@@ -13,7 +13,7 @@ const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile, loading: authLoading } = useAuth();
@@ -110,7 +110,7 @@ const LoginPage: React.FC = () => {
   return (
     <div className="min-h-[calc(100vh-80px)] bg-gray-50 flex items-center justify-center p-4 py-12 font-sans">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row border border-gray-100">
-        
+
         {/* Lado Esquerdo - Branding (Conforme imagem) */}
         <div className="md:w-[45%] bg-brand-dark relative hidden md:flex flex-col justify-between p-12 text-white">
           <div className="relative z-10">
@@ -119,15 +119,15 @@ const LoginPage: React.FC = () => {
               Continue sua jornada de aprendizado na plataforma líder em Moçambique.
             </p>
           </div>
-          
+
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-6">
               <div className="flex -space-x-2">
                 {[1, 2, 3].map((i) => (
-                  <img 
+                  <img
                     key={i}
-                    src={`https://i.pravatar.cc/100?img=${10 + i}`} 
-                    alt="User" 
+                    src={`https://i.pravatar.cc/100?img=${10 + i}`}
+                    alt="User"
                     className="w-10 h-10 rounded-full border-2 border-brand-dark object-cover"
                   />
                 ))}
@@ -138,9 +138,9 @@ const LoginPage: React.FC = () => {
           </div>
 
           <div className="absolute inset-0 bg-brand-green/30 mix-blend-overlay"></div>
-          <img 
-            src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-            alt="Students" 
+          <img
+            src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+            alt="Students"
             className="absolute inset-0 w-full h-full object-cover opacity-40 grayscale"
           />
         </div>
@@ -164,7 +164,7 @@ const LoginPage: React.FC = () => {
             </div>
           )}
 
-          <button 
+          <button
             onClick={handleGoogleLogin}
             disabled={isLoading}
             className="w-full flex items-center justify-center gap-3 py-3.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-sm font-bold text-gray-600 disabled:opacity-50 mb-8 shadow-sm"
@@ -247,7 +247,7 @@ const LoginPage: React.FC = () => {
                 </div>
               ) : (
                 <>
-                  Entrar na EduPrime
+                  Entrar na UEM Cursos online
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}

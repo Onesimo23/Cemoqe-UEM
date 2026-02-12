@@ -11,7 +11,7 @@ import {
   Save,
   Server,
   Shield,
-  X
+  X,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import AdminLayout from "../../layouts/AdminLayout";
@@ -32,9 +32,9 @@ const AdminSettingsPage: React.FC = () => {
 
   // Appearance State
   const [brandSettings, setBrandSettings] = useState({
-    platformName: "EduPrime",
-    institutionName: "EduPrime Academy Group",
-    applicationName: "EduPrime LMS Portal",
+    platformName: "UEM Cursos online",
+    institutionName: "UEM Cursos online Academy Group",
+    applicationName: "UEM Cursos online LMS Portal",
     primaryColor: "#0E7038",
     accentColor: "#EAB308",
     fontFamily: "Inter",
@@ -100,9 +100,9 @@ const AdminSettingsPage: React.FC = () => {
     try {
       setIsSaving(true);
       const defaultSettings = {
-        platformName: "EduPrime",
-        institutionName: "EduPrime Academy Group",
-        applicationName: "EduPrime LMS Portal",
+        platformName: "UEM Cursos online",
+        institutionName: "Universidade Eduardo Mondlane",
+        applicationName: "UEM Cursos online",
         primaryColor: "#0e7038",
         accentColor: "#eab308",
         fontFamily: "Inter",
@@ -257,7 +257,7 @@ const AdminSettingsPage: React.FC = () => {
               Configurações do Sistema
             </h1>
             <p className="text-slate-500 text-sm">
-              Gerencie os parâmetros globais da plataforma EduPrime.
+              Gerencie os parâmetros globais da plataforma UEM Cursos online.
             </p>
           </div>
           {showSuccess && (

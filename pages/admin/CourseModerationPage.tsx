@@ -1,15 +1,15 @@
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import {
-    CheckCircle2,
-    Clock,
-    Eye,
-    Filter,
-    Info,
-    MessageSquare,
-    PlayCircle,
-    Search,
-    X,
-    XCircle
+  CheckCircle2,
+  Clock,
+  Eye,
+  Filter,
+  Info,
+  MessageSquare,
+  PlayCircle,
+  Search,
+  X,
+  XCircle,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { MOCK_COURSES } from "../../constants";
@@ -78,13 +78,13 @@ const CourseModerationPage: React.FC = () => {
 
   // Initialize pending list from localStorage or constant
   useEffect(() => {
-    const savedPending = localStorage.getItem("eduprime_pending_moderation");
+    const savedPending = localStorage.getItem("uem_pending_moderation");
     if (savedPending) {
       setPendingList(JSON.parse(savedPending));
     } else {
       setPendingList(INITIAL_PENDING);
       localStorage.setItem(
-        "eduprime_pending_moderation",
+        "uem_pending_moderation",
         JSON.stringify(INITIAL_PENDING),
       );
     }
@@ -92,10 +92,7 @@ const CourseModerationPage: React.FC = () => {
 
   const updatePendingStorage = (newList: PendingCourse[]) => {
     setPendingList(newList);
-    localStorage.setItem(
-      "eduprime_pending_moderation",
-      JSON.stringify(newList),
-    );
+    localStorage.setItem("uem_pending_moderation", JSON.stringify(newList));
   };
 
   const handleApprove = async (id: string) => {
@@ -103,7 +100,7 @@ const CourseModerationPage: React.FC = () => {
     if (!courseToApprove) return;
 
     // 1. Get current catalog
-    const savedCourses = localStorage.getItem("eduprime_courses");
+    const savedCourses = localStorage.getItem("uem_courses");
     const catalog: Course[] = savedCourses
       ? JSON.parse(savedCourses)
       : MOCK_COURSES;
@@ -125,7 +122,7 @@ const CourseModerationPage: React.FC = () => {
 
     // 3. Update Catalog in Storage
     const updatedCatalog = [newCourse, ...catalog];
-    localStorage.setItem("eduprime_courses", JSON.stringify(updatedCatalog));
+    localStorage.setItem("uem_courses", JSON.stringify(updatedCatalog));
 
     // 4. Update Moderation List
     const updatedPending = pendingList.filter((item) => item.id !== id);
@@ -161,7 +158,7 @@ const CourseModerationPage: React.FC = () => {
 
     // Save to a mock "notifications" system for the instructor
     const notifications = JSON.parse(
-      localStorage.getItem("eduprime_notifications") || "[]",
+      localStorage.getItem("uem_notifications") || "[]",
     );
     notifications.push({
       id: Date.now(),
@@ -171,10 +168,7 @@ const CourseModerationPage: React.FC = () => {
       reason: rejectionReason,
       date: new Date().toISOString(),
     });
-    localStorage.setItem(
-      "eduprime_notifications",
-      JSON.stringify(notifications),
-    );
+    localStorage.setItem("uem_notifications", JSON.stringify(notifications));
 
     // Registar log
     try {
