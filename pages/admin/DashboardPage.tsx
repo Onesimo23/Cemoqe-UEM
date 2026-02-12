@@ -67,7 +67,10 @@ const AdminDashboardPage: React.FC = () => {
         const activeTutors = instructorSnap.size;
 
         // Cursos Publicados
-        const courseQuery = query(collection(db, "courses"));
+        const courseQuery = query(
+          collection(db, "courses"),
+          limit(100), // Limita para performance
+        );
         const courseSnap = await getDocs(courseQuery);
         const publishedCourses = courseSnap.size;
 
@@ -86,7 +89,10 @@ const AdminDashboardPage: React.FC = () => {
 
         // Total de Receita - Buscar de courses (cada course tem price e enrollments count)
         let totalRevenue = 0;
-        const allCoursesQuery = query(collection(db, "courses"));
+        const allCoursesQuery = query(
+          collection(db, "courses"),
+          limit(200), // Limita para performance
+        );
         const allCoursesSnap = await getDocs(allCoursesQuery);
 
         for (const courseDoc of allCoursesSnap.docs) {
@@ -111,6 +117,7 @@ const AdminDashboardPage: React.FC = () => {
           const allLogsQuery = query(
             collection(db, "admin_logs"),
             orderBy("timestamp", "desc"),
+            limit(500), // Limita para performance
           );
           const allLogsSnap = await getDocs(allLogsQuery);
           allLogsData = allLogsSnap.docs.map((doc) => ({

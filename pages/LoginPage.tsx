@@ -1,15 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 // Added Check to the imports from lucide-react
-import { Eye, EyeOff, Lock, Mail, ArrowRight, Loader2, AlertCircle, Check } from 'lucide-react';
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider, db } from '../services/firebase';
-import { useAuth } from '../contexts/AuthContext';
-import { doc, getDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import {
+  AlertCircle,
+  ArrowRight,
+  Check,
+  Eye,
+  EyeOff,
+  Loader2,
+  Lock,
+  Mail,
+} from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import { auth, db, googleProvider } from "../services/firebase";
+import { DEFAULT_DASHBOARD, isValidRole } from "../utils/routeProtection";
 
 const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,53 +28,73 @@ const LoginPage: React.FC = () => {
   const location = useLocation();
   const { user, profile, loading: authLoading } = useAuth();
 
+  /**
+   * Redireciona o utilizador para o dashboard apropriado conforme o seu role
+   */
+  const redirectToDashboard = (userRole?: string | null) => {
+    if (!userRole || !isValidRole(userRole)) {
+      navigate("/", { replace: true });
+      return;
+    }
+
+    const dashboard = DEFAULT_DASHBOARD[userRole];
+    navigate(dashboard, { replace: true });
+  };
+
   // Redireciona conforme o papel quando o perfil estiver disponível
   useEffect(() => {
     if (!authLoading && user && profile?.role) {
-      if (profile.role === 'admin') {
-        navigate('/admin/usuarios', { replace: true });
-      } else if (profile.role === 'instructor') {
-        navigate('/instrutor/cursos', { replace: true });
-      } else {
-        navigate('/', { replace: true });
-      }
+      redirectToDashboard(profile.role);
     }
   }, [user, profile, authLoading, navigate]);
+
+  /**
+   * Obtém o role do utilizador após o login
+   */
+  const getUserRoleAfterLogin = async (userId: string): Promise<string> => {
+    try {
+      const snap = await getDoc(doc(db, "profiles", userId));
+      if (snap.exists()) {
+        const data = snap.data() as any;
+        return data?.role || "student";
+      }
+    } catch (err) {
+      console.error("Erro ao obter role do utilizador:", err);
+    }
+    return "student"; // Fallback padrão
+  };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
       const cu = auth.currentUser;
+
       if (cu) {
-        let role = 'student';
-        try {
-          const snap = await getDoc(doc(db, 'profiles', cu.uid));
-          role = snap.exists() ? ((snap.data() as any).role || 'student') : 'student';
-        } catch {}
-        if (role === 'admin') {
-          navigate('/admin/usuarios', { replace: true });
-        } else if (role === 'instructor') {
-          navigate('/instrutor/cursos', { replace: true });
-        } else {
-          navigate('/', { replace: true });
-        }
+        const role = await getUserRoleAfterLogin(cu.uid);
+        redirectToDashboard(role);
       } else {
-        navigate('/', { replace: true });
+        navigate("/", { replace: true });
       }
     } catch (err: any) {
-      console.error(err);
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+      console.error("Erro de login:", err);
+
+      if (
+        err.code === "auth/invalid-credential" ||
+        err.code === "auth/wrong-password"
+      ) {
         setError("E-mail ou senha incorretos.");
-      } else if (err.code === 'auth/user-not-found') {
+      } else if (err.code === "auth/user-not-found") {
         setError("Utilizador não encontrado.");
+      } else if (err.code === "auth/too-many-requests") {
+        setError("Demasiadas tentativas. Tente novamente mais tarde.");
       } else {
         setError("Erro ao tentar entrar. Verifique sua conexão.");
       }
     } finally {
-      // Garante que o botão não fique preso em "A ENTRAR..." caso haja bloqueios no Firestore
       setIsLoading(false);
     }
   };
@@ -72,28 +102,25 @@ const LoginPage: React.FC = () => {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     setError(null);
+
     try {
       await signInWithPopup(auth, googleProvider);
       const cu = auth.currentUser;
+
       if (cu) {
-        let role = 'student';
-        try {
-          const snap = await getDoc(doc(db, 'profiles', cu.uid));
-          role = snap.exists() ? ((snap.data() as any).role || 'student') : 'student';
-        } catch {}
-        if (role === 'admin') {
-          navigate('/admin/usuarios', { replace: true });
-        } else if (role === 'instructor') {
-          navigate('/instrutor/cursos', { replace: true });
-        } else {
-          navigate('/', { replace: true });
-        }
+        const role = await getUserRoleAfterLogin(cu.uid);
+        redirectToDashboard(role);
       } else {
-        navigate('/', { replace: true });
+        navigate("/", { replace: true });
       }
     } catch (err: any) {
-      console.error(err);
-      setError("Falha na autenticação com o Google.");
+      console.error("Erro de login com Google:", err);
+
+      if (err.code === "auth/popup-closed-by-user") {
+        setError("Login cancelado.");
+      } else {
+        setError("Falha na autenticação com o Google.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -110,13 +137,15 @@ const LoginPage: React.FC = () => {
   return (
     <div className="min-h-[calc(100vh-80px)] bg-gray-50 flex items-center justify-center p-4 py-12 font-sans">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row border border-gray-100">
-
         {/* Lado Esquerdo - Branding (Conforme imagem) */}
         <div className="md:w-[45%] bg-brand-dark relative hidden md:flex flex-col justify-between p-12 text-white">
           <div className="relative z-10">
-            <h2 className="text-4xl font-extrabold mb-4 leading-tight">Bem-vindo de volta!</h2>
+            <h2 className="text-4xl font-extrabold mb-4 leading-tight">
+              Bem-vindo de volta!
+            </h2>
             <p className="text-brand-light/80 text-lg leading-relaxed">
-              Continue sua jornada de aprendizado na plataforma líder em Moçambique.
+              Continue sua jornada de aprendizado na plataforma líder em
+              Moçambique.
             </p>
           </div>
 
@@ -132,7 +161,9 @@ const LoginPage: React.FC = () => {
                   />
                 ))}
               </div>
-              <p className="text-sm font-bold text-brand-light">Milhares de alunos ativos</p>
+              <p className="text-sm font-bold text-brand-light">
+                Milhares de alunos ativos
+              </p>
             </div>
             <div className="h-1.5 w-24 bg-brand-accent rounded-full"></div>
           </div>
@@ -148,10 +179,15 @@ const LoginPage: React.FC = () => {
         {/* Lado Direito - Formulário */}
         <div className="md:w-[55%] p-8 md:p-14">
           <div className="text-center md:text-left mb-10">
-            <h3 className="text-3xl font-black text-gray-900 mb-2">Acesse sua conta</h3>
+            <h3 className="text-3xl font-black text-gray-900 mb-2">
+              Acesse sua conta
+            </h3>
             <p className="text-gray-500 font-medium">
-              Novo por aqui?{' '}
-              <Link to="/cadastro" className="text-brand-green font-bold hover:underline">
+              Novo por aqui?{" "}
+              <Link
+                to="/cadastro"
+                className="text-brand-green font-bold hover:underline"
+              >
                 Crie sua conta grátis
               </Link>
             </p>
@@ -169,19 +205,27 @@ const LoginPage: React.FC = () => {
             disabled={isLoading}
             className="w-full flex items-center justify-center gap-3 py-3.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-sm font-bold text-gray-600 disabled:opacity-50 mb-8 shadow-sm"
           >
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+            <img
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              alt="Google"
+              className="w-5 h-5"
+            />
             Entrar com Google
           </button>
 
           <div className="relative flex py-3 items-center mb-8">
             <div className="flex-grow border-t border-gray-100"></div>
-            <span className="flex-shrink-0 mx-4 text-gray-300 text-[10px] font-black uppercase tracking-widest">ou e-mail</span>
+            <span className="flex-shrink-0 mx-4 text-gray-300 text-[10px] font-black uppercase tracking-widest">
+              ou e-mail
+            </span>
             <div className="flex-grow border-t border-gray-100"></div>
           </div>
 
           <form onSubmit={handleEmailLogin} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-xs font-black text-gray-500 uppercase tracking-wider ml-1">E-mail</label>
+              <label className="text-xs font-black text-gray-500 uppercase tracking-wider ml-1">
+                E-mail
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <Mail className="h-5 w-5 text-gray-400" />
@@ -198,7 +242,9 @@ const LoginPage: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-black text-gray-500 uppercase tracking-wider ml-1">Senha</label>
+              <label className="text-xs font-black text-gray-500 uppercase tracking-wider ml-1">
+                Senha
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-gray-400" />
@@ -216,7 +262,11 @@ const LoginPage: React.FC = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-white transition-colors"
                 >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -226,11 +276,19 @@ const LoginPage: React.FC = () => {
                 <div className="relative">
                   <input type="checkbox" className="sr-only peer" />
                   <div className="w-5 h-5 bg-gray-200 rounded border border-gray-300 peer-checked:bg-brand-green peer-checked:border-brand-green transition-all"></div>
-                  <Check className="absolute inset-0 text-white opacity-0 peer-checked:opacity-100 transition-opacity w-4 h-4 m-auto" strokeWidth={4} />
+                  <Check
+                    className="absolute inset-0 text-white opacity-0 peer-checked:opacity-100 transition-opacity w-4 h-4 m-auto"
+                    strokeWidth={4}
+                  />
                 </div>
-                <span className="ml-2 text-sm font-bold text-gray-500 group-hover:text-gray-700">Lembrar</span>
+                <span className="ml-2 text-sm font-bold text-gray-500 group-hover:text-gray-700">
+                  Lembrar
+                </span>
               </label>
-              <Link to="/recuperar-senha" className="text-sm font-bold text-brand-green hover:underline">
+              <Link
+                to="/recuperar-senha"
+                className="text-sm font-bold text-brand-green hover:underline"
+              >
                 Esqueceu a senha?
               </Link>
             </div>
@@ -247,7 +305,7 @@ const LoginPage: React.FC = () => {
                 </div>
               ) : (
                 <>
-                  Entrar na UEM Cursos online
+                   UEM
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}

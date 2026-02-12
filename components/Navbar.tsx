@@ -5,12 +5,40 @@ import { NAV_LINKS } from "../constants";
 import { useAuth } from "../contexts/AuthContext";
 import { useBranding } from "../contexts/BrandingContext";
 import { auth } from "../services/firebase";
+import { DEFAULT_DASHBOARD, isValidRole } from "../utils/routeProtection";
 
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { branding } = useBranding();
   const isAuthenticated = !!(user || auth.currentUser);
+
+  /**
+   * Obtém o link correto para o dashboard conforme o role
+   */
+  const getDashboardLink = (): string => {
+    if (!profile || !isValidRole(profile.role)) {
+      return "/aluno/dashboard"; // Fallback
+    }
+    return DEFAULT_DASHBOARD[profile.role];
+  };
+
+  /**
+   * Obtém o label correto para o botão conforme o role
+   */
+  const getDashboardLabel = (): string => {
+    if (!profile || !isValidRole(profile.role)) {
+      return "Minha Área";
+    }
+
+    const labels: Record<typeof profile.role, string> = {
+      admin: "Painel Administrativo",
+      instructor: "Meus Cursos",
+      student: "Meu Dashboard",
+    };
+
+    return labels[profile.role];
+  };
 
   return (
     <nav className="w-full bg-white py-4 px-6 md:px-12 sticky top-0 z-50 shadow-sm border-b border-gray-100">
@@ -95,7 +123,7 @@ const Navbar: React.FC = () => {
             </Link>
           ) : (
             <Link
-              to="/aluno/dashboard"
+              to={getDashboardLink()}
               className="flex items-center gap-2 text-white font-bold py-2.5 px-6 rounded-md transition-all shadow-md"
               style={{
                 backgroundColor: branding.appearance.primaryColor,
@@ -103,7 +131,7 @@ const Navbar: React.FC = () => {
               }}
             >
               <LayoutDashboard className="w-4 h-4" />
-              Área de Estudante
+              {getDashboardLabel()}
             </Link>
           )}
         </div>
@@ -146,7 +174,7 @@ const Navbar: React.FC = () => {
             </Link>
           ) : (
             <Link
-              to="/aluno/dashboard"
+              to={getDashboardLink()}
               className="text-white font-semibold py-3 rounded-md w-full text-center shadow-md flex items-center justify-center gap-2"
               style={{
                 backgroundColor: branding.appearance.primaryColor,
@@ -155,7 +183,7 @@ const Navbar: React.FC = () => {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <LayoutDashboard className="w-4 h-4" />
-              Área de Estudante
+              {getDashboardLabel()}
             </Link>
           )}
         </div>
