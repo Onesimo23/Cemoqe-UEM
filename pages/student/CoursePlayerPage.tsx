@@ -1,32 +1,36 @@
 import {
-  addDoc,
-  collection,
-  doc,
-  getDocs,
-  increment,
-  onSnapshot,
-  orderBy,
-  limit as qbLimit,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
+    addDoc,
+    collection,
+    doc,
+    getDocs,
+    increment,
+    onSnapshot,
+    orderBy,
+    limit as qbLimit,
+    query,
+    serverTimestamp,
+    updateDoc,
+    where,
 } from "firebase/firestore";
 import {
-  Award,
-  CheckCircle,
-  ChevronDown,
-  ChevronLeft,
-  Circle,
-  Download,
-  File,
-  FileText,
-  Menu,
-  PlayCircle,
-  Upload
+    Award,
+    CheckCircle,
+    ChevronDown,
+    ChevronLeft,
+    Circle,
+    Download,
+    File,
+    FileText,
+    Lock,
+    Menu,
+    PlayCircle,
+    Upload,
+    Volume2,
+    VolumeX,
 } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import CertificatePaymentModal from "../../components/CertificatePaymentModal";
 import { useAuth } from "../../contexts/AuthContext";
 import { db } from "../../services/firebase";
 import { isSupabaseConfigured, supabase } from "../../services/supabase";
@@ -52,6 +56,16 @@ const CoursePlayerPage: React.FC = () => {
   const [openReplies, setOpenReplies] = useState<Record<string, boolean>>({});
   const [replyDraft, setReplyDraft] = useState<Record<string, string>>({});
   const answersSubsRef = useRef<Record<string, () => void>>({});
+  const [completedLessons, setCompletedLessons] = useState<Set<string>>(
+    new Set(),
+  );
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
+  const [isReading, setIsReading] = useState(false);
+  const [showCertificateModal, setShowCertificateModal] = useState(false);
+  const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const toggleModule = (moduleId: string) => {
     setOpenModules((prev) =>
@@ -59,6 +73,50 @@ const CoursePlayerPage: React.FC = () => {
         ? prev.filter((id) => id !== moduleId)
         : [...prev, moduleId],
     );
+  };
+
+  // Mostrar toast notification que desaparece automaticamente
+  const showToast = (
+    message: string,
+    type: "success" | "error" = "success",
+  ) => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  // Controlar leitura de texto (text-to-speech)
+  const toggleTextToSpeech = (text: string) => {
+    // Se já está lendo, parar
+    if (isReading) {
+      window.speechSynthesis.cancel();
+      setIsReading(false);
+      return;
+    }
+
+    // Remover tags HTML e extrair texto puro
+    const plainText = text
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (!plainText) return;
+
+    // Criar utterance
+    const utterance = new SpeechSynthesisUtterance(plainText);
+    utterance.lang = "pt-BR";
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    utterance.onstart = () => setIsReading(true);
+    utterance.onend = () => setIsReading(false);
+    utterance.onerror = () => {
+      setIsReading(false);
+      showToast("Erro ao reproduzir áudio. Tente novamente.", "error");
+    };
+
+    speechSynthesisRef.current = utterance;
+    window.speechSynthesis.speak(utterance);
   };
 
   // Cleanup de subscriptions de respostas ao desmontar
@@ -70,62 +128,91 @@ const CoursePlayerPage: React.FC = () => {
         } catch {}
       });
       answersSubsRef.current = {};
+      // Parar leitura ao desmontar
+      window.speechSynthesis.cancel();
     };
   }, []);
 
   const ensureAbsoluteFileUrl = (val?: string) => {
     const str = (val || "").toString().trim();
     if (!str) return "";
-    if (/^https?:\/\//i.test(str)) return str;
-    try {
-      const opts: any = (db as any)?.app?.options || {};
-      const projectId: string | undefined = opts?.projectId;
-      let bucket: string = projectId
-        ? `${projectId}.appspot.com`
-        : opts?.storageBucket || "";
-      if (bucket.endsWith("firebasestorage.app") && projectId) {
-        bucket = `${projectId}.appspot.com`;
-      }
-      if (!bucket) return str;
-      const path = encodeURIComponent(str.startsWith("/") ? str.slice(1) : str);
-      const base = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${path}`;
-      return `${base}?alt=media`;
-    } catch {
+
+    // Se já é URL absoluta HTTP(S), retorna como está
+    if (/^https?:\/\//i.test(str)) {
       return str;
     }
+
+    // Se é uma URL de dados (blob, etc), retorna como está
+    if (/^(blob|data):/i.test(str)) {
+      return str;
+    }
+
+    // Se começa com /, trata como caminho relativo no Firebase Storage
+    if (str.startsWith("/")) {
+      try {
+        const opts: any = (db as any)?.app?.options || {};
+        const projectId: string | undefined = opts?.projectId;
+        let bucket: string = projectId
+          ? `${projectId}.appspot.com`
+          : opts?.storageBucket || "";
+        if (bucket.endsWith("firebasestorage.app") && projectId) {
+          bucket = `${projectId}.appspot.com`;
+        }
+        if (!bucket) return str;
+        const path = encodeURIComponent(str.slice(1));
+        const base = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${path}`;
+        return `${base}?alt=media`;
+      } catch (err) {
+        console.error("Erro ao construir URL Firebase:", err);
+        return str;
+      }
+    }
+
+    // Se não começa com http(s) nem /, retorna como está
+    // (pode ser um ID de doc Google, reference ID, etc)
+    return str;
   };
 
   const getDownloadUrl = (url?: string) => {
     const src = ensureAbsoluteFileUrl(url);
-    if (!src) return "#";
+    if (!src || src === "#") return "#";
+
+    // Debug: Log qual URL está sendo processada
+    console.log("[CoursePlayer] getDownloadUrl input:", url);
+    console.log("[CoursePlayer] getDownloadUrl after ensureAbsolute:", src);
+
     try {
       const u = new URL(src);
       const host = u.hostname;
       const path = u.pathname;
-      const lower = src.toLowerCase();
+
+      // Google Docs - exportar como PDF
       if (host.includes("docs.google.com")) {
         const types = ["document", "spreadsheets", "presentation"];
         const t = types.find((ti) => path.includes(`/${ti}/d/`));
-        const id = path.split("/d/")[1]?.split("/")[0];
-        if (id && t)
-          return `https://docs.google.com/${t}/d/${id}/export?format=pdf`;
-      }
-      if (host.includes("drive.google.com")) {
-        let id: string | null = null;
-        if (path.includes("/file/d/"))
-          id = path.split("/file/d/")[1]?.split("/")[0] || null;
-        if (!id) id = u.searchParams.get("id");
-        if (id) return `https://drive.google.com/uc?export=download&id=${id}`;
-      }
-      if (host.includes("firebasestorage.googleapis.com")) {
-        const uu = new URL(src);
-        if (!uu.searchParams.get("alt")) {
-          uu.searchParams.set("alt", "media");
+        const docId = path.split("/d/")[1]?.split("/")[0];
+        if (docId && t) {
+          return `https://docs.google.com/${t}/d/${docId}/export?format=pdf`;
         }
-        return uu.toString();
       }
+
+      // Google Drive
+      if (host.includes("drive.google.com")) {
+        let driveId: string | null = null;
+        if (path.includes("/file/d/"))
+          driveId = path.split("/file/d/")[1]?.split("/")[0] || null;
+        if (!driveId) driveId = u.searchParams.get("id");
+        if (driveId) {
+          return `https://drive.google.com/uc?id=${driveId}&export=download`;
+        }
+      }
+
+      // Para outras URLs (Supabase, Firebase, etc), retorna como está
+      // O navegador já pode fazer o download direto
       return src;
-    } catch {
+    } catch (err) {
+      // Se não conseguir fazer parse como URL, retorna como está
+      console.error("Erro ao processar URL para download:", err);
       return src;
     }
   };
@@ -247,6 +334,54 @@ const CoursePlayerPage: React.FC = () => {
     }
   };
 
+  // Marcar aula como concluída
+  const markLessonAsComplete = async () => {
+    if (!user?.uid || !id || !current?.lesson?.id) {
+      showToast("Erro ao marcar aula como concluída.", "error");
+      return;
+    }
+
+    try {
+      // Adicionar registro de conclusão no Firebase
+      await addDoc(collection(db, "lesson-completions"), {
+        course_id: id,
+        lesson_id: current.lesson.id,
+        user_uid: user.uid,
+        user_name: user.displayName || "Aluno",
+        course_title: course?.title || "",
+        lesson_title: current.lesson.title || "",
+        completedAt: serverTimestamp(),
+      });
+
+      // Atualizar o estado local
+      setCompletedLessons((prev) => {
+        const updated = new Set(prev);
+        updated.add(current.lesson.id);
+        return updated;
+      });
+
+      // Ir para a próxima aula se existir
+      const idx = allLessons.findIndex(
+        (x) => x.lesson.id === current.lesson.id,
+      );
+      if (idx >= 0 && idx < allLessons.length - 1) {
+        setCurrentLessonId(allLessons[idx + 1].lesson.id);
+        showToast(
+          "Aula concluída com sucesso! Passando para a próxima...",
+          "success",
+        );
+      } else {
+        showToast(
+          "Parabéns! Você completou todas as aulas do curso!",
+          "success",
+        );
+      }
+    } catch (err) {
+      console.error("Erro ao marcar aula como concluída:", err);
+      showToast("Não foi possível marcar a aula como concluída.", "error");
+    }
+  };
+
   // Verificar inscrição do aluno
   useEffect(() => {
     const checkEnrollment = async () => {
@@ -269,6 +404,34 @@ const CoursePlayerPage: React.FC = () => {
     };
     checkEnrollment();
   }, [user?.uid, id]);
+
+  // Carregar aulas completadas do aluno para este curso
+  useEffect(() => {
+    if (!id || !user?.uid) {
+      setCompletedLessons(new Set());
+      return;
+    }
+    try {
+      const q = query(
+        collection(db, "lesson-completions"),
+        where("course_id", "==", id),
+        where("user_uid", "==", user.uid),
+      );
+      const unsub = onSnapshot(q, (snap) => {
+        const completed = new Set<string>();
+        snap.docs.forEach((doc) => {
+          const data = doc.data();
+          if (data.lesson_id) {
+            completed.add(data.lesson_id);
+          }
+        });
+        setCompletedLessons(completed);
+      });
+      return () => unsub();
+    } catch {
+      setCompletedLessons(new Set());
+    }
+  }, [id, user?.uid]);
 
   // Carregar dúvidas (questions) em tempo real para o curso atual, com fallback sem orderBy se índice faltar
   useEffect(() => {
@@ -631,6 +794,32 @@ const CoursePlayerPage: React.FC = () => {
     [allLessons, currentLessonId],
   );
 
+  // Calcular progresso dinâmico
+  const progressPercentage = useMemo(() => {
+    if (allLessons.length === 0) return 0;
+    return Math.round((completedLessons.size / allLessons.length) * 100);
+  }, [allLessons.length, completedLessons.size]);
+
+  const progressWidth = useMemo(() => {
+    return Math.max(5, progressPercentage); // mínimo de 5% para visibilidade
+  }, [progressPercentage]);
+
+  // Determinar se uma aula está bloqueada (não pode ser acessada)
+  const isLessonLocked = (lessonId: string): boolean => {
+    // Primeira aula nunca é bloqueada
+    if (allLessons.length > 0 && allLessons[0]?.lesson?.id === lessonId) {
+      return false;
+    }
+
+    // Encontrar índice da aula atual
+    const currentIdx = allLessons.findIndex((x) => x.lesson.id === lessonId);
+    if (currentIdx <= 0) return false;
+
+    // Aula anterior deve estar completada para acessar
+    const prevLesson = allLessons[currentIdx - 1];
+    return !completedLessons.has(prevLesson?.lesson?.id || "");
+  };
+
   const courseTitle = course?.title || "Curso Completo";
 
   const ytEmbed = (url?: string) => {
@@ -666,30 +855,20 @@ const CoursePlayerPage: React.FC = () => {
 
   const resolveDocumentViewer = (
     url?: string,
-  ): { type: "pdf-embed" | "iframe" | "image"; src: string } | null => {
+  ): { type: "iframe" | "image"; src: string } | null => {
     const src = ensureAbsoluteFileUrl(url);
     if (!src) return null;
+
+    console.log("[resolveDocumentViewer] Input URL:", url);
+    console.log("[resolveDocumentViewer] After ensureAbsolute:", src);
+
     try {
       const u = new URL(src);
       const host = u.hostname;
       const path = u.pathname;
       const lowerPath = path.toLowerCase();
 
-      // Preferir URL pública do Supabase ao embedar (melhor compatibilidade com Office Viewer)
-      let embedSrc = src;
-      if (
-        host.includes("supabase.co") &&
-        lowerPath.includes("/storage/v1/object/sign/")
-      ) {
-        // Usa pathname original (com casing intacto) e apenas troca o segmento 'sign'->'public'
-        const replacedPath = u.pathname.replace(
-          "/storage/v1/object/sign/",
-          "/storage/v1/object/public/",
-        );
-        // Reconstrói mantendo protocolo/host e removendo query
-        embedSrc = `${u.protocol}//${u.host}${replacedPath}`;
-      }
-
+      // Detectar tipo de arquivo pela extensão
       const officeDocExts = [".doc", ".docx"];
       const officePresentationExts = [".ppt", ".pptx"];
       const officeSheetExts = [".xls", ".xlsx"];
@@ -704,6 +883,15 @@ const CoursePlayerPage: React.FC = () => {
       const imageExts = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"];
       const isImage = imageExts.some((ext) => lowerPath.endsWith(ext));
 
+      console.log("[resolveDocumentViewer] File type:", {
+        isPdf,
+        isImage,
+        isOfficeDoc,
+        isOfficePresentation,
+        isOfficeSheet,
+      });
+
+      // Google Docs
       if (host.includes("docs.google.com")) {
         const types = ["document", "spreadsheets", "presentation"];
         const t = types.find((ti) => path.includes(`/${ti}/d/`));
@@ -717,11 +905,15 @@ const CoursePlayerPage: React.FC = () => {
               };
             }
             const pdfUrl = `https://docs.google.com/${t}/d/${id}/export?format=pdf`;
-            return { type: "pdf-embed", src: `${pdfUrl}#toolbar=0` };
+            return {
+              type: "iframe",
+              src: `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(pdfUrl)}`,
+            };
           }
         }
       }
 
+      // Google Drive
       if (host.includes("drive.google.com")) {
         let id: string | null = null;
         if (path.includes("/file/d/"))
@@ -733,41 +925,96 @@ const CoursePlayerPage: React.FC = () => {
         }
       }
 
-      if (host.includes("firebasestorage.googleapis.com")) {
-        if (isPdf) return { type: "pdf-embed", src: `${embedSrc}#toolbar=0` };
-        if (isImage) return { type: "image", src: embedSrc };
-        if (isOfficeDoc)
+      // Remove query string se existir (tokens, etc)
+      let cleanSrc = src.split("?")[0];
+
+      // Supabase Storage
+      if (host.includes("supabase.co")) {
+        if (isImage) return { type: "image", src: cleanSrc };
+
+        // PDFs: Tentar carregar diretamente (Supabase serve PDFs)
+        // Se falhar, o fallback é usar Google Docs Viewer
+        if (isPdf) {
+          // Primeiro tenta carregar direto (mais confiável)
+          console.log(
+            "[resolveDocumentViewer] PDF from Supabase (direto):",
+            cleanSrc,
+          );
           return {
             type: "iframe",
-            src: `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(embedSrc)}`,
+            src: cleanSrc, // Supabase serve PDFs nativamente em iframes
           };
-        if (isOfficePresentation || isOfficeSheet)
+        }
+
+        // Office documents: usar Microsoft Office Online Viewer
+        if (isOfficeDoc || isOfficePresentation || isOfficeSheet) {
+          const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(cleanSrc)}`;
+          console.log("[resolveDocumentViewer] Office from Supabase:", {
+            original: cleanSrc,
+            viewer: viewerUrl,
+          });
           return {
             type: "iframe",
-            src: `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(embedSrc)}`,
+            src: viewerUrl,
           };
-        return { type: "iframe", src: embedSrc };
+        }
+
+        return { type: "iframe", src: cleanSrc };
       }
 
-      if (isPdf) return { type: "pdf-embed", src: `${embedSrc}#toolbar=0` };
-      if (isOfficeDoc)
-        return {
-          type: "iframe",
-          src: `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(embedSrc)}`,
-        };
-      if (isOfficePresentation || isOfficeSheet)
-        return {
-          type: "iframe",
-          src: `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(embedSrc)}`,
-        };
+      // Firebase Storage
+      if (host.includes("firebasestorage.googleapis.com")) {
+        if (isImage) return { type: "image", src: src };
 
-      return { type: "iframe", src: embedSrc };
-    } catch {
+        // PDFs: usar Google Docs Viewer
+        if (isPdf) {
+          return {
+            type: "iframe",
+            src: `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(src)}`,
+          };
+        }
+
+        if (isOfficeDoc || isOfficePresentation || isOfficeSheet) {
+          return {
+            type: "iframe",
+            src: `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(src)}`,
+          };
+        }
+
+        return { type: "iframe", src: src };
+      }
+
+      // Fallback para qualquer outra URL
+      if (isImage) return { type: "image", src: cleanSrc };
+
+      // PDFs: usar Google Docs Viewer
+      if (isPdf) {
+        return {
+          type: "iframe",
+          src: `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(cleanSrc)}`,
+        };
+      }
+
+      // Office documents com Microsoft Office Online Viewer
+      if (isOfficeDoc || isOfficePresentation || isOfficeSheet) {
+        return {
+          type: "iframe",
+          src: `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(cleanSrc)}`,
+        };
+      }
+
+      return { type: "iframe", src: cleanSrc };
+    } catch (err) {
+      console.error("Erro ao resolver visualizador de documento:", err);
       try {
         const parsed = new URL(src);
         const lowerPath = parsed.pathname.toLowerCase();
-        if (lowerPath.endsWith(".pdf"))
-          return { type: "pdf-embed", src: `${src}#toolbar=0` };
+        if (lowerPath.endsWith(".pdf")) {
+          return {
+            type: "iframe",
+            src: `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(src)}`,
+          };
+        }
       } catch {}
       return { type: "iframe", src: src || "" };
     }
@@ -803,10 +1050,15 @@ const CoursePlayerPage: React.FC = () => {
             </h1>
             <div className="flex items-center gap-2 text-xs text-white">
               <span className="hidden md:inline">Progresso:</span>
-              <div className="w-24 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                <div className="w-[35%] h-full bg-brand-accent rounded-full"></div>
+              <div className="w-24 h-1.5  rounded-full overflow-hidden">
+                <div
+                  style={{ width: `${progressWidth}%` }}
+                  className="h-full bg-brand-accent rounded-full transition-all duration-300"
+                ></div>
               </div>
-              <span className="font-semibold text-brand-accent">35%</span>
+              <span className="font-semibold text-brand-accent">
+                {progressPercentage}%
+              </span>
             </div>
           </div>
         </div>
@@ -819,9 +1071,23 @@ const CoursePlayerPage: React.FC = () => {
             <Menu className="w-5 h-5" />
           </button>
           <div className="hidden md:flex items-center gap-3">
-            <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-white/10 hover:bg-white/20 rounded-lg transition-colors border border-white/10">
-              <Award className="w-4 h-4 text-brand-accent" />
-              <span>Certificado</span>
+            <button
+              onClick={() =>
+                progressPercentage === 100 && setShowCertificateModal(true)
+              }
+              disabled={progressPercentage < 100}
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors border ${
+                progressPercentage === 100
+                  ? "bg-brand-accent/20 hover:bg-brand-accent/30 border-brand-accent text-brand-accent cursor-pointer"
+                  : "bg-white/10 hover:bg-white/20 border-white/10 text-white/50 cursor-not-allowed"
+              }`}
+            >
+              <Award className="w-4 h-4" />
+              <span>
+                {progressPercentage === 100
+                  ? "Emitir Certificado"
+                  : "Certificado"}
+              </span>
             </button>
             <div className="w-8 h-8 rounded-full bg-brand-green border-2 border-brand-accent flex items-center justify-center font-bold text-xs">
               RS
@@ -860,13 +1126,41 @@ const CoursePlayerPage: React.FC = () => {
               })()}
             </div>
           ) : current?.lesson?.type === "text" ? (
-            <div className="w-full bg-white">
+            <div className="w-full bg-slate-50">
               <div className="max-w-4xl mx-auto px-6 py-8">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-gray-900">
                     Leitura da Aula
                   </h3>
-                  <div className="text-xs text-gray-400">Conteúdo em texto</div>
+                  <div className="flex items-center gap-4">
+                    {current?.lesson?.content && (
+                      <button
+                        onClick={() =>
+                          toggleTextToSpeech(current.lesson.content)
+                        }
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg font-semibold text-sm transition-colors ${
+                          isReading
+                            ? "bg-red-100 text-red-600 hover:bg-red-200"
+                            : "bg-blue-100 text-blue-600 hover:bg-blue-200"
+                        }`}
+                      >
+                        {isReading ? (
+                          <>
+                            <VolumeX className="w-4 h-4" />
+                            Parar
+                          </>
+                        ) : (
+                          <>
+                            <Volume2 className="w-4 h-4" />
+                            Ler
+                          </>
+                        )}
+                      </button>
+                    )}
+                    <div className="text-xs text-gray-400">
+                      Conteúdo em texto
+                    </div>
+                  </div>
                 </div>
                 <article className="prose prose-green max-w-none">
                   {(() => {
@@ -891,13 +1185,21 @@ const CoursePlayerPage: React.FC = () => {
             </div>
           ) : current?.lesson?.type === "document" &&
             current?.lesson?.content ? (
-            <div className="w-full bg-white">
+            <div className="w-full bg-slate-50">
               <div className="max-w-6xl mx-auto px-4 md:px-6 py-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-lg font-bold text-gray-900">
                     Documento da Aula
                   </h3>
                   <div className="flex items-center gap-2">
+                    {current?.lesson?.content &&
+                      (() => {
+                        console.log(
+                          "[CoursePlayer] Document content:",
+                          current.lesson.content,
+                        );
+                        return null;
+                      })()}
                     <a
                       href={getDownloadUrl(current.lesson.content)}
                       download
@@ -918,32 +1220,56 @@ const CoursePlayerPage: React.FC = () => {
                 {(() => {
                   const viewer = resolveDocumentViewer(current.lesson.content);
                   return (
-                    <div className="w-full h-[70vh] border rounded-xl overflow-hidden shadow-sm">
+                    <div className="w-full h-[70vh] border rounded-xl overflow-hidden shadow-sm bg-slate-50">
                       {viewer ? (
-                        viewer.type === "pdf-embed" ? (
-                          <embed
-                            src={viewer.src}
-                            type="application/pdf"
-                            className="w-full h-full"
-                          />
-                        ) : viewer.type === "image" ? (
-                          <div className="w-full h-full bg-gray-50 flex items-center justify-center">
+                        viewer.type === "image" ? (
+                          <div className="w-full h-full bg-slate-50 flex items-center justify-center">
                             <img
                               src={viewer.src}
                               alt="Documento"
                               className="max-w-full max-h-full object-contain"
+                              onError={() => {
+                                console.error(
+                                  "Erro ao carregar imagem:",
+                                  viewer.src,
+                                );
+                              }}
                             />
                           </div>
                         ) : (
                           <iframe
                             src={viewer.src}
-                            className="w-full h-full"
+                            className="w-full h-full border-none"
                             title="Visualização de Documento"
+                            sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                            onError={() => {
+                              console.error(
+                                "Erro ao carregar iframe:",
+                                viewer.src,
+                              );
+                            }}
                           />
                         )
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-500">
-                          Não foi possível visualizar este documento.
+                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-600 p-6">
+                          <div className="text-center">
+                            <p className="font-semibold mb-2">
+                              Não foi possível visualizar este documento
+                            </p>
+                            <p className="text-sm text-gray-500 mb-4">
+                              Use os botões acima para baixar ou abrir em nova
+                              aba
+                            </p>
+                            {current?.lesson?.content && (
+                              <a
+                                href={getDownloadUrl(current.lesson.content)}
+                                download
+                                className="text-sm font-semibold px-4 py-2 bg-brand-green text-white rounded-lg hover:bg-brand-dark transition-colors inline-block"
+                              >
+                                ⬇ Baixar Documento
+                              </a>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1043,6 +1369,7 @@ const CoursePlayerPage: React.FC = () => {
                           </p>
                         );
                       const isHtml = /<[^>]+>/.test(c);
+
                       if (isHtml)
                         return (
                           <div
@@ -1056,15 +1383,25 @@ const CoursePlayerPage: React.FC = () => {
 
                   <div className="bg-green-50 border border-green-100 p-4 rounded-xl flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="bg-white p-2 rounded-full text-brand-green shadow-sm">
+                      <div className="bg-slate-50 p-2 rounded-full text-brand-green shadow-sm">
                         <CheckCircle className="w-5 h-5" />
                       </div>
                       <span className="font-semibold text-brand-dark">
                         Concluiu esta aula?
                       </span>
                     </div>
-                    <button className="text-sm font-bold text-white bg-brand-green hover:bg-brand-dark px-4 py-2 rounded-lg transition-colors">
-                      Marcar como Concluída
+                    <button
+                      onClick={markLessonAsComplete}
+                      disabled={completedLessons.has(current?.lesson?.id || "")}
+                      className={`text-sm font-bold px-4 py-2 rounded-lg transition-colors ${
+                        completedLessons.has(current?.lesson?.id || "")
+                          ? "text-white bg-gray-400 cursor-not-allowed"
+                          : "text-white bg-brand-green hover:bg-brand-dark"
+                      }`}
+                    >
+                      {completedLessons.has(current?.lesson?.id || "")
+                        ? "✓ Concluída"
+                        : "Marcar como Concluída"}
                     </button>
                   </div>
                 </div>
@@ -1130,7 +1467,7 @@ const CoursePlayerPage: React.FC = () => {
               {activeTab === "uploads" && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div
-                    className="bg-white border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center hover:border-brand-green hover:bg-green-50/30 transition-all group cursor-pointer"
+                    className="bg-slate-50 border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center hover:border-brand-green hover:bg-green-50/30 transition-all group cursor-pointer"
                     onClick={handleUploadClick}
                   >
                     <input
@@ -1162,7 +1499,7 @@ const CoursePlayerPage: React.FC = () => {
                           href={file.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex items-center p-4 bg-white border border-gray-100 rounded-xl hover:shadow-sm transition-shadow"
+                          className="flex items-center p-4 bg-slate-50 border border-gray-100 rounded-xl hover:shadow-sm transition-shadow"
                         >
                           <div className="p-2.5 bg-brand-light rounded-lg">
                             <File className="w-5 h-5 text-brand-green" />
@@ -1290,7 +1627,7 @@ const CoursePlayerPage: React.FC = () => {
         {/* Right: Sidebar / Playlist */}
         <aside
           className={`
-            fixed inset-y-0 right-0 z-30 w-80 bg-white border-l border-gray-200 transform transition-transform duration-300 ease-in-out flex flex-col pt-16 md:pt-0 md:relative md:translate-x-0
+            fixed inset-y-0 right-0 z-30 w-80 bg-slate-50 border-l border-gray-200 transform transition-transform duration-300 ease-in-out flex flex-col pt-16 md:pt-0 md:relative md:translate-x-0
             ${isSidebarOpen ? "translate-x-0" : "translate-x-full"}
           `}
         >
@@ -1329,22 +1666,32 @@ const CoursePlayerPage: React.FC = () => {
                   </button>
 
                   {openModules.includes(mId) && (
-                    <div className="bg-white">
+                    <div className="bg-slate-50">
                       {Array.isArray(module.lessons) &&
                         module.lessons.map((lesson: any, li: number) => {
                           const isActive = lesson.id === currentLessonId;
+                          const locked = isLessonLocked(lesson.id);
+                          const isCompleted = completedLessons.has(lesson.id);
+
                           return (
                             <div
                               key={lesson.id || `${mId}-${li}`}
-                              onClick={() => setCurrentLessonId(lesson.id)}
+                              onClick={() =>
+                                !locked && setCurrentLessonId(lesson.id)
+                              }
                               className={`
-                                flex items-start gap-3 p-3 pl-4 border-l-4 cursor-pointer transition-colors
+                                flex items-start gap-3 p-3 pl-4 border-l-4 transition-colors
+                                ${locked ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
                                 ${isActive ? "border-brand-green bg-green-50/30" : "border-transparent hover:bg-gray-50"}
                               `}
                             >
                               <div className="mt-0.5">
-                                {isActive ? (
+                                {locked ? (
+                                  <Lock className="w-4 h-4 text-gray-300" />
+                                ) : isActive ? (
                                   <PlayCircle className="w-4 h-4 text-brand-green fill-current" />
+                                ) : isCompleted ? (
+                                  <CheckCircle className="w-4 h-4 text-brand-green fill-current" />
                                 ) : (
                                   <Circle className="w-4 h-4 text-gray-300" />
                                 )}
@@ -1376,6 +1723,34 @@ const CoursePlayerPage: React.FC = () => {
             })}
           </div>
         </aside>
+
+        {/* Toast Notification */}
+        {toast && (
+          <div
+            className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-lg shadow-lg font-semibold text-white transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 ${
+              toast.type === "success"
+                ? "bg-brand-green hover:bg-brand-green/90"
+                : "bg-red-500 hover:bg-red-600"
+            }`}
+          >
+            {toast.message}
+          </div>
+        )}
+
+        {/* Certificate Payment Modal */}
+        <CertificatePaymentModal
+          isOpen={showCertificateModal}
+          onClose={() => setShowCertificateModal(false)}
+          courseId={id || ""}
+          courseTitle={course?.title || "Curso"}
+          onSuccess={() => {
+            setShowCertificateModal(false);
+            showToast(
+              "Certificado submetido! Aguarde confirmação do instrutor.",
+              "success",
+            );
+          }}
+        />
       </div>
     </div>
   );
@@ -1392,7 +1767,7 @@ const InteractiveQuiz = ({ course }: any) => {
 
   if (!list.length) {
     return (
-      <div className="bg-white border border-gray-200 rounded-xl p-6 text-center text-gray-500">
+      <div className="bg-slate-50 border border-gray-200 rounded-xl p-6 text-center text-gray-500">
         Sem exercícios interativos para esta aula.
       </div>
     );
@@ -1479,7 +1854,7 @@ const InteractiveQuiz = ({ course }: any) => {
       {list.map((ex: any) => (
         <div
           key={ex.id}
-          className="bg-white border border-gray-200 rounded-2xl overflow-hidden"
+          className="bg-slate-50 border border-gray-200 rounded-2xl overflow-hidden"
         >
           <div className="p-4 border-b border-gray-100 flex items-center justify-between">
             <div>
@@ -1586,7 +1961,7 @@ const InteractiveQuiz = ({ course }: any) => {
                             setDrop(data.exId, data.itemId, t.id);
                           } catch {}
                         }}
-                        className="p-3 bg-white border border-gray-200 rounded-lg min-h-[60px]"
+                        className="p-3 bg-slate-50 border border-gray-200 rounded-lg min-h-[60px]"
                       >
                         <div className="text-xs font-bold text-gray-700 mb-2">
                           {t.label}
@@ -1735,7 +2110,7 @@ const TabButton = ({ active, onClick, label }: any) => (
 );
 
 const MaterialCard = ({ title, type, size, icon }: any) => (
-  <div className="flex items-center p-4 border border-gray-100 rounded-xl hover:shadow-md transition-shadow bg-white cursor-pointer group">
+  <div className="flex items-center p-4 border border-gray-100 rounded-xl hover:shadow-md transition-shadow bg-slate-50 cursor-pointer group">
     <div className="p-3 bg-gray-50 rounded-lg group-hover:bg-gray-100 transition-colors">
       {icon}
     </div>

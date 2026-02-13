@@ -9,6 +9,7 @@ import {
   where,
 } from "firebase/firestore";
 import {
+  BookOpen,
   Check,
   ChevronDown,
   DollarSign,
@@ -21,6 +22,7 @@ import {
   Power,
   Search,
   Star,
+  TrendingUp,
   Users,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
@@ -37,6 +39,9 @@ interface InstructorCourse extends Course {
   status: "Publicado" | "Rascunho";
   enrollmentCount: number;
   revenue: number;
+  totalLessons: number;
+  moduleCount: number;
+  completionRate: number;
 }
 
 const InstructorCoursesPage: React.FC = () => {
@@ -66,14 +71,40 @@ const InstructorCoursesPage: React.FC = () => {
         // Contar inscrições reais para este curso
         let enrollmentCount = 0;
         let totalRevenue = 0;
+        let totalLessons = 0;
+        let moduleCount = 0;
+        let completionRate = 0;
 
         try {
+          // Buscar módulos e contar aulas
+          const modulesSnap = await getDocs(
+            collection(db, "courses", d.id, "modules"),
+          );
+          moduleCount = modulesSnap.size;
+
+          for (const moduleDoc of modulesSnap.docs) {
+            const lessonsSnap = await getDocs(
+              collection(
+                db,
+                "courses",
+                d.id,
+                "modules",
+                moduleDoc.id,
+                "lessons",
+              ),
+            );
+            totalLessons += lessonsSnap.size;
+          }
+
+          // Contar inscrições e calcular receita
           const enrollmentsQ = query(
             collection(db, "enrollments"),
             where("course_id", "==", d.id),
           );
           const enrollmentsSnap = await getDocs(enrollmentsQ);
           enrollmentCount = enrollmentsSnap.size;
+
+          let completedEnrollments = 0;
 
           // Somar receita de certificados vendidos
           enrollmentsSnap.forEach((enrollDoc) => {
@@ -88,9 +119,18 @@ const InstructorCoursesPage: React.FC = () => {
                     ) || 0
                   : certificatePrice;
             }
+            // Calcular taxa de conclusão
+            if (enrollData?.progress === 100) {
+              completedEnrollments++;
+            }
           });
+
+          completionRate =
+            enrollmentCount > 0
+              ? Math.round((completedEnrollments / enrollmentCount) * 100)
+              : 0;
         } catch (err) {
-          console.error("Erro ao contar inscrições:", err);
+          console.error("Erro ao buscar informações do curso:", err);
         }
 
         list.push({
@@ -112,8 +152,18 @@ const InstructorCoursesPage: React.FC = () => {
           status,
           enrollmentCount,
           revenue: totalRevenue,
+          totalLessons,
+          moduleCount,
+          completionRate,
         } as InstructorCourse);
       }
+
+      // Ordena por data de atualização (mais recentes primeiro)
+      list.sort((a, b) => {
+        const aTime = new Date(a.id).getTime() || 0;
+        const bTime = new Date(b.id).getTime() || 0;
+        return bTime - aTime;
+      });
 
       setCourses(list);
     });
@@ -122,6 +172,36 @@ const InstructorCoursesPage: React.FC = () => {
   }, [user?.uid]);
 
   const [filterValue, setFilterValue] = useState("Mais recentes");
+  const [searchValue, setSearchValue] = useState("");
+
+  // Função para filtrar e ordenar cursos
+  const getFilteredAndSortedCourses = () => {
+    let filtered = courses.filter(
+      (course) =>
+        course.title.toLowerCase().includes(searchValue.toLowerCase()) ||
+        course.category.toLowerCase().includes(searchValue.toLowerCase()),
+    );
+
+    switch (filterValue) {
+      case "Mais vendidos":
+        filtered.sort((a, b) => b.enrollmentCount - a.enrollmentCount);
+        break;
+      case "Melhor avaliados":
+        filtered.sort((a, b) => b.rating - a.rating);
+        break;
+      case "Maior receita":
+        filtered.sort((a, b) => b.revenue - a.revenue);
+        break;
+      case "Mais recentes":
+      default:
+        // Já está ordenado por data
+        break;
+    }
+
+    return filtered;
+  };
+
+  const filteredCourses = getFilteredAndSortedCourses();
 
   const toggleCourseStatus = async (id: string) => {
     const current = courses.find((c) => c.id === id);
@@ -187,6 +267,8 @@ const InstructorCoursesPage: React.FC = () => {
             <input
               type="text"
               placeholder="Buscar em meus cursos..."
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/10"
             />
           </div>
@@ -211,9 +293,7 @@ const InstructorCoursesPage: React.FC = () => {
                   <SelectItem value="Melhor avaliados">
                     Melhor avaliados
                   </SelectItem>
-                  <SelectItem value="Preço: Menor-Maior">
-                    Preço: Menor-Maior
-                  </SelectItem>
+                  <SelectItem value="Maior receita">Maior receita</SelectItem>
                 </SelectListBox>
               </SelectPopover>
             </Select>
@@ -230,6 +310,9 @@ const InstructorCoursesPage: React.FC = () => {
                     Curso
                   </th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    Conteúdo
+                  </th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                     Status
                   </th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -241,7 +324,7 @@ const InstructorCoursesPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {courses.map((course) => (
+                {filteredCourses.map((course) => (
                   <tr
                     key={course.id}
                     className="hover:bg-slate-50/50 transition-colors group"
@@ -270,8 +353,30 @@ const InstructorCoursesPage: React.FC = () => {
                             {course.title}
                           </p>
                           <p className="text-xs text-slate-400">
-                            {course.category} • {course.duration}
+                            {course.category}
                           </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-6">
+                        <div className="flex flex-col">
+                          <span className="flex items-center gap-1 text-xs font-bold text-slate-700">
+                            <BookOpen size={12} className="text-purple-500" />
+                            {course.totalLessons}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">
+                            Aulas
+                          </span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="flex items-center gap-1 text-xs font-bold text-slate-700">
+                            <TrendingUp size={12} className="text-orange-500" />
+                            {course.completionRate}%
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">
+                            Conclusão
+                          </span>
                         </div>
                       </div>
                     </td>
@@ -396,7 +501,9 @@ const InstructorCoursesPage: React.FC = () => {
           {/* Footer Info */}
           <div className="p-6 bg-slate-50/50 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs font-medium text-slate-500">
-              Mostrando {courses.length} de 12 cursos criados
+              Mostrando {filteredCourses.length} de {courses.length} cursos
+              criados
+              {searchValue && ` (busca: "${searchValue}")`}
             </p>
             <div className="flex gap-2">
               <button className="px-4 py-2 text-xs font-bold text-slate-400 border border-slate-200 rounded-lg bg-white cursor-not-allowed shadow-sm">
@@ -412,8 +519,6 @@ const InstructorCoursesPage: React.FC = () => {
     </InstructorLayout>
   );
 };
-
-// --- Custom UI Components (Copied from CourseEditor for consistency) ---
 
 const SelectContext = React.createContext<any>(null);
 

@@ -1,6 +1,7 @@
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { UserProfile } from "../contexts/AuthContext";
+import { cacheService } from "../services/cacheService";
 import { db } from "../services/firebase";
 
 export interface Tutor {
@@ -41,8 +42,18 @@ export function useTutors() {
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const CACHE_KEY = "tutors_list";
+  const CACHE_TTL = 60; // 60 minutos
 
   useEffect(() => {
+    // Tenta recuperar do cache primeiro
+    const cachedTutors = cacheService.get<Tutor[]>(CACHE_KEY);
+    if (cachedTutors && cachedTutors.length > 0) {
+      setTutors(cachedTutors);
+      setLoading(false);
+      console.log("Tutores carregados do cache");
+    }
+
     const q = query(
       collection(db, "profiles"),
       where("role", "==", "instructor"),
@@ -163,6 +174,9 @@ export function useTutors() {
           setTutors(list);
           setError(null);
           setLoading(false);
+          // Salva no cache
+          cacheService.set(CACHE_KEY, list, CACHE_TTL);
+          console.log("Tutores atualizados e cacheados");
         };
 
         return () => {

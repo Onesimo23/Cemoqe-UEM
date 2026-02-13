@@ -1,39 +1,39 @@
 import {
-    addDoc,
-    collection,
-    doc,
-    getDoc,
-    serverTimestamp,
-    updateDoc
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 import {
-    getDownloadURL,
-    getStorage,
-    ref as sRef,
-    uploadBytes,
+  getDownloadURL,
+  getStorage,
+  ref as sRef,
+  uploadBytes,
 } from "firebase/storage";
 import {
-    ArrowLeft,
-    Check,
-    CheckCircle,
-    ChevronDown,
-    File as FileIcon,
-    FileText,
-    FileUp,
-    HelpCircle,
-    Image as ImageIcon,
-    Info,
-    Layout,
-    Link as LinkIcon,
-    List,
-    MonitorPlay,
-    Plus,
-    PlusCircle,
-    Plus as PlusIcon,
-    Save,
-    Trash2,
-    Type,
-    X
+  ArrowLeft,
+  Check,
+  CheckCircle,
+  ChevronDown,
+  File as FileIcon,
+  FileText,
+  FileUp,
+  HelpCircle,
+  Image as ImageIcon,
+  Info,
+  Layout,
+  Link as LinkIcon,
+  List,
+  MonitorPlay,
+  Plus,
+  PlusCircle,
+  Plus as PlusIcon,
+  Save,
+  Trash2,
+  Type,
+  X,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -693,18 +693,20 @@ const CourseEditorPage: React.FC = () => {
             });
           if (upErr) throw upErr;
 
-          // Preferir Public URL (bucket público). Se vazio, gerar Signed URL
-          let url = supabase.storage
+          // SEMPRE usar Signed URL para garantir que funcione
+          // (mesmo que o bucket seja privado)
+          const { data: signed, error: sErr } = await supabase.storage
             .from(SUPABASE_BUCKET)
-            .getPublicUrl(filePath).data.publicUrl;
-          if (!url) {
-            const { data: signed, error: sErr } = await supabase.storage
-              .from(SUPABASE_BUCKET)
-              .createSignedUrl(filePath, SUPABASE_SIGNED_TTL);
-            if (sErr) throw sErr;
-            url = signed?.signedUrl || "";
+            .createSignedUrl(filePath, SUPABASE_SIGNED_TTL);
+
+          if (sErr) {
+            console.error("Erro ao criar Signed URL:", sErr);
+            throw sErr;
           }
+
+          const url = signed?.signedUrl || "";
           if (url) {
+            console.log("[CourseEditor] Lesson file URL:", url);
             updateLesson(moduleId, lessonId, "content", url);
             return;
           }

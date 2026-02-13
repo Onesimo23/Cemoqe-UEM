@@ -21,6 +21,7 @@ import {
   Share2,
   Smartphone,
   Star,
+  Users,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -37,6 +38,9 @@ const CourseDetailsPage: React.FC = () => {
   const { user } = useAuth();
   const [enrolling, setEnrolling] = useState(false);
   const navigate = useNavigate();
+  const [enrollmentCount, setEnrollmentCount] = useState(0);
+  const [instructorData, setInstructorData] = useState<any>(null);
+  const [totalLessons, setTotalLessons] = useState(0);
 
   // Scroll to top on mount
   useEffect(() => {
@@ -86,6 +90,31 @@ const CourseDetailsPage: React.FC = () => {
     };
     checkEnrollment();
   }, [user?.uid, id]);
+
+  // Buscar contagem de inscrições em tempo real
+  useEffect(() => {
+    if (!id) return;
+    const q = query(
+      collection(db, "enrollments"),
+      where("course_id", "==", id),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setEnrollmentCount(snap.size);
+    });
+    return () => unsub();
+  }, [id]);
+
+  // Buscar dados do instrutor em tempo real
+  useEffect(() => {
+    if (!course?.instructor_uid) return;
+    const ref = doc(db, "profiles", course.instructor_uid);
+    const unsub = onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        setInstructorData(snap.data());
+      }
+    });
+    return () => unsub();
+  }, [course?.instructor_uid]);
 
   const normalizedModules = useMemo(() => {
     const raw = (course?.modules ??
@@ -191,6 +220,12 @@ const CourseDetailsPage: React.FC = () => {
         });
         const subs = await Promise.all(modPromises);
         setFallbackModules(subs);
+        // Contar total de lições
+        const totalLessonsCount = subs.reduce(
+          (acc, m) => acc + (Array.isArray(m?.lessons) ? m.lessons.length : 0),
+          0,
+        );
+        setTotalLessons(totalLessonsCount);
       } catch (e) {
         console.warn("Falha ao carregar subcoleções de módulos:", e);
         setFallbackModules([]);
@@ -326,7 +361,12 @@ const CourseDetailsPage: React.FC = () => {
                   ))}
                 </div>
                 <span className="text-slate-300 ml-1">
-                  ({(course?.reviewCount ?? 0).toLocaleString()} avaliações)
+                  (
+                  {Math.max(
+                    course?.reviewCount ?? 0,
+                    enrollmentCount,
+                  ).toLocaleString()}{" "}
+                  avaliações)
                 </span>
               </div>
               <span className="hidden sm:inline text-slate-500">|</span>
@@ -335,6 +375,11 @@ const CourseDetailsPage: React.FC = () => {
                 <span className="underline decoration-yellow-400/50 underline-offset-4 font-semibold">
                   {course?.instructor || "Instrutor"}
                 </span>
+              </div>
+              <span className="hidden sm:inline text-slate-500">|</span>
+              <div className="flex items-center gap-1.5 text-slate-100">
+                <Users className="w-4 h-4" />
+                <span>{enrollmentCount.toLocaleString()} alunos</span>
               </div>
             </div>
 
@@ -483,7 +528,10 @@ const CourseDetailsPage: React.FC = () => {
               </h2>
               <div className="flex gap-6 items-start">
                 <img
-                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(course?.instructor || "Instrutor")}&background=0e7038&color=fff&size=128`}
+                  src={
+                    instructorData?.avatar_url ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(course?.instructor || "Instrutor")}&background=0e7038&color=fff&size=128`
+                  }
                   alt={course?.instructor || "Instrutor"}
                   className="w-20 h-20 rounded-full object-cover border-4 border-gray-50 shadow-sm"
                 />
@@ -492,27 +540,26 @@ const CourseDetailsPage: React.FC = () => {
                     {course?.instructor || "Instrutor"}
                   </h3>
                   <p className="text-brand-green font-medium text-sm mb-3">
-                    Senior {course?.category || "Geral"} Specialist
+                    {instructorData?.profession ||
+                      `Senior ${course?.category || "Geral"} Specialist`}
                   </p>
                   <div className="flex items-center gap-6 text-sm text-gray-500 mb-4">
                     <div className="flex items-center gap-1.5">
                       <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span>4.8 Instrutor Rating</span>
+                      <span>{course?.rating || "4.8"} Instructor Rating</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Award className="w-4 h-4 text-gray-400" />
-                      <span>15k+ Alunos</span>
+                      <span>{enrollmentCount.toLocaleString()} Alunos</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <PlayCircle className="w-4 h-4 text-gray-400" />
-                      <span>12 Cursos</span>
+                      <span>{course?.courseCount || "12"} Cursos</span>
                     </div>
                   </div>
                   <p className="text-gray-600 text-sm leading-relaxed">
-                    Com mais de 10 anos de experiência na indústria, já liderei
-                    equipes em grandes empresas de tecnologia e ajudei a formar
-                    milhares de profissionais. Minha paixão é tornar conceitos
-                    complexos em algo simples e prático.
+                    {instructorData?.bio ||
+                      `Com mais de 10 anos de experiência na indústria, já liderei equipes em grandes empresas de tecnologia e ajudei a formar milhares de profissionais. Minha paixão é tornar conceitos complexos em algo simples e prático.`}
                   </p>
                 </div>
               </div>
@@ -562,10 +609,13 @@ const CourseDetailsPage: React.FC = () => {
                 <div className="p-6">
                   <div className="flex items-end gap-3 mb-6">
                     <span className="text-3xl font-bold text-gray-900">
-                      {course?.priceType === "free"
-                        ? "Gratuito"
-                        : `${course?.currency || "MZM"} ${course?.price || "0,00"}`}
+                      Gratuito
                     </span>
+                    {enrollmentCount > 0 && (
+                      <span className="text-xs text-gray-500 font-medium">
+                        {enrollmentCount.toLocaleString()} alunos inscritos
+                      </span>
+                    )}
                   </div>
 
                   {isEnrolled ? (

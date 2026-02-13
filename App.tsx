@@ -34,6 +34,7 @@ import StudentCoursesPage from "./pages/student/MyCoursesPage";
 import StudentSettingsPage from "./pages/student/SettingsPage";
 
 // Instructor Pages
+import InstructorCertificatesPage from "./pages/instructor/CertificatesManagementPage";
 import InstructorCourseEditorPage from "./pages/instructor/CourseEditorPage";
 import InstructorDashboardPage from "./pages/instructor/DashboardPage";
 import InstructorFinancePage from "./pages/instructor/FinanceiroPage";
@@ -42,6 +43,7 @@ import InstructorStudentsPage from "./pages/instructor/MyStudentsPage";
 import InstructorQuestionsPage from "./pages/instructor/QuestionsPage";
 import InstructorReportsPage from "./pages/instructor/ReportsPage";
 import InstructorSettingsPage from "./pages/instructor/SettingsPage";
+import InstructorProgressPage from "./pages/instructor/StudentsProgressPage";
 
 // Admin Pages
 import AdminAnalyticsPage from "./pages/admin/AnalyticsPage";
@@ -303,6 +305,22 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute allowedRole="instructor">
                   <InstructorFinancePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/instrutor/certificados"
+              element={
+                <ProtectedRoute allowedRole="instructor">
+                  <InstructorCertificatesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/instrutor/progresso"
+              element={
+                <ProtectedRoute allowedRole="instructor">
+                  <InstructorProgressPage />
                 </ProtectedRoute>
               }
             />

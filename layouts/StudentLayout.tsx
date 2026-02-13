@@ -1,17 +1,16 @@
 import {
-    Award,
-    Bell,
-    BookOpen,
-    History,
-    Home,
-    LayoutDashboard,
-    LogOut,
-    Menu,
-    MessageSquare,
-    Search,
-    Settings,
-    Star,
-    X
+  Award,
+  Bell,
+  BookOpen,
+  History,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  MessageSquare,
+  Search,
+  Settings,
+  Star,
+  X,
 } from "lucide-react";
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -29,15 +28,13 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const { branding } = useBranding();
 
-  const handleLogout = async (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleLogout = async () => {
     if (window.confirm("Deseja realmente encerrar a sua sessão?")) {
       try {
         await logout();
-        // Força o redirecionamento absoluto para a home e limpa o histórico
         navigate("/", { replace: true });
-      } catch (error) {
-        console.error("Erro ao processar logout:", error);
+      } finally {
+        // Garante limpeza de contexto
       }
     }
   };
@@ -81,18 +78,19 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex font-sans text-slate-900">
+    <div className="min-h-screen bg-slate-50 flex font-sans">
+      {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-slate-900/60 z-40 md:hidden backdrop-blur-sm"
           onClick={() => setIsSidebarOpen(false)}
         ></div>
       )}
 
-      {/* Sidebar Lateral */}
+      {/* Sidebar */}
       <aside
         className={`
-        fixed md:sticky top-0 left-0 z-50 h-screen w-64 bg-brand-dark text-white flex flex-col transition-transform duration-300 ease-in-out
+        fixed md:sticky top-0 left-0 z-50 h-screen w-72 bg-slate-900 text-white flex flex-col transition-transform duration-300 ease-in-out
         ${isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
       `}
       >
@@ -106,26 +104,35 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
               />
             ) : (
               <div
-                className="p-2 rounded-lg text-white font-black flex items-center justify-center h-10 w-10"
+                className="p-2 rounded-lg text-white font-black flex items-center justify-center min-w-10 h-10"
                 style={{ backgroundColor: branding.appearance.primaryColor }}
               >
                 {branding.appearance.logoText?.charAt(0) || "U"}
               </div>
             )}
             <div className="flex flex-col">
-              <span className="text-lg font-bold leading-none">
+              <span
+                className="text-lg font-bold leading-none"
+                style={{ fontFamily: branding.appearance.fontFamily }}
+              >
                 {branding.appearance.logoText ||
                   branding.appearance.platformName}
               </span>
               {branding.appearance.logoSubtext && (
                 <span
-                  className="text-xs font-bold leading-tight"
-                  style={{ color: branding.appearance.accentColor }}
+                  className="text-[10px] font-black leading-tight"
+                  style={{
+                    color: branding.appearance.accentColor,
+                    fontFamily: branding.appearance.fontFamily,
+                  }}
                 >
                   {branding.appearance.logoSubtext}
                 </span>
               )}
             </div>
+            <span className="ml-2 text-[10px] bg-brand-accent text-brand-dark px-1.5 py-0.5 rounded font-black uppercase">
+              Aluno
+            </span>
           </Link>
           <button
             onClick={() => setIsSidebarOpen(false)}
@@ -137,35 +144,43 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
 
         <div className="p-6 border-b border-white/10 bg-white/5">
           <div className="flex items-center gap-3">
-            <img
-              src={
-                profile?.avatar_url ||
-                user?.photoURL ||
-                `https://ui-avatars.com/api/?name=${profile?.full_name || "User"}&background=0e7038&color=fff`
-              }
-              alt="User"
-              className="w-10 h-10 rounded-full border-2 border-brand-green object-cover shadow-sm"
-            />
-            <div className="min-w-0">
-              <p className="font-semibold text-sm truncate">
+            {profile?.avatar_url || user?.photoURL ? (
+              <img
+                src={profile?.avatar_url || user?.photoURL || ""}
+                className="w-10 h-10 rounded-full border-2 border-brand-accent/30 object-cover"
+                alt="Aluno"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-brand-green flex items-center justify-center font-bold text-white shadow-inner border-2 border-brand-accent/30">
+                AL
+              </div>
+            )}
+            <div>
+              <p className="font-semibold text-sm">
                 {profile?.full_name || "Estudante"}
               </p>
-              <p className="text-[10px] text-brand-accent font-bold uppercase tracking-tight">
-                Painel de Aluno
+              <p className="text-[10px] text-brand-accent font-black uppercase tracking-widest">
+                Acesso de Aluno
               </p>
             </div>
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
           {menuItems.map((item) => {
             const isActive = location.pathname === item.href;
             return (
               <Link
                 key={item.href}
                 to={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all
-                  ${isActive ? "bg-brand-green text-white shadow-lg" : "text-gray-400 hover:bg-white/5 hover:text-white"}`}
+                className={`
+                  flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all
+                  ${
+                    isActive
+                      ? "bg-brand-green text-white shadow-lg shadow-green-900/40"
+                      : "text-slate-400 hover:bg-white/5 hover:text-white"
+                  }
+                `}
                 onClick={() => setIsSidebarOpen(false)}
               >
                 {item.icon}
@@ -175,10 +190,8 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
           })}
         </nav>
 
-        {/* Botão SAIR DO PAINEL */}
         <div className="p-4 border-t border-white/10">
           <button
-            type="button"
             onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-sm font-black uppercase tracking-widest text-slate-400 hover:bg-red-500 hover:text-white transition-all active:scale-95 group"
           >
@@ -188,75 +201,93 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header Mobile */}
-        <header className="bg-white border-b border-gray-200 py-4 px-6 md:hidden flex items-center justify-between sticky top-0 z-30">
+        <header className="bg-slate-900 text-white border-b border-white/5 py-4 px-6 md:hidden flex items-center justify-between sticky top-0 z-30">
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="text-gray-600"
+            className="text-slate-400"
           >
             <Menu className="w-6 h-6" />
           </button>
-          <span
-            className="font-bold text-gray-800"
-            style={{ fontFamily: branding.appearance.fontFamily }}
-          >
-            {branding.appearance.logoText || branding.appearance.platformName}
-          </span>
-          <img
-            src={
-              profile?.avatar_url ||
-              user?.photoURL ||
-              "https://ui-avatars.com/api/?name=User"
-            }
-            className="w-8 h-8 rounded-full object-cover"
-            alt="User"
-          />
+          <div className="flex items-center gap-2">
+            {branding.appearance.logoUrl ? (
+              <img
+                src={branding.appearance.logoUrl}
+                alt="Logo"
+                className="h-6 w-auto"
+              />
+            ) : (
+              <div
+                className="p-1 rounded text-white font-black text-xs flex items-center justify-center w-6 h-6"
+                style={{ backgroundColor: branding.appearance.primaryColor }}
+              >
+                {branding.appearance.logoText?.charAt(0) || "U"}
+              </div>
+            )}
+            <span
+              className="font-bold text-sm"
+              style={{ fontFamily: branding.appearance.fontFamily }}
+            >
+              {branding.appearance.logoText || branding.appearance.platformName}{" "}
+              <span style={{ color: branding.appearance.accentColor }}>
+                Aluno
+              </span>
+            </span>
+          </div>
+          <div className="w-8 h-8 bg-brand-green rounded-full flex items-center justify-center font-bold text-xs">
+            AL
+          </div>
         </header>
 
-        {/* Header Desktop (Navbar Superior do Painel) */}
-        <header className="hidden md:flex bg-white border-b border-gray-200 py-4 px-8 items-center justify-between sticky top-0 z-30 shadow-sm">
+        {/* Header Desktop */}
+        <header className="hidden md:flex bg-white border-b border-slate-200 py-4 px-8 items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-6">
-            <div className="relative w-96">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <div className="relative w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="O que queres aprender hoje?"
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/10"
+                placeholder="Buscar cursos ou tópicos..."
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-green/10 focus:border-brand-green"
               />
             </div>
-
-            <Link
-              to="/"
-              className="flex items-center gap-2 text-slate-500 hover:text-brand-green font-bold text-[10px] uppercase tracking-widest transition-all px-4 py-2.5 bg-slate-50 rounded-xl border border-slate-100 hover:bg-white hover:shadow-sm"
-            >
-              <Home className="w-4 h-4" />
-              Ir para o Início
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <button className="relative p-2 text-gray-400 hover:text-brand-green transition-colors">
-              <Bell className="w-5 h-5" />
-            </button>
-            <div className="h-8 w-px bg-gray-200 mx-2"></div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-slate-600 hidden lg:block">
-                {profile?.full_name || "Estudante"}
+            <div className="h-6 w-px bg-slate-100"></div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+                Plataforma Online
               </span>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="p-2 text-slate-400 hover:text-red-500 transition-colors"
-                title="Sair do Sistema"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <button className="relative p-2 text-slate-400 hover:text-brand-green transition-colors bg-slate-50 rounded-lg">
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand-green rounded-full border-2 border-white"></span>
+            </button>
+            <div className="h-8 w-px bg-slate-200 mx-1"></div>
+            <div className="flex items-center gap-3">
+              {profile?.avatar_url || user?.photoURL ? (
+                <img
+                  src={profile?.avatar_url || user?.photoURL || ""}
+                  className="w-8 h-8 rounded-full border-2 border-slate-100 object-cover"
+                  alt="Aluno"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-brand-green text-white font-bold grid place-items-center border-2 border-slate-100">
+                  AL
+                </div>
+              )}
+              <div className="text-sm">
+                <p className="font-semibold text-slate-900">
+                  {profile?.full_name || "Estudante"}
+                </p>
+                <p className="text-xs text-slate-500">Acesso de Aluno</p>
+              </div>
             </div>
           </div>
         </header>
 
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto bg-gray-50">{children}</main>
+        <main className="flex-1 p-6 md:p-10 overflow-y-auto">{children}</main>
       </div>
     </div>
   );
