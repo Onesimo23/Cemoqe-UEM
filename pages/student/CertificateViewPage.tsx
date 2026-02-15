@@ -145,19 +145,34 @@ const CertificateViewPage: React.FC = () => {
               </h1>
               <div className="w-32 h-1 bg-brand-accent mb-10"></div>
 
-              <p className="text-xl text-gray-400 font-medium mb-4 italic font-sans">
+              <p
+                className="text-xl font-medium mb-4 italic font-sans"
+                style={{ color: "#0E7038" }}
+              >
                 Certificamos que
               </p>
               <h2 className="text-6xl font-bold text-gray-900 mb-8 font-serif leading-none">
                 {profile?.full_name || "Estudante"}
               </h2>
 
-              <p className="text-xl text-gray-500 max-w-2xl leading-relaxed mb-10 font-sans">
-                concluiu com êxito o programa de especialização em <br />
-                <strong className="text-brand-green text-3xl block mt-4 font-bold tracking-tight">
+              <p
+                className="max-w-2xl leading-relaxed mb-10 font-sans"
+                style={{ color: "#0E7038" }}
+              >
+                <span style={{ fontSize: "1.25rem" }}>
+                  concluiu com êxito o programa de especialização em
+                </span>{" "}
+                <br />
+                <strong
+                  className="text-3xl block mt-4 font-bold tracking-tight"
+                  style={{ color: "#0E7038" }}
+                >
                   {course.title}
                 </strong>
-                <span className="block mt-4 text-lg">
+                <span
+                  className="block mt-4 text-lg"
+                  style={{ color: "#0E7038" }}
+                >
                   com carga horária total de{" "}
                   {course?.duration || `${totalLessons} aulas`}.
                 </span>
@@ -166,10 +181,16 @@ const CertificateViewPage: React.FC = () => {
               {/* Bottom Signatures Area */}
               <div className="mt-auto w-full grid grid-cols-3 gap-12 items-end px-10">
                 <div className="flex flex-col items-center">
-                  <div className="w-full border-b-2 border-gray-200 pb-2 mb-2 italic text-gray-800 font-serif text-lg">
+                  <div
+                    className="w-full border-b-2 border-gray-200 pb-2 mb-2 italic font-serif text-lg"
+                    style={{ color: "#0E7038" }}
+                  >
                     Julia Santos
                   </div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[2px]">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-[2px]"
+                    style={{ color: "#0E7038" }}
+                  >
                     Coordenadora Acadêmica
                   </p>
                 </div>
@@ -187,16 +208,25 @@ const CertificateViewPage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col items-center">
-                  <div className="w-full border-b-2 border-gray-200 pb-2 mb-2 font-mono text-gray-800 text-lg">
+                  <div
+                    className="w-full border-b-2 border-gray-200 pb-2 mb-2 font-mono text-lg"
+                    style={{ color: "#0E7038" }}
+                  >
                     24/10/2024
                   </div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[2px]">
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-[2px]"
+                    style={{ color: "#0E7038" }}
+                  >
                     Data de Emissão
                   </p>
                 </div>
               </div>
 
-              <div className="mt-10 text-[9px] text-gray-300 font-mono tracking-widest uppercase">
+              <div
+                className="mt-10 text-[9px] font-mono tracking-widest uppercase"
+                style={{ color: "#0E7038" }}
+              >
                 ID de Autenticação: UEM-
                 {Math.random().toString(36).substr(2, 9).toUpperCase()} •
                 Verifique em uemcursos.com/verify

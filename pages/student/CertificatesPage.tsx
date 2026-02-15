@@ -310,11 +310,14 @@ const CertificateCard: React.FC<{ course: EnrolledCourse }> = ({ course }) => {
           <div>
             <div className="flex justify-between text-xs font-bold mb-1.5">
               <span
-                className={isCompleted ? "text-brand-green" : "text-gray-500"}
+                className={
+                  isCompleted ? "text-brand-green" : "text-brand-green"
+                }
+                style={{ color: "#0E7038" }}
               >
                 {isCompleted ? "Concluído" : `${course.progress}% de Progresso`}
               </span>
-              <span className="text-gray-400">
+              <span style={{ color: "#0E7038" }}>
                 {course.completedLessons}/{course.totalLessons} Aulas
               </span>
             </div>

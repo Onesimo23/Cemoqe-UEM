@@ -1,15 +1,16 @@
 import {
-    addDoc,
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    query,
-    Timestamp,
-    where,
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  Timestamp,
+  where,
 } from "firebase/firestore";
-import { AlertCircle, Check, X } from "lucide-react";
+import { AlertCircle, Check, Download, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { db } from "../services/firebase";
 
@@ -46,15 +47,19 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
   courseTitle,
   onSuccess,
 }) => {
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("m-pesa");
   const [transactionId, setTransactionId] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [existingCertificate, setExistingCertificate] =
     useState<Certificate | null>(null);
   const [instructorUid, setInstructorUid] = useState<string | null>(null);
+  const [instructorName, setInstructorName] = useState<string | null>(null);
+  const [course, setCourse] = useState<any | null>(null);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -69,7 +74,28 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
       const courseSnap = await getDoc(courseRef);
       if (courseSnap.exists()) {
         const courseData = courseSnap.data();
-        setInstructorUid(courseData?.instructor_uid || null);
+        const uid = courseData?.instructor_uid || null;
+        setInstructorUid(uid);
+        setCourse(courseData);
+
+        // Buscar nome do tutor/instrutor
+        if (uid) {
+          try {
+            const userRef = doc(db, "users", uid);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+              const fullName = userSnap.data()?.full_name || "Instrutor";
+              console.log("Instrutor encontrado:", fullName, "UID:", uid);
+              setInstructorName(fullName);
+            } else {
+              console.log("Documento do usuário não encontrado para UID:", uid);
+            }
+          } catch (err) {
+            console.error("Erro ao buscar nome do instrutor:", err);
+          }
+        } else {
+          console.log("Nenhum instrutor associado ao curso");
+        }
       }
     } catch (err) {
       console.error("Erro ao buscar instrutor do curso:", err);
@@ -158,9 +184,238 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
     onClose();
   };
 
+  const handleDownloadCertificatePDF = async () => {
+    if (!course || !profile) return;
+
+    setIsDownloading(true);
+    try {
+      // Garantir que temos o nome do instrutor
+      let finalInstructorName = instructorName;
+
+      if (!finalInstructorName && instructorUid) {
+        try {
+          const userRef = doc(db, "users", instructorUid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            finalInstructorName = userSnap.data()?.full_name || "Instrutor";
+            console.log("Nome do instrutor carregado:", finalInstructorName);
+          }
+        } catch (err) {
+          console.error("Erro ao buscar nome do instrutor:", err);
+          finalInstructorName = "Instrutor";
+        }
+      }
+
+      console.log("Baixando certificado - Instrutor:", finalInstructorName);
+
+      const totalLessons =
+        course?.modules?.reduce(
+          (acc: number, m: any) =>
+            acc + (Array.isArray(m?.lessons) ? m.lessons.length : 0),
+          0,
+        ) || 0;
+
+      // Criar canvas
+      const canvas = document.createElement("canvas");
+      canvas.width = 1000;
+      canvas.height = 707;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas não suportado");
+
+      // Fundo branco
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, 1000, 707);
+
+      // Border externo - verde #0E7038
+      ctx.strokeStyle = "#0E7038";
+      ctx.lineWidth = 16;
+      ctx.strokeRect(8, 8, 984, 691);
+
+      // Border interno - dourado #EAB308
+      ctx.strokeStyle = "#EAB308";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(24, 24, 952, 659);
+
+      // Configurar fontes e cores
+      ctx.fillStyle = "#0E7038";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      let y = 30;
+
+      // Logo/Escudo da instituição - representado por um círculo com iniciais
+      ctx.fillStyle = "#0E7038";
+      ctx.beginPath();
+      ctx.arc(500, y + 20, 25, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "white";
+      ctx.font = "bold 18px Arial";
+      ctx.fillText("UEM", 500, y + 25);
+
+      y += 60;
+
+      // Título da instituição
+      ctx.fillStyle = "#0E7038";
+      ctx.font = "bold 18px Arial";
+      ctx.fillText("Universidade Eduardo Mondlane", 500, y);
+      y += 25;
+
+      ctx.font = "14px Arial";
+      ctx.fillText("Centro de Cursos Online", 500, y);
+      y += 30;
+
+      // Título certificado
+      ctx.font = "bold 48px Georgia";
+      ctx.fillText("Certificado de Conclusão", 500, y);
+      y += 65;
+
+      // Linha divisória
+      ctx.strokeStyle = "#EAB308";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(350, y);
+      ctx.lineTo(650, y);
+      ctx.stroke();
+      y += 50;
+
+      // Intro
+      ctx.fillStyle = "#0E7038";
+      ctx.font = "italic 18px Arial";
+      ctx.fillText("Certificamos que", 500, y);
+      y += 45;
+
+      // Nome do aluno
+      ctx.font = "bold 44px Georgia";
+      ctx.fillText(profile?.full_name || "Estudante", 500, y);
+      y += 65;
+
+      // Descrição - linha 1
+      ctx.font = "16px Arial";
+      ctx.fillText(
+        "concluiu com êxito o programa de especialização em",
+        500,
+        y,
+      );
+      y += 35;
+
+      // Título do curso
+      ctx.font = "bold 26px Georgia";
+      ctx.fillText(course?.title || "Curso", 500, y);
+      y += 45;
+
+      // Carga horária
+      ctx.font = "14px Arial";
+      ctx.fillText(
+        `com carga horária total de ${course?.duration || `${totalLessons} aulas`}.`,
+        500,
+        y,
+      );
+      y += 70;
+
+      // Assinaturas - 4 colunas (Instrutor, Diretor, Selo, Data)
+      ctx.font = "12px Arial";
+      ctx.textAlign = "center";
+
+      const col1 = 150;
+      const col2 = 380;
+      const col3 = 620;
+      const col4 = 850;
+
+      // Linhas para assinatura
+      ctx.strokeStyle = "#0E7038";
+      ctx.lineWidth = 1;
+
+      // Coluna 1 - Instrutor
+      ctx.beginPath();
+      ctx.moveTo(col1 - 50, y);
+      ctx.lineTo(col1 + 50, y);
+      ctx.stroke();
+
+      // Coluna 2 - Diretor
+      ctx.beginPath();
+      ctx.moveTo(col2 - 50, y);
+      ctx.lineTo(col2 + 50, y);
+      ctx.stroke();
+
+      // Coluna 3 - Selo
+      ctx.beginPath();
+      ctx.moveTo(col3 - 50, y);
+      ctx.lineTo(col3 + 50, y);
+      ctx.stroke();
+
+      // Coluna 4 - Data
+      ctx.beginPath();
+      ctx.moveTo(col4 - 50, y);
+      ctx.lineTo(col4 + 50, y);
+      ctx.stroke();
+
+      y += 25;
+
+      // Assinatura 1 - Nome do instrutor
+      ctx.font = "11px Arial";
+      ctx.fillText(finalInstructorName || "Instrutor", col1, y);
+      ctx.font = "9px Arial";
+      ctx.fillText("Instrutor do Curso", col1, y + 16);
+
+      // Assinatura 2 - Diretor
+      ctx.font = "11px Arial";
+      ctx.fillText("_______________________", col2, y);
+      ctx.font = "9px Arial";
+      ctx.fillText("Diretor do Centro de Cursos", col2, y + 16);
+
+      // Selo de autenticidade
+      ctx.font = "bold 24px Arial";
+      ctx.fillText("⭐", col3, y - 5);
+      ctx.font = "9px Arial";
+      ctx.fillText("Selo de Autenticidade", col3, y + 16);
+
+      // Data
+      ctx.font = "11px Arial";
+      ctx.fillText(new Date().toLocaleDateString("pt-PT"), col4, y);
+      ctx.font = "9px Arial";
+      ctx.fillText("Data de Emissão", col4, y + 16);
+
+      // ID Autenticação
+      y += 60;
+      ctx.font = "9px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(
+        `ID: UEM-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+        500,
+        y,
+      );
+
+      // Converter canvas para blob e fazer download
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          alert("Erro ao gerar certificado");
+          setIsDownloading(false);
+          return;
+        }
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `Certificado-${course?.title?.replace(/\s+/g, "-")}-${profile?.full_name?.replace(/\s+/g, "-")}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        setIsDownloading(false);
+        handleClose();
+      }, "image/png");
+    } catch (err) {
+      console.error("Erro:", err);
+      alert("Erro ao gerar certificado.");
+      setIsDownloading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
-  // Se existe certificado confirmado, mostrar mensagem de sucesso
+  // Se existe certificado confirmado, oferecer download direto
   if (existingCertificate?.status === "confirmed") {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -169,15 +424,23 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
             <Check className="w-6 h-6 text-green-600" />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
-            Certificado Confirmado
+            Certificado Aprovado
           </h3>
           <p className="text-gray-600 text-center mb-6">
-            Seu certificado foi verificado e confirmado pelo instrutor. Já pode
-            fazer download.
+            Seu certificado foi verificado e aprovado pelo instrutor. Clique
+            abaixo para baixar!
           </p>
           <button
+            disabled={isDownloading}
+            onClick={handleDownloadCertificatePDF}
+            className="w-full bg-brand-green text-white py-2 rounded-lg hover:bg-brand-dark transition font-semibold mb-2 flex items-center justify-center gap-2 disabled:opacity-70"
+          >
+            <Download className="w-4 h-4" />
+            {isDownloading ? "Gerando..." : "Baixar Certificado"}
+          </button>
+          <button
             onClick={handleClose}
-            className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition"
+            className="w-full text-gray-600 py-2 rounded-lg hover:bg-gray-100 transition"
           >
             Fechar
           </button>

@@ -37,7 +37,7 @@ import { isSupabaseConfigured, supabase } from "../../services/supabase";
 
 const CoursePlayerPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [activeTab, setActiveTab] = useState<
     "overview" | "materials" | "uploads" | "comments" | "interactive"
   >("overview");
@@ -1036,28 +1036,32 @@ const CoursePlayerPage: React.FC = () => {
   return (
     <div className="flex flex-col h-screen bg-gray-50 overflow-hidden font-sans">
       {/* Header */}
-      <header className="h-16 bg-brand-dark text-white flex items-center justify-between px-4 md:px-6 shadow-md z-20 flex-shrink-0">
+      <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 shadow-sm z-20 flex-shrink-0">
         <div className="flex items-center gap-4">
           <Link
             to="/aluno/dashboard"
-            className="p-2 hover:bg-white/10 rounded-full transition-colors text-brand-light"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            style={{ color: "#0E7038" }}
           >
             <ChevronLeft className="w-5 h-5" />
           </Link>
-          <div className="h-8 w-[1px] bg-white/10 hidden md:block"></div>
+          <div className="h-8 w-[1px] bg-gray-200 hidden md:block"></div>
           <div>
-            <h1 className="font-bold text-sm md:text-base truncate max-w-[200px] md:max-w-md">
+            <h1 
+              className="font-bold text-sm md:text-base truncate max-w-[200px] md:max-w-md"
+              style={{ color: "#0E7038" }}
+            >
               {courseTitle}
             </h1>
-            <div className="flex items-center gap-2 text-xs text-white">
+            <div className="flex items-center gap-2 text-xs" style={{ color: "#0E7038" }}>
               <span className="hidden md:inline">Progresso:</span>
-              <div className="w-24 h-1.5  rounded-full overflow-hidden">
+              <div className="w-24 h-1.5 rounded-full overflow-hidden border border-gray-300 bg-gray-100">
                 <div
-                  style={{ width: `${progressWidth}%` }}
-                  className="h-full bg-brand-accent rounded-full transition-all duration-300"
+                  style={{ width: `${progressWidth}%`, backgroundColor: "#0E7038" }}
+                  className="h-full rounded-full transition-all duration-300"
                 ></div>
               </div>
-              <span className="font-semibold text-brand-accent">
+              <span className="font-semibold" style={{ color: "#0E7038" }}>
                 {progressPercentage}%
               </span>
             </div>
@@ -1066,7 +1070,8 @@ const CoursePlayerPage: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <button
-            className="md:hidden p-2 hover:bg-white/10 rounded-lg"
+            className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            style={{ color: "#0E7038" }}
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           >
             <Menu className="w-5 h-5" />
@@ -1079,9 +1084,10 @@ const CoursePlayerPage: React.FC = () => {
               disabled={progressPercentage < 100}
               className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors border ${
                 progressPercentage === 100
-                  ? "bg-brand-accent/20 hover:bg-brand-accent/30 border-brand-accent text-brand-accent cursor-pointer"
-                  : "bg-white/10 hover:bg-white/20 border-white/10 text-white/50 cursor-not-allowed"
+                  ? "border-2 text-white cursor-pointer"
+                  : "border border-gray-300 cursor-not-allowed"
               }`}
+              style={progressPercentage === 100 ? { backgroundColor: "#0E7038" } : { color: "#9CA3AF" }}
             >
               <Award className="w-4 h-4" />
               <span>
@@ -1090,8 +1096,18 @@ const CoursePlayerPage: React.FC = () => {
                   : "Certificado"}
               </span>
             </button>
-            <div className="w-8 h-8 rounded-full bg-brand-green border-2 border-brand-accent flex items-center justify-center font-bold text-xs">
-              RS
+            <div 
+              className="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs text-white"
+              style={{ backgroundColor: "#0E7038", borderColor: "#0E7038" }}
+            >
+              {profile?.full_name 
+                ? profile.full_name
+                    .split(" ")
+                    .slice(0, 2)
+                    .map((n: string) => n[0])
+                    .join("")
+                    .toUpperCase()
+                : "U"}
             </div>
           </div>
         </div>
