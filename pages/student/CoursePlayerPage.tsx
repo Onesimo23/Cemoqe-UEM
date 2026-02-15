@@ -1,32 +1,32 @@
 import {
-    addDoc,
-    collection,
-    doc,
-    getDocs,
-    increment,
-    onSnapshot,
-    orderBy,
-    limit as qbLimit,
-    query,
-    serverTimestamp,
-    updateDoc,
-    where,
+  addDoc,
+  collection,
+  doc,
+  getDocs,
+  increment,
+  onSnapshot,
+  orderBy,
+  limit as qbLimit,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
 } from "firebase/firestore";
 import {
-    Award,
-    CheckCircle,
-    ChevronDown,
-    ChevronLeft,
-    Circle,
-    Download,
-    File,
-    FileText,
-    Lock,
-    Menu,
-    PlayCircle,
-    Upload,
-    Volume2,
-    VolumeX,
+  Award,
+  CheckCircle,
+  ChevronDown,
+  ChevronLeft,
+  Circle,
+  Download,
+  File,
+  FileText,
+  Lock,
+  Menu,
+  PlayCircle,
+  Upload,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -1047,17 +1047,23 @@ const CoursePlayerPage: React.FC = () => {
           </Link>
           <div className="h-8 w-[1px] bg-gray-200 hidden md:block"></div>
           <div>
-            <h1 
+            <h1
               className="font-bold text-sm md:text-base truncate max-w-[200px] md:max-w-md"
               style={{ color: "#0E7038" }}
             >
               {courseTitle}
             </h1>
-            <div className="flex items-center gap-2 text-xs" style={{ color: "#0E7038" }}>
+            <div
+              className="flex items-center gap-2 text-xs"
+              style={{ color: "#0E7038" }}
+            >
               <span className="hidden md:inline">Progresso:</span>
               <div className="w-24 h-1.5 rounded-full overflow-hidden border border-gray-300 bg-gray-100">
                 <div
-                  style={{ width: `${progressWidth}%`, backgroundColor: "#0E7038" }}
+                  style={{
+                    width: `${progressWidth}%`,
+                    backgroundColor: "#0E7038",
+                  }}
                   className="h-full rounded-full transition-all duration-300"
                 ></div>
               </div>
@@ -1087,7 +1093,11 @@ const CoursePlayerPage: React.FC = () => {
                   ? "border-2 text-white cursor-pointer"
                   : "border border-gray-300 cursor-not-allowed"
               }`}
-              style={progressPercentage === 100 ? { backgroundColor: "#0E7038" } : { color: "#9CA3AF" }}
+              style={
+                progressPercentage === 100
+                  ? { backgroundColor: "#0E7038" }
+                  : { color: "#9CA3AF" }
+              }
             >
               <Award className="w-4 h-4" />
               <span>
@@ -1096,11 +1106,11 @@ const CoursePlayerPage: React.FC = () => {
                   : "Certificado"}
               </span>
             </button>
-            <div 
+            <div
               className="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs text-white"
               style={{ backgroundColor: "#0E7038", borderColor: "#0E7038" }}
             >
-              {profile?.full_name 
+              {profile?.full_name
                 ? profile.full_name
                     .split(" ")
                     .slice(0, 2)
