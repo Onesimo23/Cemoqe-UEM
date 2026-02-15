@@ -350,6 +350,7 @@ const CoursePlayerPage: React.FC = () => {
         user_name: user.displayName || "Aluno",
         course_title: course?.title || "",
         lesson_title: current.lesson.title || "",
+        instructor_uid: course?.instructor_uid || course?.creator_uid || null,
         completedAt: serverTimestamp(),
       });
 

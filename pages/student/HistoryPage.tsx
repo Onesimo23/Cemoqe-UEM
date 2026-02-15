@@ -324,11 +324,53 @@ const HistoryPage: React.FC = () => {
       handleSubs,
     );
 
+    // Converter lesson-completions para formato de submissions
+    const handleLessonCompletions = (snap: any) => {
+      snap.docs.forEach((d: any) => {
+        const data: any = d.data();
+        const cid = data?.course_id;
+        const lid = String(data?.lesson_id);
+        const ts: Date | null =
+          data?.completedAt?.toDate?.() || data?.createdAt?.toDate?.() || null;
+        if (!cid || !lid || !ts) return;
+        // Usar chave diferente para não sobrescrever submissions
+        submissions.set(`lc|${d.id}`, {
+          cid,
+          lid,
+          ts,
+          title: data?.lesson_title,
+        });
+      });
+      const fromEnrolls = Array.from(enrollsMap.keys());
+      const fromSubs = Array.from(
+        new Set(Array.from(submissions.values()).map((s) => s.cid)),
+      );
+      subscribeCourses(Array.from(new Set([...fromEnrolls, ...fromSubs])));
+      recompute();
+    };
+
+    const lcUnsubA = onSnapshot(
+      query(
+        collection(db, "lesson-completions"),
+        where("user_uid", "==", user.uid),
+      ),
+      handleLessonCompletions,
+    );
+    const lcUnsubB = onSnapshot(
+      query(
+        collection(db, "lesson-completions"),
+        where("userId", "==", user.uid),
+      ),
+      handleLessonCompletions,
+    );
+
     return () => {
       if (enrollUnsubA) enrollUnsubA();
       if (enrollUnsubB) enrollUnsubB();
       if (subsUnsubA) subsUnsubA();
       if (subsUnsubB) subsUnsubB();
+      lcUnsubA();
+      lcUnsubB();
       courseUnsubs.forEach((u) => u());
     };
   }, [user?.uid]);

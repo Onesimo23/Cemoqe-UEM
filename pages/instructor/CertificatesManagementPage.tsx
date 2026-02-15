@@ -1,17 +1,19 @@
 import {
-    collection,
-    doc,
-    getDocs,
-    onSnapshot,
-    query,
-    Timestamp,
-    updateDoc,
-    where,
+  collection,
+  doc,
+  getDocs,
+  limit,
+  onSnapshot,
+  query,
+  Timestamp,
+  updateDoc,
+  where,
 } from "firebase/firestore";
-import { AlertCircle, Check, Clock, X } from "lucide-react";
+import { AlertCircle, Check, Clock, Search, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
+import { cacheService } from "../../services/cacheService";
 import { db } from "../../services/firebase";
 
 interface Certificate {
@@ -41,79 +43,110 @@ const CertificatesManagementPage: React.FC = () => {
   const [filter, setFilter] = useState<
     "all" | "pending" | "confirmed" | "rejected"
   >("pending");
+  const [searchTransactionId, setSearchTransactionId] = useState("");
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [error, setError] = useState("");
+  const instructorCoursesRef = React.useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (user) {
-      loadCertificates();
-      loadCourses();
+      loadCoursesAndCertificates();
     }
   }, [user]);
 
-  const loadCourses = async () => {
-    if (!user) return;
-
-    try {
-      const coursesRef = collection(db, "courses");
-      const q = query(coursesRef, where("instructor_uid", "==", user.uid));
-      const snapshot = await getDocs(q);
-
-      const coursesMap: { [key: string]: CourseData } = {};
-      snapshot.docs.forEach((doc) => {
-        coursesMap[doc.id] = {
-          id: doc.id,
-          title: doc.data().title,
-        };
-      });
-
-      setCourses(coursesMap);
-    } catch (err) {
-      console.error("Erro ao carregar cursos:", err);
-    }
-  };
-
-  const loadCertificates = async () => {
+  // Carrega cursos primeiro, depois certados para esses cursos
+  const loadCoursesAndCertificates = async () => {
     if (!user) return;
 
     try {
       setLoading(true);
 
+      // 1. Obter cursos do instrutor (cache para rapidez)
+      const cacheKey = `instructor_courses_${user.uid}`;
+      let instructorCourses: string[] = [];
+
+      const cached: any = cacheService.get(cacheKey);
+      if (cached) {
+        instructorCourses = cached;
+      } else {
+        const coursesRef = collection(db, "courses");
+        const q = query(coursesRef, where("instructor_uid", "==", user.uid));
+        const snapshot = await getDocs(q);
+
+        instructorCourses = snapshot.docs.map((doc) => doc.id);
+        const coursesMap: { [key: string]: CourseData } = {};
+
+        snapshot.docs.forEach((doc) => {
+          coursesMap[doc.id] = {
+            id: doc.id,
+            title: doc.data().title,
+          };
+        });
+
+        setCourses(coursesMap);
+        // Cache com TTL de 60 minutos
+        cacheService.set(cacheKey, instructorCourses, 60);
+      }
+
+      instructorCoursesRef.current = new Set(instructorCourses);
+
+      // 2. Escutar certificados APENAS desses cursos
       const certificatesRef = collection(db, "certificates");
+      if (instructorCourses.length > 0) {
+        // Dividir em chunks de 10 para evitar limitações do Firestore
+        const chunks = [];
+        for (let i = 0; i < instructorCourses.length; i += 10) {
+          chunks.push(instructorCourses.slice(i, i + 10));
+        }
 
-      // Carregar todos os certificados (vamos filtrar por curso do instrutor no cliente)
-      const unsubscribe = onSnapshot(certificatesRef, async (snapshot) => {
-        // Filtrar apenas certificados para cursos do instrutor
-        const allCerts = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Certificate[];
+        // Criar queries para cada chunk
+        const unsubscribers: Array<() => void> = [];
 
-        // Obter cursos do instrutor para filtrar
-        const instructorCoursesRef = collection(db, "courses");
-        const coursesQuery = query(
-          instructorCoursesRef,
-          where("instructor_uid", "==", user.uid),
-        );
-        const coursesSnapshot = await getDocs(coursesQuery);
-        const instructorCourseIds = new Set(
-          coursesSnapshot.docs.map((doc) => doc.id),
-        );
+        for (const chunk of chunks) {
+          const q = query(
+            certificatesRef,
+            where("course_id", "in", chunk),
+            limit(100),
+          );
 
-        // Filtrar certificados apenas para os cursos do instrutor
-        const filteredCerts = allCerts.filter((cert) =>
-          instructorCourseIds.has(cert.course_id),
-        );
+          const unsub = onSnapshot(
+            q,
+            (snapshot) => {
+              const certs = snapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+              })) as Certificate[];
 
-        setCertificates(filteredCerts);
+              // Mesclar com certificados anteriores
+              setCertificates((prev) => {
+                const map = new Map(prev.map((c) => [c.id, c]));
+                certs.forEach((c) => map.set(c.id, c));
+                return Array.from(map.values());
+              });
+
+              setLoading(false);
+            },
+            (err) => {
+              console.error("Erro ao escutar certificados:", err);
+              setLoading(false);
+            },
+          );
+
+          unsubscribers.push(unsub);
+        }
+
+        // Cleanup
+        return () => {
+          unsubscribers.forEach((unsub) => unsub());
+        };
+      } else {
+        // Sem cursos, sem certificados
+        setCertificates([]);
         setLoading(false);
-      });
-
-      return () => unsubscribe();
+      }
     } catch (err) {
-      console.error("Erro ao carregar certificados:", err);
-      setError("Erro ao carregar certificados");
+      console.error("Erro ao carregar dados:", err);
       setLoading(false);
     }
   };
@@ -152,8 +185,17 @@ const CertificatesManagementPage: React.FC = () => {
   };
 
   const filteredCertificates = certificates.filter((cert) => {
-    if (filter === "all") return true;
-    return cert.status === filter;
+    // Filtrar por status
+    if (filter !== "all" && cert.status !== filter) return false;
+
+    // Filtrar por ID de transação (busca case-insensitive)
+    if (searchTransactionId.trim()) {
+      return cert.transaction_id
+        .toLowerCase()
+        .includes(searchTransactionId.toLowerCase());
+    }
+
+    return true;
   });
 
   const pendingCount = certificates.filter(
@@ -261,23 +303,37 @@ const CertificatesManagementPage: React.FC = () => {
         )}
 
         {/* Filters */}
-        <div className="mb-6 flex gap-2">
-          {["all", "pending", "confirmed", "rejected"].map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilter(status as any)}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                filter === status
-                  ? "bg-blue-600 text-white"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              {status === "all" && "Todos"}
-              {status === "pending" && "À Espera"}
-              {status === "confirmed" && "Confirmados"}
-              {status === "rejected" && "Rejeitados"}
-            </button>
-          ))}
+        <div className="mb-6 space-y-4">
+          <div className="flex gap-2">
+            {["all", "pending", "confirmed", "rejected"].map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilter(status as any)}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  filter === status
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                {status === "all" && "Todos"}
+                {status === "pending" && "À Espera"}
+                {status === "confirmed" && "Confirmados"}
+                {status === "rejected" && "Rejeitados"}
+              </button>
+            ))}
+          </div>
+
+          {/* Search by Transaction ID */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Procurar por ID de Transação..."
+              value={searchTransactionId}
+              onChange={(e) => setSearchTransactionId(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
 
         {/* Certificates List */}

@@ -1,6 +1,8 @@
 import {
     addDoc,
     collection,
+    doc,
+    getDoc,
     getDocs,
     query,
     Timestamp,
@@ -52,12 +54,27 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
   const [success, setSuccess] = useState(false);
   const [existingCertificate, setExistingCertificate] =
     useState<Certificate | null>(null);
+  const [instructorUid, setInstructorUid] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen && user) {
       checkExistingCertificate();
+      getInstructorUid();
     }
   }, [isOpen, user, courseId]);
+
+  const getInstructorUid = async () => {
+    try {
+      const courseRef = doc(db, "courses", courseId);
+      const courseSnap = await getDoc(courseRef);
+      if (courseSnap.exists()) {
+        const courseData = courseSnap.data();
+        setInstructorUid(courseData?.instructor_uid || null);
+      }
+    } catch (err) {
+      console.error("Erro ao buscar instrutor do curso:", err);
+    }
+  };
 
   const checkExistingCertificate = async () => {
     if (!user) return;
@@ -109,6 +126,7 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
         payment_method: paymentMethod,
         transaction_id: transactionId,
         submitted_at: Timestamp.now(),
+        instructor_uid: instructorUid || undefined,
       };
 
       await addDoc(certificatesRef, newCertificate);

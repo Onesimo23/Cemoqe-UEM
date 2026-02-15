@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed:test-certificate": "npx tsx scripts/seedTestCertificate.ts",
+    "migrate:instructor-uid": "npx tsx scripts/migrateInstructorUid.ts"
   },
   "dependencies": {
     "react": "^19.2.3",

@@ -1,20 +1,20 @@
 import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  limit as qbLimit,
-  query,
-  serverTimestamp,
-  where,
+    addDoc,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    limit as qbLimit,
+    query,
+    serverTimestamp,
+    where,
 } from "firebase/firestore";
 import {
-  AlertCircle,
-  ArrowLeft,
-  CheckCircle,
-  Loader2,
-  PlayCircle,
+    AlertCircle,
+    ArrowLeft,
+    CheckCircle,
+    Loader2,
+    PlayCircle,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -97,6 +97,7 @@ const EnrollmentPage: React.FC = () => {
         enrolledAt: serverTimestamp(),
         course_title: course?.title || "",
         instructor: course?.instructor || "",
+        instructor_uid: course?.instructor_uid || course?.creator_uid || null,
         imageUrl: course?.imageUrl || "",
         status: "active",
         certificatePaid: false,

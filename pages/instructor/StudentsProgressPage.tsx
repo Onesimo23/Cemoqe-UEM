@@ -1,6 +1,7 @@
 import {
     collection,
     getDocs,
+    limit,
     onSnapshot,
     query,
     where,
@@ -9,6 +10,7 @@ import { Download, TrendingUp, Users } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
+import { cacheService } from "../../services/cacheService";
 import { db } from "../../services/firebase";
 
 interface StudentProgress {
@@ -49,66 +51,97 @@ const StudentsProgressPage: React.FC = () => {
     try {
       setLoading(true);
 
-      // 1. Obter todos os cursos do instrutor
-      const coursesRef = collection(db, "courses");
-      const coursesQuery = query(
-        coursesRef,
-        where("instructor_uid", "==", user.uid),
-      );
-      const coursesSnapshot = await getDocs(coursesQuery);
+      // 1. Obter cursos do instrutor (com cache)
+      const cacheKey = `instructor_courses_${user.uid}`;
+      const cachedCourses: any = cacheService.get(cacheKey);
 
-      const courses: { [key: string]: string } = {};
-      coursesSnapshot.docs.forEach((doc) => {
-        courses[doc.id] = doc.data().title;
-      });
+      let courses: { [key: string]: string } = {};
+      let instructorCourseIds: string[] = [];
 
-      // 2. Para cada curso, obter os alunos inscritos e seu progresso
+      if (cachedCourses) {
+        instructorCourseIds = cachedCourses;
+        // Tentar carregar dados dos cursos, mas não bloquear se não conseguir
+        const coursesRef = collection(db, "courses");
+        const q = query(
+          coursesRef,
+          where("instructor_uid", "==", user.uid),
+          limit(100),
+        );
+        const coursesSnap = await getDocs(q);
+        coursesSnap.docs.forEach((doc) => {
+          courses[doc.id] = doc.data().title;
+        });
+      } else {
+        const coursesRef = collection(db, "courses");
+        const q = query(
+          coursesRef,
+          where("instructor_uid", "==", user.uid),
+          limit(100),
+        );
+        const coursesSnap = await getDocs(q);
+        coursesSnap.docs.forEach((doc) => {
+          courses[doc.id] = doc.data().title;
+          instructorCourseIds.push(doc.id);
+        });
+        cacheService.set(cacheKey, instructorCourseIds, 60);
+      }
+
       const studentProgressMap: { [key: string]: StudentProgress } = {};
 
-      // Usar onSnapshot para atualizações em tempo real de inscrições
+      // Usar onSnapshot para atualizações em tempo real
       const enrollmentsRef = collection(db, "enrollments");
       const unsubscribe = onSnapshot(enrollmentsRef, async (snapshot) => {
         // Filtrar inscrições dos cursos do instrutor
         const enrollments = snapshot.docs
           .filter((doc) =>
-            Object.keys(courses).includes((doc.data() as any).course_id),
+            instructorCourseIds.includes((doc.data() as any).course_id),
           )
           .map((doc) => ({ id: doc.id, ...(doc.data() as any) }) as any);
 
-        // Agrupar por estudante
+        // 2. Carregar status de certificados EM BATCH
+        const certificatesRef = collection(db, "certificates");
+        const certQuery = query(
+          certificatesRef,
+          limit(1000), // Limitar para segurança
+        );
+        const certSnap = await getDocs(certQuery);
+
+        // Criar um mapa de certificados para lookup rápido
+        const certificateMap = new Map<string, any>();
+        certSnap.docs.forEach((doc) => {
+          const data = doc.data();
+          const key = `${data.student_uid}:${data.course_id}`;
+          certificateMap.set(key, data);
+        });
+
+        // 3. Agrupar por estudante COM dados dos certificados já carregados
+        const newStudentProgressMap: { [key: string]: StudentProgress } = {};
+
         for (const enrollment of enrollments) {
           const studentUid = enrollment.student_uid;
 
-          if (!studentProgressMap[studentUid]) {
-            studentProgressMap[studentUid] = {
+          if (!newStudentProgressMap[studentUid]) {
+            newStudentProgressMap[studentUid] = {
               student_uid: studentUid,
               student_name: enrollment.student_name || "Estudante Desconhecido",
               enrollments: [],
             };
           }
 
-          // Obter progresso da inscrição
+          // Dados já disponíveis
           const progressPercentage = enrollment.progress_percentage || 0;
           const completedLessons = enrollment.completed_lessons || 0;
           const totalLessons = enrollment.total_lessons || 0;
 
-          // Obter status do certificado
+          // Procurar certificado no mapa (O(1) em vez de N queries)
           let certificateStatus: "none" | "pending" | "confirmed" | "rejected" =
             "none";
-          const certificatesRef = collection(db, "certificates");
-          const certQuery = query(
-            certificatesRef,
-            where("student_uid", "==", studentUid),
-            where("course_id", "==", enrollment.course_id),
-          );
-          const certSnapshot = await getDocs(certQuery);
-
-          if (!certSnapshot.empty) {
-            const cert = certSnapshot.docs[0].data();
+          const certKey = `${studentUid}:${enrollment.course_id}`;
+          const cert = certificateMap.get(certKey);
+          if (cert) {
             certificateStatus = cert.status || "none";
           }
 
-          // Adicionar inscrição ao estudante
           const enrollmentData = {
             course_id: enrollment.course_id,
             course_title: courses[enrollment.course_id] || "Curso Desconhecido",
@@ -121,20 +154,19 @@ const StudentsProgressPage: React.FC = () => {
               progressPercentage === 100 ? enrollment.completed_at : undefined,
           };
 
-          // Verificar se já existe essa inscrição
-          const existingIndex = studentProgressMap[
+          const existingIndex = newStudentProgressMap[
             studentUid
           ].enrollments.findIndex((e) => e.course_id === enrollment.course_id);
 
           if (existingIndex >= 0) {
-            studentProgressMap[studentUid].enrollments[existingIndex] =
+            newStudentProgressMap[studentUid].enrollments[existingIndex] =
               enrollmentData;
           } else {
-            studentProgressMap[studentUid].enrollments.push(enrollmentData);
+            newStudentProgressMap[studentUid].enrollments.push(enrollmentData);
           }
         }
 
-        setStudentsProgress(Object.values(studentProgressMap));
+        setStudentsProgress(Object.values(newStudentProgressMap));
         setLoading(false);
       });
 

@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   getDocs,
+  limit,
   onSnapshot,
   query,
   serverTimestamp,
@@ -23,12 +24,13 @@ import {
   Search,
   Star,
   TrendingUp,
-  Users,
+  Users
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
+import { cacheService } from "../../services/cacheService";
 import { db } from "../../services/firebase";
 // Added Course import to fix interface extension error
 import { Course } from "../../types";
@@ -47,93 +49,44 @@ interface InstructorCourse extends Course {
 const InstructorCoursesPage: React.FC = () => {
   // Estado local para permitir a ativação/desativação
   const [courses, setCourses] = useState<InstructorCourse[]>([]);
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const courseMetricsRef = useRef<{ [key: string]: any }>({});
 
-  // Carrega cursos do Firestore atribuídos ao instrutor atual (instructor_uid)
+  // Carrega cursos rapidamente SEM aguardar sub-coleções
+  // Depois carrega métricas em background
   useEffect(() => {
     if (!user?.uid) {
       setCourses([]);
+      setLoading(false);
       return;
     }
 
+    // Tentar carregar do cache primeiro
+    const cached = cacheService.get(`instructor_courses_${user.uid}`);
+    if (cached) {
+      setCourses(cached);
+      setLoading(false);
+    }
+
+    // Query rápida: apenas dados básicos dos cursos
     const q = query(
       collection(db, "courses"),
       where("instructor_uid", "==", user.uid),
+      limit(100), // Limita a 100 cursos
     );
+
     const unsub = onSnapshot(q, async (snap) => {
       const list: InstructorCourse[] = [];
 
+      // Primeiro: Carrega dados básicos RAPIDAMENTE
       for (const d of snap.docs) {
         const data: any = d.data();
         const status: "Publicado" | "Rascunho" =
           data?.status === "Publicado" ? "Publicado" : "Rascunho";
 
-        // Contar inscrições reais para este curso
-        let enrollmentCount = 0;
-        let totalRevenue = 0;
-        let totalLessons = 0;
-        let moduleCount = 0;
-        let completionRate = 0;
-
-        try {
-          // Buscar módulos e contar aulas
-          const modulesSnap = await getDocs(
-            collection(db, "courses", d.id, "modules"),
-          );
-          moduleCount = modulesSnap.size;
-
-          for (const moduleDoc of modulesSnap.docs) {
-            const lessonsSnap = await getDocs(
-              collection(
-                db,
-                "courses",
-                d.id,
-                "modules",
-                moduleDoc.id,
-                "lessons",
-              ),
-            );
-            totalLessons += lessonsSnap.size;
-          }
-
-          // Contar inscrições e calcular receita
-          const enrollmentsQ = query(
-            collection(db, "enrollments"),
-            where("course_id", "==", d.id),
-          );
-          const enrollmentsSnap = await getDocs(enrollmentsQ);
-          enrollmentCount = enrollmentsSnap.size;
-
-          let completedEnrollments = 0;
-
-          // Somar receita de certificados vendidos
-          enrollmentsSnap.forEach((enrollDoc) => {
-            const enrollData: any = enrollDoc.data();
-            // Apenas contar certificados que foram pagos
-            if (enrollData?.certificatePaid) {
-              const certificatePrice = enrollData?.certificatePrice || 0;
-              totalRevenue +=
-                typeof certificatePrice === "string"
-                  ? parseFloat(
-                      certificatePrice.replace(/\./g, "").replace(",", "."),
-                    ) || 0
-                  : certificatePrice;
-            }
-            // Calcular taxa de conclusão
-            if (enrollData?.progress === 100) {
-              completedEnrollments++;
-            }
-          });
-
-          completionRate =
-            enrollmentCount > 0
-              ? Math.round((completedEnrollments / enrollmentCount) * 100)
-              : 0;
-        } catch (err) {
-          console.error("Erro ao buscar informações do curso:", err);
-        }
-
-        list.push({
+        // Dados imediatos (sem awaits)
+        const basicCourse: InstructorCourse = {
           id: d.id,
           title: data?.title || "Sem título",
           instructor: data?.instructor || "",
@@ -150,15 +103,21 @@ const InstructorCoursesPage: React.FC = () => {
           badgeColor: data?.badgeColor || "blue",
           isActive: status === "Publicado",
           status,
-          enrollmentCount,
-          revenue: totalRevenue,
-          totalLessons,
-          moduleCount,
-          completionRate,
-        } as InstructorCourse);
+          // Dados agregados (com valores padrão do banco)
+          enrollmentCount: data?.enrollmentCount || 0,
+          revenue: data?.totalRevenue || 0,
+          totalLessons: data?.totalLessons || 0,
+          moduleCount: data?.moduleCount || 0,
+          completionRate: data?.completionRate || 0,
+        } as InstructorCourse;
+
+        list.push(basicCourse);
+
+        // Carregar métricas em background (não bloqueia UI)
+        loadCourseMetrics(d.id, user.uid);
       }
 
-      // Ordena por data de atualização (mais recentes primeiro)
+      // Ordena por data
       list.sort((a, b) => {
         const aTime = new Date(a.id).getTime() || 0;
         const bTime = new Date(b.id).getTime() || 0;
@@ -166,10 +125,113 @@ const InstructorCoursesPage: React.FC = () => {
       });
 
       setCourses(list);
+      // Cache com TTL de 30 minutos
+      cacheService.set(`instructor_courses_${user.uid}`, list, 30);
+      setLoading(false);
     });
 
     return () => unsub();
   }, [user?.uid]);
+
+  // Carrega métricas em background, separado da renderização
+  const loadCourseMetrics = async (courseId: string, instructorUid: string) => {
+    try {
+      // Se já temos em cache, use
+      const cacheKey = `course_metrics_${courseId}`;
+      let metrics: any = cacheService.get(cacheKey);
+
+      if (!metrics) {
+        let totalLessons = 0;
+        let moduleCount = 0;
+
+        // Contar módulos e aulas (apenas se não estiver em cache)
+        const modulesSnap = await getDocs(
+          collection(db, "courses", courseId, "modules"),
+        );
+        moduleCount = modulesSnap.size;
+
+        // Apenas contar lições se houver módulos
+        if (moduleCount > 0) {
+          for (const moduleDoc of modulesSnap.docs) {
+            const lessonsSnap = await getDocs(
+              collection(
+                db,
+                "courses",
+                courseId,
+                "modules",
+                moduleDoc.id,
+                "lessons",
+              ),
+            );
+            totalLessons += lessonsSnap.size;
+          }
+        }
+
+        // Contar inscrições e calcular métricas
+        const enrollmentsQ = query(
+          collection(db, "enrollments"),
+          where("course_id", "==", courseId),
+          limit(1000), // Limite para segurança
+        );
+        const enrollmentsSnap = await getDocs(enrollmentsQ);
+        const enrollmentCount = enrollmentsSnap.size;
+
+        let completedEnrollments = 0;
+        let totalRevenue = 0;
+
+        enrollmentsSnap.forEach((enrollDoc) => {
+          const enrollData: any = enrollDoc.data();
+          if (enrollData?.certificatePaid) {
+            const certificatePrice = enrollData?.certificatePrice || 0;
+            totalRevenue +=
+              typeof certificatePrice === "string"
+                ? parseFloat(
+                    certificatePrice.replace(/\./g, "").replace(",", "."),
+                  ) || 0
+                : certificatePrice;
+          }
+          if (enrollData?.progress === 100) {
+            completedEnrollments++;
+          }
+        });
+
+        const completionRate =
+          enrollmentCount > 0
+            ? Math.round((completedEnrollments / enrollmentCount) * 100)
+            : 0;
+
+        metrics = {
+          totalLessons,
+          moduleCount,
+          enrollmentCount,
+          revenue: totalRevenue,
+          completionRate,
+        };
+
+        // Cache com TTL de 60 minutos
+        cacheService.set(cacheKey, metrics, 60);
+      }
+
+      // Atualiza o curso com as métricas
+      courseMetricsRef.current[courseId] = metrics;
+      setCourses((prev) =>
+        prev.map((c) =>
+          c.id === courseId
+            ? {
+                ...c,
+                totalLessons: metrics.totalLessons,
+                moduleCount: metrics.moduleCount,
+                enrollmentCount: metrics.enrollmentCount,
+                revenue: metrics.revenue,
+                completionRate: metrics.completionRate,
+              }
+            : c,
+        ),
+      );
+    } catch (err) {
+      console.error("Erro ao carregar métricas do curso:", err);
+    }
+  };
 
   const [filterValue, setFilterValue] = useState("Mais recentes");
   const [searchValue, setSearchValue] = useState("");
@@ -245,9 +307,19 @@ const InstructorCoursesPage: React.FC = () => {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
-              Meus Cursos
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
+                Meus Cursos
+              </h1>
+              {loading && (
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 rounded-lg">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs font-medium text-blue-700">
+                    Carregando...
+                  </span>
+                </div>
+              )}
+            </div>
             <p className="text-slate-500 mt-1">
               Gerencie seu catálogo de conteúdos e acompanhe as vendas.
             </p>
@@ -301,220 +373,248 @@ const InstructorCoursesPage: React.FC = () => {
         </div>
 
         {/* Courses Table/Grid */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50 border-b border-gray-100">
-                <tr>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    Curso
-                  </th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    Conteúdo
-                  </th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    Métricas (MZM)
-                  </th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {filteredCourses.map((course) => (
-                  <tr
-                    key={course.id}
-                    className="hover:bg-slate-50/50 transition-colors group"
-                  >
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-4">
-                        <div className="relative">
-                          <img
-                            src={course.imageUrl}
-                            className={`w-16 h-10 rounded-lg object-cover shadow-sm transition-opacity duration-300 ${course.status === "Rascunho" ? "opacity-40 grayscale" : "opacity-100"}`}
-                            alt={course.title}
-                          />
-                          {course.status === "Rascunho" && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <EyeOff
-                                size={14}
-                                className="text-white drop-shadow-md"
-                              />
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <p
-                            className={`font-bold transition-colors ${course.status === "Publicado" ? "text-slate-900 group-hover:text-brand-green" : "text-slate-400 italic"}`}
-                          >
-                            {course.title}
-                          </p>
-                          <p className="text-xs text-slate-400">
-                            {course.category}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-6">
-                        <div className="flex flex-col">
-                          <span className="flex items-center gap-1 text-xs font-bold text-slate-700">
-                            <BookOpen size={12} className="text-purple-500" />
-                            {course.totalLessons}
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">
-                            Aulas
-                          </span>
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="flex items-center gap-1 text-xs font-bold text-slate-700">
-                            <TrendingUp size={12} className="text-orange-500" />
-                            {course.completionRate}%
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">
-                            Conclusão
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-black uppercase transition-all duration-300 ${
-                          course.status === "Rascunho"
-                            ? "bg-amber-50 text-amber-600"
-                            : "bg-emerald-50 text-emerald-600"
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full animate-pulse ${course.status === "Rascunho" ? "bg-amber-500" : "bg-emerald-500"}`}
-                        ></span>
-                        {course.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-6">
-                        <div className="flex flex-col">
-                          <span className="flex items-center gap-1 text-xs font-bold text-slate-700">
-                            <Users size={12} className="text-blue-500" />{" "}
-                            {course.enrollmentCount}
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">
-                            Alunos
-                          </span>
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="flex items-center gap-1 text-xs font-bold text-slate-700">
-                            <DollarSign
-                              size={12}
-                              className="text-emerald-500"
-                            />{" "}
-                            {course.revenue.toLocaleString("pt-MZ", {
-                              minimumFractionDigits: 2,
-                            })}
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">
-                            MZM
-                          </span>
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="flex items-center gap-1 text-xs font-bold text-slate-700">
-                            <Star
-                              size={12}
-                              className="text-brand-accent fill-brand-accent"
-                            />{" "}
-                            {course.rating}
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">
-                            Rating
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {/* Botão de Ativar/Desativar */}
-                        <button
-                          onClick={() => toggleCourseStatus(course.id)}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border transition-all active:scale-95 ${
-                            course.status === "Publicado"
-                              ? "bg-red-50 text-red-600 border-red-100 hover:bg-red-100"
-                              : "bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100"
-                          }`}
-                          title={
-                            course.status === "Publicado"
-                              ? "Desativar (Tornar Rascunho)"
-                              : "Ativar (Publicar)"
-                          }
-                        >
-                          {course.status === "Publicado" ? (
-                            <Power size={14} />
-                          ) : (
-                            <Check size={14} />
-                          )}
-                          {course.status === "Publicado"
-                            ? "Desativar"
-                            : "Ativar"}
-                        </button>
-
-                        <div className="h-6 w-px bg-slate-100 mx-1"></div>
-
-                        <Link
-                          to={`/instrutor/cursos/editar/${course.id}`}
-                          className="p-2 text-slate-400 hover:text-brand-green hover:bg-brand-green/5 rounded-lg transition-all"
-                          title="Editar Curso"
-                        >
-                          <Edit3 size={18} />
-                        </Link>
-                        <Link
-                          to={`/cursos/${course.id}`}
-                          target="_blank"
-                          className={`p-2 rounded-lg transition-all ${
-                            course.status === "Publicado"
-                              ? "text-slate-400 hover:text-blue-500 hover:bg-blue-50"
-                              : "text-slate-200 cursor-not-allowed"
-                          }`}
-                          title={
-                            course.status === "Publicado"
-                              ? "Ver Página de Vendas"
-                              : "Curso não publicado"
-                          }
-                          onClick={(e) =>
-                            course.status !== "Publicado" && e.preventDefault()
-                          }
-                        >
-                          <Eye size={18} />
-                        </Link>
-                        <button className="p-2 text-slate-400 hover:text-slate-900 rounded-lg transition-all">
-                          <MoreVertical size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Footer Info */}
-          <div className="p-6 bg-slate-50/50 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs font-medium text-slate-500">
-              Mostrando {filteredCourses.length} de {courses.length} cursos
-              criados
-              {searchValue && ` (busca: "${searchValue}")`}
+        {filteredCourses.length === 0 && !loading ? (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+            <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">
+              {courses.length === 0
+                ? "Nenhum curso criado ainda"
+                : "Nenhum curso encontrado"}
+            </h3>
+            <p className="text-slate-500 mb-6">
+              {courses.length === 0
+                ? "Comece criando seu primeiro curso para compartilhar conhecimento."
+                : "Ajuste sua busca ou filtros."}
             </p>
-            <div className="flex gap-2">
-              <button className="px-4 py-2 text-xs font-bold text-slate-400 border border-slate-200 rounded-lg bg-white cursor-not-allowed shadow-sm">
-                Anterior
-              </button>
-              <button className="px-4 py-2 text-xs font-bold text-brand-green border border-brand-green/20 rounded-lg bg-white hover:bg-brand-green/5 transition-colors shadow-sm">
-                Próximo
-              </button>
+            {courses.length === 0 && (
+              <Link
+                to="/instrutor/cursos/novo"
+                className="inline-flex items-center gap-2 bg-brand-green text-white font-bold px-6 py-3 rounded-xl hover:bg-brand-dark transition-all"
+              >
+                <Plus className="w-5 h-5" /> Criar Primeiro Curso
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50 border-b border-gray-100">
+                  <tr>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      Curso
+                    </th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      Conteúdo
+                    </th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      Métricas (MZM)
+                    </th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredCourses.map((course) => (
+                    <tr
+                      key={course.id}
+                      className="hover:bg-slate-50/50 transition-colors group"
+                    >
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className="relative">
+                            <img
+                              src={course.imageUrl}
+                              className={`w-16 h-10 rounded-lg object-cover shadow-sm transition-opacity duration-300 ${course.status === "Rascunho" ? "opacity-40 grayscale" : "opacity-100"}`}
+                              alt={course.title}
+                            />
+                            {course.status === "Rascunho" && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <EyeOff
+                                  size={14}
+                                  className="text-white drop-shadow-md"
+                                />
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <p
+                              className={`font-bold transition-colors ${course.status === "Publicado" ? "text-slate-900 group-hover:text-brand-green" : "text-slate-400 italic"}`}
+                            >
+                              {course.title}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                              {course.category}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-6">
+                          <div className="flex flex-col">
+                            <span className="flex items-center gap-1 text-xs font-bold text-slate-700">
+                              <BookOpen size={12} className="text-purple-500" />
+                              {course.totalLessons}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">
+                              Aulas
+                            </span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="flex items-center gap-1 text-xs font-bold text-slate-700">
+                              <TrendingUp
+                                size={12}
+                                className="text-orange-500"
+                              />
+                              {course.completionRate}%
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">
+                              Conclusão
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-black uppercase transition-all duration-300 ${
+                            course.status === "Rascunho"
+                              ? "bg-amber-50 text-amber-600"
+                              : "bg-emerald-50 text-emerald-600"
+                          }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full animate-pulse ${course.status === "Rascunho" ? "bg-amber-500" : "bg-emerald-500"}`}
+                          ></span>
+                          {course.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-6">
+                          <div className="flex flex-col">
+                            <span className="flex items-center gap-1 text-xs font-bold text-slate-700">
+                              <Users size={12} className="text-blue-500" />{" "}
+                              {course.enrollmentCount}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">
+                              Alunos
+                            </span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="flex items-center gap-1 text-xs font-bold text-slate-700">
+                              <DollarSign
+                                size={12}
+                                className="text-emerald-500"
+                              />{" "}
+                              {course.revenue.toLocaleString("pt-MZ", {
+                                minimumFractionDigits: 2,
+                              })}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">
+                              MZM
+                            </span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="flex items-center gap-1 text-xs font-bold text-slate-700">
+                              <Star
+                                size={12}
+                                className="text-brand-accent fill-brand-accent"
+                              />{" "}
+                              {course.rating}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">
+                              Rating
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {/* Botão de Ativar/Desativar */}
+                          <button
+                            onClick={() => toggleCourseStatus(course.id)}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border transition-all active:scale-95 ${
+                              course.status === "Publicado"
+                                ? "bg-red-50 text-red-600 border-red-100 hover:bg-red-100"
+                                : "bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100"
+                            }`}
+                            title={
+                              course.status === "Publicado"
+                                ? "Desativar (Tornar Rascunho)"
+                                : "Ativar (Publicar)"
+                            }
+                          >
+                            {course.status === "Publicado" ? (
+                              <Power size={14} />
+                            ) : (
+                              <Check size={14} />
+                            )}
+                            {course.status === "Publicado"
+                              ? "Desativar"
+                              : "Ativar"}
+                          </button>
+
+                          <div className="h-6 w-px bg-slate-100 mx-1"></div>
+
+                          <Link
+                            to={`/instrutor/cursos/editar/${course.id}`}
+                            className="p-2 text-slate-400 hover:text-brand-green hover:bg-brand-green/5 rounded-lg transition-all"
+                            title="Editar Curso"
+                          >
+                            <Edit3 size={18} />
+                          </Link>
+                          <Link
+                            to={`/cursos/${course.id}`}
+                            target="_blank"
+                            className={`p-2 rounded-lg transition-all ${
+                              course.status === "Publicado"
+                                ? "text-slate-400 hover:text-blue-500 hover:bg-blue-50"
+                                : "text-slate-200 cursor-not-allowed"
+                            }`}
+                            title={
+                              course.status === "Publicado"
+                                ? "Ver Página de Vendas"
+                                : "Curso não publicado"
+                            }
+                            onClick={(e) =>
+                              course.status !== "Publicado" &&
+                              e.preventDefault()
+                            }
+                          >
+                            <Eye size={18} />
+                          </Link>
+                          <button className="p-2 text-slate-400 hover:text-slate-900 rounded-lg transition-all">
+                            <MoreVertical size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Footer Info */}
+            <div className="p-6 bg-slate-50/50 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+              <p className="text-xs font-medium text-slate-500">
+                Mostrando {filteredCourses.length} de {courses.length} cursos
+                criados
+                {searchValue && ` (busca: "${searchValue}")`}
+              </p>
+              <div className="flex gap-2">
+                <button className="px-4 py-2 text-xs font-bold text-slate-400 border border-slate-200 rounded-lg bg-white cursor-not-allowed shadow-sm">
+                  Anterior
+                </button>
+                <button className="px-4 py-2 text-xs font-bold text-brand-green border border-brand-green/20 rounded-lg bg-white hover:bg-brand-green/5 transition-colors shadow-sm">
+                  Próximo
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </InstructorLayout>
   );
