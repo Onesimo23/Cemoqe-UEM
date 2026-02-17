@@ -1,39 +1,39 @@
 import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  serverTimestamp,
-  updateDoc,
+    addDoc,
+    collection,
+    doc,
+    getDoc,
+    serverTimestamp,
+    updateDoc,
 } from "firebase/firestore";
 import {
-  getDownloadURL,
-  getStorage,
-  ref as sRef,
-  uploadBytes,
+    getDownloadURL,
+    getStorage,
+    ref as sRef,
+    uploadBytes,
 } from "firebase/storage";
 import {
-  ArrowLeft,
-  Check,
-  CheckCircle,
-  ChevronDown,
-  File as FileIcon,
-  FileText,
-  FileUp,
-  HelpCircle,
-  Image as ImageIcon,
-  Info,
-  Layout,
-  Link as LinkIcon,
-  List,
-  MonitorPlay,
-  Plus,
-  PlusCircle,
-  Plus as PlusIcon,
-  Save,
-  Trash2,
-  Type,
-  X,
+    ArrowLeft,
+    Check,
+    CheckCircle,
+    ChevronDown,
+    File as FileIcon,
+    FileText,
+    FileUp,
+    HelpCircle,
+    Image as ImageIcon,
+    Info,
+    Layout,
+    Link as LinkIcon,
+    List,
+    MonitorPlay,
+    Plus,
+    PlusCircle,
+    Plus as PlusIcon,
+    Save,
+    Trash2,
+    Type,
+    X,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -110,6 +110,10 @@ const CourseEditorPage: React.FC = () => {
     "basic" | "descriptions" | "curriculum" | "interactive"
   >("basic");
   const [isSaving, setIsSaving] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error" | "info";
+  } | null>(null);
 
   // Form State
   const [imageSource, setImageSource] = useState<"local" | "url">("local");
@@ -145,6 +149,15 @@ const CourseEditorPage: React.FC = () => {
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Mostrar toast notification
+  const showToast = (
+    message: string,
+    type: "success" | "error" | "info" = "info",
+  ) => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   // Supabase Storage config (bucket deve existir no projeto Supabase)
   const SUPABASE_BUCKET = "course-files";
@@ -187,7 +200,7 @@ const CourseEditorPage: React.FC = () => {
 
   const handleSave = async () => {
     if (!user?.uid) {
-      alert("Sessão inválida. Entre novamente.");
+      showToast("Sessão inválida. Entre novamente.", "error");
       return;
     }
     setIsSaving(true);
@@ -237,11 +250,11 @@ const CourseEditorPage: React.FC = () => {
         await addDoc(ref, { ...payload, createdAt: serverTimestamp() });
       }
 
-      alert("Curso salvo com sucesso!");
+      showToast("Curso salvo com sucesso!", "success");
       navigate("/instrutor/cursos");
     } catch (e) {
       console.error("Erro ao salvar curso:", e);
-      alert("Não foi possível salvar o curso.");
+      showToast("Não foi possível salvar o curso.", "error");
     } finally {
       setIsSaving(false);
     }
@@ -669,11 +682,19 @@ const CourseEditorPage: React.FC = () => {
     try {
       const file = e.target.files?.[0];
       if (!file) return;
-      // Restringe formatos: apenas PDF e DOCX
+      // Restringe formatos: PDF, DOCX, PPTX, XLS, XLSX
       const lower = file.name.toLowerCase();
-      const allowed = lower.endsWith(".pdf") || lower.endsWith(".docx");
+      const allowed =
+        lower.endsWith(".pdf") ||
+        lower.endsWith(".docx") ||
+        lower.endsWith(".pptx") ||
+        lower.endsWith(".xlsx") ||
+        lower.endsWith(".xls");
       if (!allowed) {
-        alert("Formato não suportado. Selecione um ficheiro PDF ou DOCX.");
+        showToast(
+          "Formato não suportado. Selecione PDF, DOCX, PPTX, XLS ou XLSX.",
+          "error",
+        );
         return;
       }
       // Feedback rápido
@@ -726,7 +747,10 @@ const CourseEditorPage: React.FC = () => {
       updateLesson(moduleId, lessonId, "content", url);
     } catch (err) {
       console.error("Falha ao enviar documento da aula:", err);
-      alert("Não foi possível enviar o documento. Tente novamente.");
+      showToast(
+        "Não foi possível enviar o documento. Tente novamente.",
+        "error",
+      );
     }
   };
 
@@ -1826,11 +1850,11 @@ const CourseEditorPage: React.FC = () => {
                                       e,
                                     )
                                   }
-                                  accept=".pdf,.docx"
+                                  accept=".pdf,.docx,.pptx,.xls,.xlsx"
                                 />
                               </div>
                               <p className="text-[10px] text-gray-400 italic">
-                                Formatos aceites: PDF, DOCX.
+                                Formatos aceites: PDF, DOCX, PPTX, XLS, XLSX.
                               </p>
                             </div>
                           )}
@@ -1882,6 +1906,21 @@ const CourseEditorPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-lg shadow-lg font-semibold text-white transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 ${
+            toast.type === "success"
+              ? "bg-green-600 hover:bg-green-700"
+              : toast.type === "error"
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
     </InstructorLayout>
   );
 };

@@ -1,14 +1,19 @@
 import { Course } from '../types';
-import { MOCK_COURSES } from '../constants';
 
 /**
- * Simulates a Node.js backend API call to fetch courses.
- * In a real app, this would use fetch() or axios to hit a Node/Express endpoint.
+ * Fetches courses from the backend database.
+ * This should be updated to call your actual API endpoint.
  */
 export const fetchRecommendedCourses = async (): Promise<Course[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(MOCK_COURSES);
-    }, 600); // Simulate network latency
-  });
+  try {
+    // TODO: Replace with actual API call to your backend
+    // const response = await fetch('/api/courses');
+    // return response.json();
+    
+    // For now, returns empty array - courses should come from database only
+    return [];
+  } catch (error) {
+    console.error('Erro ao carregar cursos:', error);
+    return [];
+  }
 };

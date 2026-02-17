@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { MOCK_COURSES } from "../../constants";
 import AdminLayout from "../../layouts/AdminLayout";
 import { Course } from "../../types";
 
@@ -72,13 +71,19 @@ const ContentManagementPage: React.FC = () => {
   });
 
   // Sync with LocalStorage for persistence and moderation updates
+  // Only load courses that exist in localStorage (from database)
   useEffect(() => {
     const savedCourses = localStorage.getItem("uem_courses");
     if (savedCourses) {
-      setCourses(JSON.parse(savedCourses));
+      try {
+        setCourses(JSON.parse(savedCourses));
+      } catch (error) {
+        console.error('Erro ao carregar cursos:', error);
+        setCourses([]);
+      }
     } else {
-      setCourses(MOCK_COURSES);
-      localStorage.setItem("uem_courses", JSON.stringify(MOCK_COURSES));
+      // Start with empty array - courses must come from database
+      setCourses([]);
     }
   }, []);
 

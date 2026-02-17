@@ -12,7 +12,6 @@ import {
   XCircle,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { MOCK_COURSES } from "../../constants";
 import AdminLayout from "../../layouts/AdminLayout";
 import { db } from "../../services/firebase";
 import { Course } from "../../types";
@@ -103,7 +102,7 @@ const CourseModerationPage: React.FC = () => {
     const savedCourses = localStorage.getItem("uem_courses");
     const catalog: Course[] = savedCourses
       ? JSON.parse(savedCourses)
-      : MOCK_COURSES;
+      : [];
 
     // 2. Map pending to actual Course type
     const newCourse: Course = {

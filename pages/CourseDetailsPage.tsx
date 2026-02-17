@@ -1,27 +1,27 @@
 import {
-  collection,
-  doc,
-  getDocs,
-  onSnapshot,
-  limit as qbLimit,
-  query,
-  where,
+    collection,
+    doc,
+    getDocs,
+    onSnapshot,
+    limit as qbLimit,
+    query,
+    where,
 } from "firebase/firestore";
 import {
-  AlertCircle,
-  Award,
-  Check,
-  ChevronDown,
-  Download,
-  File,
-  FileText,
-  Globe,
-  Infinity,
-  PlayCircle,
-  Share2,
-  Smartphone,
-  Star,
-  Users,
+    AlertCircle,
+    Award,
+    Check,
+    ChevronDown,
+    Download,
+    File,
+    FileText,
+    Globe,
+    Infinity,
+    PlayCircle,
+    Share2,
+    Smartphone,
+    Star,
+    Users,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -571,34 +571,13 @@ const CourseDetailsPage: React.FC = () => {
             <div className="lg:absolute lg:-top-64 lg:right-0 w-full lg:w-[360px] flex flex-col gap-6">
               {/* Purchase Card */}
               <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden sticky top-24">
-                {/* Preview Image/Video Area */}
+                {/* Preview Image Area - Mostrar sempre a imagem de destaque */}
                 <div className="relative aspect-video group cursor-pointer bg-gray-900">
-                  {!isEnrolled && firstVideo ? (
-                    (() => {
-                      const yt = ytEmbed(firstVideo?.content);
-                      if (yt) {
-                        return (
-                          <div className="w-full h-full">
-                            <iframe
-                              src={yt}
-                              className="w-full h-full"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                              allowFullScreen
-                              title="Prévia do curso"
-                            />
-                            <div className="absolute inset-0 pointer-events-none"></div>
-                          </div>
-                        );
-                      }
-                      return <TimedHtml5Preview src={firstVideo?.content} />;
-                    })()
-                  ) : (
-                    <img
-                      src={course?.imageUrl}
-                      alt="Preview"
-                      className="w-full h-full object-cover opacity-90 group-hover:opacity-75 transition-opacity"
-                    />
-                  )}
+                  <img
+                    src={course?.imageUrl || course?.cardImageUrl}
+                    alt="Preview"
+                    className="w-full h-full object-cover opacity-90 group-hover:opacity-75 transition-opacity"
+                  />
                   <div className="absolute bottom-4 left-0 w-full text-center">
                     <span className="text-white font-bold text-sm drop-shadow-md">
                       Pré-visualizar curso

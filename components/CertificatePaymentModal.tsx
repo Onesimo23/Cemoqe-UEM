@@ -592,6 +592,47 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
             </select>
           </div>
 
+          {/* Dados de Pagamento por Método */}
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <p className="text-sm font-semibold text-amber-900 mb-2">
+              Dados para Transferência:
+            </p>
+            {paymentMethod === "m-pesa" && (
+              <div className="text-sm text-amber-800">
+                <p className="font-medium">
+                  M-Pesa: <span className="font-bold">846909999</span>
+                </p>
+                <p className="text-xs text-amber-700 mt-1">
+                  Faça a transferência para este número e insira o ID da
+                  transação abaixo.
+                </p>
+              </div>
+            )}
+            {paymentMethod === "e-mola" && (
+              <div className="text-sm text-amber-800">
+                <p className="font-medium">
+                  E-Mola: <span className="font-bold">(870509214)</span>
+                </p>
+                <p className="text-xs text-amber-700 mt-1">
+                  Faça a transferência para este número e insira o ID da
+                  transação abaixo.
+                </p>
+              </div>
+            )}
+            {paymentMethod === "bank" && (
+              <div className="text-sm text-amber-800">
+                <p className="font-medium">
+                  BCI:{" "}
+                  <span className="font-bold">(000800000971671710113)</span>
+                </p>
+                <p className="text-xs text-amber-700 mt-1">
+                  Faça a transferência para esta conta e insira o ID da
+                  transação abaixo.
+                </p>
+              </div>
+            )}
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               ID da Transação

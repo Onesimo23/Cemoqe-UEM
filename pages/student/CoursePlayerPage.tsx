@@ -1,32 +1,33 @@
 import {
-    addDoc,
-    collection,
-    doc,
-    getDocs,
-    increment,
-    onSnapshot,
-    orderBy,
-    limit as qbLimit,
-    query,
-    serverTimestamp,
-    updateDoc,
-    where,
+  addDoc,
+  collection,
+  doc,
+  getDocs,
+  increment,
+  onSnapshot,
+  orderBy,
+  limit as qbLimit,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
 } from "firebase/firestore";
 import {
-    Award,
-    CheckCircle,
-    ChevronDown,
-    ChevronLeft,
-    Circle,
-    Download,
-    File,
-    FileText,
-    Lock,
-    Menu,
-    PlayCircle,
-    Upload,
-    Volume2,
-    VolumeX,
+  Award,
+  CheckCircle,
+  ChevronDown,
+  ChevronLeft,
+  Circle,
+  Download,
+  File,
+  FileText,
+  Lock,
+  Menu,
+  PlayCircle,
+  Upload,
+  Volume2,
+  VolumeX,
+  X,
 } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -41,7 +42,7 @@ const CoursePlayerPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     "overview" | "materials" | "uploads" | "comments" | "interactive"
   >("overview");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [openModules, setOpenModules] = useState<string[]>([]);
   const [currentLessonId, setCurrentLessonId] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
@@ -1097,6 +1098,27 @@ const CoursePlayerPage: React.FC = () => {
           >
             <Menu className="w-5 h-5" />
           </button>
+          {/* Mobile: Dropdown para Certificado */}
+          <div className="md:hidden relative group">
+            <button
+              onClick={() =>
+                progressPercentage === 100 && setShowCertificateModal(true)
+              }
+              disabled={progressPercentage < 100}
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors border ${
+                progressPercentage === 100
+                  ? "border-2 text-white cursor-pointer"
+                  : "border border-gray-300 cursor-not-allowed"
+              }`}
+              style={
+                progressPercentage === 100
+                  ? { backgroundColor: "#0E7038" }
+                  : { color: "#9CA3AF" }
+              }
+            >
+              <Award className="w-4 h-4" />
+            </button>
+          </div>
           <div className="hidden md:flex items-center gap-3">
             <button
               onClick={() =>
@@ -1254,7 +1276,7 @@ const CoursePlayerPage: React.FC = () => {
                 {(() => {
                   const viewer = resolveDocumentViewer(current.lesson.content);
                   return (
-                    <div className="w-full h-[70vh] border rounded-xl overflow-hidden shadow-sm bg-slate-50">
+                    <div className="w-full h-[50vh] md:h-[70vh] border rounded-xl overflow-hidden shadow-sm bg-slate-50">
                       {viewer ? (
                         viewer.type === "image" ? (
                           <div className="w-full h-full bg-slate-50 flex items-center justify-center">
@@ -1369,7 +1391,7 @@ const CoursePlayerPage: React.FC = () => {
             </div>
 
             {/* Tabs Navigation */}
-            <div className="flex items-center gap-6 border-b border-gray-200 mb-6 overflow-x-auto whitespace-nowrap scrollbar-hide">
+            <div className="flex items-center gap-3 md:gap-6 border-b border-gray-200 mb-6 overflow-x-auto whitespace-nowrap scrollbar-hide">
               <TabButton
                 active={activeTab === "overview"}
                 onClick={() => setActiveTab("overview")}
@@ -1685,6 +1707,13 @@ const CoursePlayerPage: React.FC = () => {
           `}
         >
           <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="md:hidden p-1 hover:bg-gray-200 rounded-lg transition-colors"
+              style={{ color: "#0E7038" }}
+            >
+              <X className="w-5 h-5" />
+            </button>
             <h3 className="font-bold text-gray-900">Conteúdo do Curso</h3>
             <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">
               {Array.isArray(displayModules)
@@ -2152,7 +2181,7 @@ const InteractiveQuiz = ({ course }: any) => {
 const TabButton = ({ active, onClick, label }: any) => (
   <button
     onClick={onClick}
-    className={`pb-3 text-sm font-bold border-b-2 transition-colors flex-shrink-0 ${
+    className={`pb-2 md:pb-3 text-xs md:text-sm font-bold border-b-2 transition-colors flex-shrink-0 ${
       active
         ? "border-brand-green text-brand-green"
         : "border-transparent text-gray-500 hover:text-gray-700"
