@@ -173,6 +173,19 @@ const CoursePlayerPage: React.FC = () => {
     return str;
   };
 
+  const getOpenInNewTabUrl = (url?: string) => {
+    const str = (url || "").toString().trim();
+    if (!str) return "#";
+
+    // URLs do Supabase com token assinado devem ser mantidas intactas
+    if (str.includes("supabase.co") && str.includes("token=")) {
+      return str;
+    }
+
+    // Para outros tipos, tenta garantir URL absoluta
+    return ensureAbsoluteFileUrl(url);
+  };
+
   const getDownloadUrl = (url?: string) => {
     const src = ensureAbsoluteFileUrl(url);
     if (!src || src === "#") return "#";
@@ -927,11 +940,15 @@ const CoursePlayerPage: React.FC = () => {
       }
 
       // Remove query string se existir (tokens, etc)
-      let cleanSrc = src.split("?")[0];
+      // MAS: URLs assinadas do Supabase PRECISAM do token
+      let cleanSrc = src;
+      if (!src.includes("supabase.co") || !src.includes("token=")) {
+        cleanSrc = src.split("?")[0];
+      }
 
       // Supabase Storage
       if (host.includes("supabase.co")) {
-        if (isImage) return { type: "image", src: cleanSrc };
+        if (isImage) return { type: "image", src: src }; // Mantém token para imagens
 
         // PDFs: Tentar carregar diretamente (Supabase serve PDFs)
         // Se falhar, o fallback é usar Google Docs Viewer
@@ -939,19 +956,19 @@ const CoursePlayerPage: React.FC = () => {
           // Primeiro tenta carregar direto (mais confiável)
           console.log(
             "[resolveDocumentViewer] PDF from Supabase (direto):",
-            cleanSrc,
+            src,
           );
           return {
             type: "iframe",
-            src: cleanSrc, // Supabase serve PDFs nativamente em iframes
+            src: src, // Mantém URL com token intacta
           };
         }
 
-        // Office documents: usar Microsoft Office Online Viewer
+        // Office documents: usar Microsoft Office Online Viewer com token preservado
         if (isOfficeDoc || isOfficePresentation || isOfficeSheet) {
-          const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(cleanSrc)}`;
+          const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(src)}`;
           console.log("[resolveDocumentViewer] Office from Supabase:", {
-            original: cleanSrc,
+            original: src,
             viewer: viewerUrl,
           });
           return {
@@ -960,7 +977,7 @@ const CoursePlayerPage: React.FC = () => {
           };
         }
 
-        return { type: "iframe", src: cleanSrc };
+        return { type: "iframe", src: src }; // Mantém token
       }
 
       // Firebase Storage
@@ -1232,15 +1249,7 @@ const CoursePlayerPage: React.FC = () => {
                       download
                       className="text-sm font-semibold px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50"
                     >
-                      Baixar
-                    </a>
-                    <a
-                      href={ensureAbsoluteFileUrl(current.lesson.content)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm font-semibold px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50"
-                    >
-                      Abrir em nova aba
+                      ⬇ Baixar
                     </a>
                   </div>
                 </div>
@@ -1268,7 +1277,11 @@ const CoursePlayerPage: React.FC = () => {
                             src={viewer.src}
                             className="w-full h-full border-none"
                             title="Visualização de Documento"
-                            sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                            sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            onLoad={() => {
+                              console.log("[CoursePlayer] iframe carregado com sucesso:", viewer.src);
+                            }}
                             onError={() => {
                               console.error(
                                 "Erro ao carregar iframe:",
@@ -1284,8 +1297,7 @@ const CoursePlayerPage: React.FC = () => {
                               Não foi possível visualizar este documento
                             </p>
                             <p className="text-sm text-gray-500 mb-4">
-                              Use os botões acima para baixar ou abrir em nova
-                              aba
+                              Faça o download para visualizar o arquivo em seu computador
                             </p>
                             {current?.lesson?.content && (
                               <a
