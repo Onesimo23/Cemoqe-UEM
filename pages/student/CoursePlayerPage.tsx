@@ -1,32 +1,32 @@
 import {
-  addDoc,
-  collection,
-  doc,
-  getDocs,
-  increment,
-  onSnapshot,
-  orderBy,
-  limit as qbLimit,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
+    addDoc,
+    collection,
+    doc,
+    getDocs,
+    increment,
+    onSnapshot,
+    orderBy,
+    limit as qbLimit,
+    query,
+    serverTimestamp,
+    updateDoc,
+    where,
 } from "firebase/firestore";
 import {
-  Award,
-  CheckCircle,
-  ChevronDown,
-  ChevronLeft,
-  Circle,
-  Download,
-  File,
-  FileText,
-  Lock,
-  Menu,
-  PlayCircle,
-  Upload,
-  Volume2,
-  VolumeX,
+    Award,
+    CheckCircle,
+    ChevronDown,
+    ChevronLeft,
+    Circle,
+    Download,
+    File,
+    FileText,
+    Lock,
+    Menu,
+    PlayCircle,
+    Upload,
+    Volume2,
+    VolumeX,
 } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -869,7 +869,7 @@ const CoursePlayerPage: React.FC = () => {
 
   const resolveDocumentViewer = (
     url?: string,
-  ): { type: "iframe" | "image"; src: string } | null => {
+  ): { type: "iframe" | "image" | "embed"; src: string } | null => {
     const src = ensureAbsoluteFileUrl(url);
     if (!src) return null;
 
@@ -950,16 +950,14 @@ const CoursePlayerPage: React.FC = () => {
       if (host.includes("supabase.co")) {
         if (isImage) return { type: "image", src: src }; // Mantém token para imagens
 
-        // PDFs: Tentar carregar diretamente (Supabase serve PDFs)
-        // Se falhar, o fallback é usar Google Docs Viewer
+        // PDFs: Usar <embed> nativo - funciona em todos os navegadores
         if (isPdf) {
-          // Primeiro tenta carregar direto (mais confiável)
           console.log(
-            "[resolveDocumentViewer] PDF from Supabase (direto):",
+            "[resolveDocumentViewer] PDF from Supabase (embed nativo):",
             src,
           );
           return {
-            type: "iframe",
+            type: "embed",
             src: src, // Mantém URL com token intacta
           };
         }
@@ -977,18 +975,18 @@ const CoursePlayerPage: React.FC = () => {
           };
         }
 
-        return { type: "iframe", src: src }; // Mantém token
+        return { type: "embed", src: src }; // Mantém token, usa embed
       }
 
       // Firebase Storage
       if (host.includes("firebasestorage.googleapis.com")) {
         if (isImage) return { type: "image", src: src };
 
-        // PDFs: usar Google Docs Viewer
+        // PDFs: usar embed nativo
         if (isPdf) {
           return {
-            type: "iframe",
-            src: `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(src)}`,
+            type: "embed",
+            src: src,
           };
         }
 
@@ -999,17 +997,17 @@ const CoursePlayerPage: React.FC = () => {
           };
         }
 
-        return { type: "iframe", src: src };
+        return { type: "embed", src: src };
       }
 
       // Fallback para qualquer outra URL
       if (isImage) return { type: "image", src: cleanSrc };
 
-      // PDFs: usar Google Docs Viewer
+      // PDFs: usar embed nativo
       if (isPdf) {
         return {
-          type: "iframe",
-          src: `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(cleanSrc)}`,
+          type: "embed",
+          src: cleanSrc,
         };
       }
 
@@ -1021,7 +1019,7 @@ const CoursePlayerPage: React.FC = () => {
         };
       }
 
-      return { type: "iframe", src: cleanSrc };
+      return { type: "embed", src: cleanSrc };
     } catch (err) {
       console.error("Erro ao resolver visualizador de documento:", err);
       try {
@@ -1029,12 +1027,12 @@ const CoursePlayerPage: React.FC = () => {
         const lowerPath = parsed.pathname.toLowerCase();
         if (lowerPath.endsWith(".pdf")) {
           return {
-            type: "iframe",
-            src: `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(src)}`,
+            type: "embed",
+            src: src,
           };
         }
       } catch {}
-      return { type: "iframe", src: src || "" };
+      return { type: "embed", src: src || "" };
     }
   };
 
@@ -1272,15 +1270,30 @@ const CoursePlayerPage: React.FC = () => {
                               }}
                             />
                           </div>
+                        ) : viewer.type === "embed" ? (
+                          <embed
+                            src={viewer.src}
+                            className="w-full h-full"
+                            type="application/pdf"
+                            onError={() => {
+                              console.error(
+                                "Erro ao carregar embed:",
+                                viewer.src,
+                              );
+                            }}
+                          />
                         ) : (
                           <iframe
                             src={viewer.src}
                             className="w-full h-full border-none"
                             title="Visualização de Documento"
-                            sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation allow-presentation"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                             onLoad={() => {
-                              console.log("[CoursePlayer] iframe carregado com sucesso:", viewer.src);
+                              console.log(
+                                "[CoursePlayer] iframe carregado com sucesso:",
+                                viewer.src,
+                              );
                             }}
                             onError={() => {
                               console.error(
@@ -1297,7 +1310,8 @@ const CoursePlayerPage: React.FC = () => {
                               Não foi possível visualizar este documento
                             </p>
                             <p className="text-sm text-gray-500 mb-4">
-                              Faça o download para visualizar o arquivo em seu computador
+                              Faça o download para visualizar o arquivo em seu
+                              computador
                             </p>
                             {current?.lesson?.content && (
                               <a
