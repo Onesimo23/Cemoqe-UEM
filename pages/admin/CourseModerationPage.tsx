@@ -1,15 +1,15 @@
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import {
-  CheckCircle2,
-  Clock,
-  Eye,
-  Filter,
-  Info,
-  MessageSquare,
-  PlayCircle,
-  Search,
-  X,
-  XCircle,
+    CheckCircle2,
+    Clock,
+    Eye,
+    Filter,
+    Info,
+    MessageSquare,
+    PlayCircle,
+    Search,
+    X,
+    XCircle,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import AdminLayout from "../../layouts/AdminLayout";
@@ -100,9 +100,7 @@ const CourseModerationPage: React.FC = () => {
 
     // 1. Get current catalog
     const savedCourses = localStorage.getItem("uem_courses");
-    const catalog: Course[] = savedCourses
-      ? JSON.parse(savedCourses)
-      : [];
+    const catalog: Course[] = savedCourses ? JSON.parse(savedCourses) : [];
 
     // 2. Map pending to actual Course type
     const newCourse: Course = {

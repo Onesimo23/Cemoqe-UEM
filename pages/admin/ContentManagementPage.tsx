@@ -1,19 +1,19 @@
 import {
-   AlertCircle,
-   ChevronRight,
-   Eye,
-   EyeOff,
-   Filter,
-   FolderPlus,
-   Hash,
-   Layers,
-   Plus,
-   Power,
-   Search,
-   Trash2,
-   TrendingUp,
-   User,
-   X
+  AlertCircle,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Filter,
+  FolderPlus,
+  Hash,
+  Layers,
+  Plus,
+  Power,
+  Search,
+  Trash2,
+  TrendingUp,
+  User,
+  X,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -78,7 +78,7 @@ const ContentManagementPage: React.FC = () => {
       try {
         setCourses(JSON.parse(savedCourses));
       } catch (error) {
-        console.error('Erro ao carregar cursos:', error);
+        console.error("Erro ao carregar cursos:", error);
         setCourses([]);
       }
     } else {
