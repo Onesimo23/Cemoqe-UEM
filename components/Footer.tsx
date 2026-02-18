@@ -17,14 +17,6 @@ const Footer: React.FC = () => {
     alt="Logo UEM"
     className="h-16 w-auto" // Aumentei um pouco a altura (h-16) para dar destaque
   />
-
-  {/* Nome da instituição agora aparece abaixo devido ao flex-col */}
-  <span
-    className="text-lg font-bold text-center"
-    style={{ color: branding.appearance.primaryColor }}
-  >
-    {branding.appearance.institutionName}
-  </span>
 </div>
 
         {/* Links */}
