@@ -12,8 +12,9 @@ import {
     UserCheck,
     Users,
     X,
+    Clock,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import LogoutConfirmModal from "../components/LogoutConfirmModal";
 import { useAuth } from "../contexts/AuthContext";
@@ -27,10 +28,28 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [dateTime, setDateTime] = useState<string>("");
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, profile, user } = useAuth();
   const { branding } = useBranding();
+
+  // Atualizar data e hora em tempo real
+  React.useEffect(() => {
+    const updateDateTime = () => {
+      const now = new Date();
+      const formatted = now.toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      setDateTime(formatted);
+    };
+    updateDateTime();
+    const interval = setInterval(updateDateTime, 60000); // Atualiza a cada minuto
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogoutClick = () => {
     setIsLogoutModalOpen(true);
@@ -200,6 +219,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         {/* Header Desktop */}
         <header className="hidden md:flex bg-white border-b border-slate-200 py-4 px-8 items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-6">
+            <Link to="/" className="text-sm font-bold text-slate-700 hover:text-brand-green transition-colors px-4 py-2 rounded-lg hover:bg-slate-50">
+              ← Voltar para o Site
+            </Link>
+            <div className="h-6 w-px bg-slate-100"></div>
             <div className="relative w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
@@ -210,9 +233,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             </div>
             <div className="h-6 w-px bg-slate-100"></div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+              <Clock className="w-4 h-4 text-slate-400" />
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
-                Servidores Operacionais
+                {dateTime}
               </span>
             </div>
           </div>
