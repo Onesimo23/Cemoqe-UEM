@@ -9,24 +9,33 @@ import { DEFAULT_DASHBOARD, isValidRole } from "../utils/routeProtection";
 
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, profile } = useAuth();
+  const { user, profile, loading } = useAuth();
   const { branding } = useBranding();
   const isAuthenticated = !!(user || auth.currentUser);
 
   /**
    * Obtém o link correto para o dashboard conforme o role
+   * Com fallback para /aluno/dashboard se o profile não estiver pronto
    */
   const getDashboardLink = (): string => {
-    if (!profile || !isValidRole(profile.role)) {
-      return "/aluno/dashboard"; // Fallback
+    // Se o profile está carregado e tem um role válido, usa-o
+    if (profile && isValidRole(profile.role)) {
+      return DEFAULT_DASHBOARD[profile.role];
     }
-    return DEFAULT_DASHBOARD[profile.role];
+    
+    // Fallback padrão
+    return "/aluno/dashboard";
   };
 
   /**
    * Obtém o label correto para o botão conforme o role
    */
   const getDashboardLabel = (): string => {
+    // Se está carregando, mostra label genérica
+    if (loading) {
+      return "Carregando...";
+    }
+    
     if (!profile || !isValidRole(profile.role)) {
       return "Minha Área";
     }
@@ -101,7 +110,7 @@ const Navbar: React.FC = () => {
           ) : (
             <Link
               to={getDashboardLink()}
-              className="flex items-center gap-2 text-white font-bold py-2.5 px-6 rounded-md transition-all shadow-md"
+              className={`flex items-center gap-2 text-white font-bold py-2.5 px-6 rounded-md transition-all shadow-md ${loading ? 'opacity-60 pointer-events-none' : ''}`}
               style={{
                 backgroundColor: branding.appearance.primaryColor,
                 boxShadow: `0 4px 6px ${branding.appearance.primaryColor}40`,
@@ -152,7 +161,7 @@ const Navbar: React.FC = () => {
           ) : (
             <Link
               to={getDashboardLink()}
-              className="text-white font-semibold py-3 rounded-md w-full text-center shadow-md flex items-center justify-center gap-2"
+              className={`text-white font-semibold py-3 rounded-md w-full text-center shadow-md flex items-center justify-center gap-2 ${loading ? 'opacity-60 pointer-events-none' : ''}`}
               style={{
                 backgroundColor: branding.appearance.primaryColor,
                 boxShadow: `0 4px 6px ${branding.appearance.primaryColor}40`,
