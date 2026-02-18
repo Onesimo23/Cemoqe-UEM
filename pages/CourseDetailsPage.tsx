@@ -587,9 +587,6 @@ const CourseDetailsPage: React.FC = () => {
 
                 <div className="p-6">
                   <div className="flex items-end gap-3 mb-6">
-                    <span className="text-3xl font-bold text-gray-900">
-                      Gratuito
-                    </span>
                     {enrollmentCount > 0 && (
                       <span className="text-xs text-gray-500 font-medium">
                         {enrollmentCount.toLocaleString()} alunos inscritos
