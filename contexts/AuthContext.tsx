@@ -47,7 +47,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    console.log("🟢 [AuthContext] useEffect rápido: auth.currentUser =", auth.currentUser?.uid, "user state =", user?.uid);
+    console.log(
+      "🟢 [AuthContext] useEffect rápido: auth.currentUser =",
+      auth.currentUser?.uid,
+      "user state =",
+      user?.uid,
+    );
     if (auth.currentUser && !user) {
       const cu = auth.currentUser;
       setUser(cu);
@@ -66,7 +71,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           createdAt: null,
           lastLogin: null,
         };
-        console.log("🎯 [AuthContext] Setando fallback profile com role:", fallback.role);
+        console.log(
+          "🎯 [AuthContext] Setando fallback profile com role:",
+          fallback.role,
+        );
         setProfile(fallback);
         setLoading(false);
       }
@@ -77,10 +85,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const getOrUpdateProfile = async (
     firebaseUser: User,
   ): Promise<UserProfile> => {
-    console.log("🔵 [AuthContext] getOrUpdateProfile iniciado para:", firebaseUser.uid);
+    console.log(
+      "🔵 [AuthContext] getOrUpdateProfile iniciado para:",
+      firebaseUser.uid,
+    );
     const userRef = doc(db, "profiles", firebaseUser.uid);
     const userSnap = await getDoc(userRef);
-    console.log("📂 [AuthContext] Profile existe no Firestore:", userSnap.exists());
+    console.log(
+      "📂 [AuthContext] Profile existe no Firestore:",
+      userSnap.exists(),
+    );
 
     // Sempre usar displayName do Firebase se disponível
     const fullName =
@@ -92,12 +106,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     if (userSnap.exists()) {
       const firestoreData = userSnap.data() as any;
-      console.log("✅ [AuthContext] Dados do Firestore completos:", firestoreData);
-      console.log("✅ [AuthContext] Dados do Firestore - role:", firestoreData.role);
-      
+      console.log(
+        "✅ [AuthContext] Dados do Firestore completos:",
+        firestoreData,
+      );
+      console.log(
+        "✅ [AuthContext] Dados do Firestore - role:",
+        firestoreData.role,
+      );
+
       // GARANTIR que role sempre existe (fallback para student se não estiver presente)
       const role = firestoreData.role || "student";
-      
+
       profileData = {
         id: firebaseUser.uid,
         uid: firebaseUser.uid,
@@ -111,7 +131,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         lastLogin: firestoreData.lastLogin || null,
       };
     } else {
-      console.log("⚠️  [AuthContext] Perfil não existe no Firestore, criando novo com role='student'");
+      console.log(
+        "⚠️  [AuthContext] Perfil não existe no Firestore, criando novo com role='student'",
+      );
       profileData = {
         id: firebaseUser.uid,
         uid: firebaseUser.uid,
@@ -126,7 +148,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       };
     }
 
-    console.log("📤 [AuthContext] Perfil a retornar:", { role: profileData.role, email: profileData.email, uid: profileData.uid });
+    console.log("📤 [AuthContext] Perfil a retornar:", {
+      role: profileData.role,
+      email: profileData.email,
+      uid: profileData.uid,
+    });
 
     // SEMPRE garantir que o Firestore tem o nome correto E O ROLE DEFINIDO
     await setDoc(
@@ -147,18 +173,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     // Timeout de segurança: garante que loading fica false após 5 segundos
     const safetyTimeout = setTimeout(() => {
-      console.warn("⏰ [AuthContext] TIMEOUT de segurança disparo! Loading ficou true por muito tempo");
+      console.warn(
+        "⏰ [AuthContext] TIMEOUT de segurança disparo! Loading ficou true por muito tempo",
+      );
       setLoading(false);
     }, 5000);
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      console.log("🔔 [AuthContext] onAuthStateChanged disparado, currentUser:", currentUser?.uid);
+      console.log(
+        "🔔 [AuthContext] onAuthStateChanged disparado, currentUser:",
+        currentUser?.uid,
+      );
       setUser(currentUser);
       if (currentUser) {
         try {
           console.log("🔄 [AuthContext] Carregando perfil do Firestore...");
           const userProfile = await getOrUpdateProfile(currentUser);
-          console.log("✔️ [AuthContext] Perfil carregado com sucesso:", { role: userProfile.role, email: userProfile.email });
+          console.log("✔️ [AuthContext] Perfil carregado com sucesso:", {
+            role: userProfile.role,
+            email: userProfile.email,
+          });
           setProfile(userProfile);
           await setDoc(
             doc(db, "profiles", currentUser.uid),
@@ -187,7 +221,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             createdAt: null,
             lastLogin: null,
           };
-          console.log("🛡️ [AuthContext] Usando fallback profile com role:", fallback.role);
+          console.log(
+            "🛡️ [AuthContext] Usando fallback profile com role:",
+            fallback.role,
+          );
           setProfile(fallback);
         }
       } else {

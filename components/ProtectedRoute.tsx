@@ -5,7 +5,7 @@ import { auth } from "../services/firebase";
 import {
     DEFAULT_DASHBOARD,
     isValidRole,
-    logUnauthorizedAccess
+    logUnauthorizedAccess,
 } from "../utils/routeProtection";
 
 interface ProtectedRouteProps {
@@ -64,7 +64,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Se não autenticado, redireciona para login
   if (!isAuthenticated) {
-    console.log("🔐 [ProtectedRoute] Não autenticado, redirecionando para login");
+    console.log(
+      "🔐 [ProtectedRoute] Não autenticado, redirecionando para login",
+    );
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -78,7 +80,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // ⛔ VALIDAÇÃO CRÍTICA: Bloqueia acesso a rotas não autorizada
   // Para admin e instrutor, verifica o role exato
   if (allowedRole !== "student" && profile.role !== allowedRole) {
-    console.log("🚫 [ProtectedRoute] Role diferente! Esperado:", allowedRole, "Atual:", profile.role);
+    console.log(
+      "🚫 [ProtectedRoute] Role diferente! Esperado:",
+      allowedRole,
+      "Atual:",
+      profile.role,
+    );
     logUnauthorizedAccess(location.pathname, profile.role, user?.uid);
     // Redireciona para o dashboard do seu role
     return <Navigate to={DEFAULT_DASHBOARD[profile.role]} replace />;
@@ -88,7 +95,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // (ou se tiver múltiplos roles e estudante for um deles no futuro)
   if (allowedRole === "student" && profile.role !== "student") {
     // Admin e instrutor não devem ter acesso a rotas de estudante
-    console.log("🚫 [ProtectedRoute] Não é estudante! Role atual:", profile.role);
+    console.log(
+      "🚫 [ProtectedRoute] Não é estudante! Role atual:",
+      profile.role,
+    );
     logUnauthorizedAccess(location.pathname, profile.role, user?.uid);
     return <Navigate to={DEFAULT_DASHBOARD[profile.role]} replace />;
   }

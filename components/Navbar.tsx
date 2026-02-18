@@ -22,7 +22,7 @@ const Navbar: React.FC = () => {
     if (profile && isValidRole(profile.role)) {
       return DEFAULT_DASHBOARD[profile.role];
     }
-    
+
     // Fallback padrão
     return "/aluno/dashboard";
   };
@@ -35,7 +35,7 @@ const Navbar: React.FC = () => {
     if (loading) {
       return "Carregando...";
     }
-    
+
     if (!profile || !isValidRole(profile.role)) {
       return "Minha Área";
     }
@@ -110,7 +110,7 @@ const Navbar: React.FC = () => {
           ) : (
             <Link
               to={getDashboardLink()}
-              className={`flex items-center gap-2 text-white font-bold py-2.5 px-6 rounded-md transition-all shadow-md ${loading ? 'opacity-60 pointer-events-none' : ''}`}
+              className={`flex items-center gap-2 text-white font-bold py-2.5 px-6 rounded-md transition-all shadow-md ${loading ? "opacity-60 pointer-events-none" : ""}`}
               style={{
                 backgroundColor: branding.appearance.primaryColor,
                 boxShadow: `0 4px 6px ${branding.appearance.primaryColor}40`,
@@ -161,7 +161,7 @@ const Navbar: React.FC = () => {
           ) : (
             <Link
               to={getDashboardLink()}
-              className={`text-white font-semibold py-3 rounded-md w-full text-center shadow-md flex items-center justify-center gap-2 ${loading ? 'opacity-60 pointer-events-none' : ''}`}
+              className={`text-white font-semibold py-3 rounded-md w-full text-center shadow-md flex items-center justify-center gap-2 ${loading ? "opacity-60 pointer-events-none" : ""}`}
               style={{
                 backgroundColor: branding.appearance.primaryColor,
                 boxShadow: `0 4px 6px ${branding.appearance.primaryColor}40`,
