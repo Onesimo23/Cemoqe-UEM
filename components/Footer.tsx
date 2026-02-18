@@ -10,26 +10,22 @@ const Footer: React.FC = () => {
     <footer className="bg-white border-t border-gray-100 py-12 px-6 md:px-12 mt-auto">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
         {/* Brand */}
-        <div className="flex items-center gap-2">
-          {branding.appearance.logoUrl ? (
-            <img
-              src={branding.appearance.logoUrl}
-              alt="Logo"
-              className="h-8 w-auto"
-            />
-          ) : (
-            <GraduationCap
-              className="w-6 h-6"
-              style={{ color: branding.appearance.primaryColor }}
-            />
-          )}
-          <span
-            className="text-lg font-bold"
-            style={{ color: branding.appearance.primaryColor }}
-          >
-            {branding.appearance.institutionName}
-          </span>
-        </div>
+        <div className="flex flex-col items-center gap-2">
+  {/* Logotipo fixo apontando para a pasta public */}
+  <img
+    src="/uem.svg"
+    alt="Logo UEM"
+    className="h-16 w-auto" // Aumentei um pouco a altura (h-16) para dar destaque
+  />
+
+  {/* Nome da instituição agora aparece abaixo devido ao flex-col */}
+  <span
+    className="text-lg font-bold text-center"
+    style={{ color: branding.appearance.primaryColor }}
+  >
+    {branding.appearance.institutionName}
+  </span>
+</div>
 
         {/* Links */}
         <div className="flex flex-wrap justify-center gap-8 text-sm text-gray-500 font-medium">
@@ -80,10 +76,9 @@ const Footer: React.FC = () => {
         </div>
       </div>
 
-      <div className="text-center text-xs text-gray-400 mt-12">
-        © 2024 {branding.appearance.institutionName}. Todos os direitos
-        reservados.
-      </div>
+     <div className="text-center text-xs text-gray-400 mt-12">
+  © {new Date().getFullYear()} {branding.appearance.institutionName}. Todos os direitos reservados.
+</div>
     </footer>
   );
 };

@@ -46,7 +46,7 @@ const Hero: React.FC = () => {
             <span style={{ color: branding.appearance.accentColor }}>
               Cursos
             </span>
-            <span className="relative"> para gestores</span>{" "}
+            <span className="relative"> Para Gestores</span>{" "}
           </h1>
 
           {/* Subtext */}
