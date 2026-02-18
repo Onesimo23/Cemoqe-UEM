@@ -44,11 +44,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const cu = auth.currentUser;
       setUser(cu);
       if (!profile) {
+        const fullName = cu.displayName || cu.email?.split('@')[0] || 'Utilizador';
         const fallback: UserProfile = {
           id: cu.uid,
           uid: cu.uid,
           email: cu.email || '',
-          full_name: cu.displayName || 'Estudante',
+          full_name: fullName,
           avatar_url: cu.photoURL || null,
           role: 'student',
           status: 'Ativo',
@@ -70,12 +71,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (userSnap.exists()) {
       profileData = { ...(userSnap.data() as UserProfile), uid: firebaseUser.uid };
+      // Garantir que nunca tenha "Novo Utilizador"
+      if (profileData.full_name === 'Novo Utilizador' || !profileData.full_name) {
+        profileData.full_name = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Utilizador';
+        await setDoc(userRef, { full_name: profileData.full_name }, { merge: true });
+      }
     } else {
+      // Extrair nome do Google: usar displayName, senão usar parte do email antes do @
+      const fullName = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Utilizador';
+      
       profileData = {
         id: firebaseUser.uid,
         uid: firebaseUser.uid,
         email: firebaseUser.email || '',
-        full_name: firebaseUser.displayName || 'Novo Utilizador',
+        full_name: fullName,
         avatar_url: firebaseUser.photoURL || null,
         role: 'student',
         status: 'Ativo',
@@ -103,11 +112,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (err) {
           console.error("Erro ao carregar perfil:", err);
           // Fallback seguro: trata utilizador autenticado como estudante quando Firestore estiver indisponível
+          const fullName = currentUser.displayName || currentUser.email?.split('@')[0] || 'Utilizador';
           const fallback: UserProfile = {
             id: currentUser.uid,
             uid: currentUser.uid,
             email: currentUser.email || '',
-            full_name: currentUser.displayName || 'Estudante',
+            full_name: fullName,
             avatar_url: currentUser.photoURL || null,
             role: 'student',
             status: 'Ativo',
