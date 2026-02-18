@@ -51,7 +51,7 @@ Deno.serve(async (req: Request) => {
         id: uid,
         uid,
         email: body.email ?? email ?? '',
-        full_name: body.full_name ?? 'Novo Utilizador',
+        full_name: body.full_name ?? email?.split('@')[0] ?? 'Utilizador',
         role: body.role ?? 'student',
         status: body.status ?? 'Ativo',
         avatar_url: body.avatar_url ?? null,

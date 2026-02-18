@@ -152,7 +152,7 @@ const CertificateViewPage: React.FC = () => {
                 Certificamos que
               </p>
               <h2 className="text-6xl font-bold text-gray-900 mb-8 font-serif leading-none">
-                {profile?.full_name || "Estudante"}
+                {profile?.full_name || user?.displayName || user?.email?.split('@')[0] || "Utilizador"}
               </h2>
 
               <p
