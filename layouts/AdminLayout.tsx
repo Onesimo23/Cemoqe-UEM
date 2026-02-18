@@ -14,8 +14,8 @@ import {
     X,
 } from "lucide-react";
 import React, { useState } from "react";
-import LogoutConfirmModal from "../components/LogoutConfirmModal";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import LogoutConfirmModal from "../components/LogoutConfirmModal";
 import { useAuth } from "../contexts/AuthContext";
 import { useBranding } from "../contexts/BrandingContext";
 
@@ -103,7 +103,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           onClick={() => setIsSidebarOpen(false)}
         ></div>
       )}
-
       {/* Sidebar */}
       <aside
         className={`
@@ -197,7 +196,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           </button>
         </div>
       </aside>
-
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header Desktop */}
         <header className="hidden md:flex bg-white border-b border-slate-200 py-4 px-8 items-center justify-between sticky top-0 z-30">
@@ -285,14 +283,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </header>
 
         <main className="flex-1 p-6 md:p-10 overflow-y-auto">{children}</main>
-      </div>      <LogoutConfirmModal
+      </div>{" "}
+      <LogoutConfirmModal
         isOpen={isLogoutModalOpen}
         onConfirm={handleConfirmLogout}
         onCancel={handleCancelLogout}
         title="Confirmar Saída"
         message="Encerrar sessão administrativa?"
         isLoading={isLoggingOut}
-      />    </div>
+      />{" "}
+    </div>
   );
 };
 

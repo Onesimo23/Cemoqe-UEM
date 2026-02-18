@@ -1,5 +1,5 @@
-import React from "react";
 import { AlertCircle, X } from "lucide-react";
+import React from "react";
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -36,7 +36,9 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <div className={`${isDangerous ? "bg-red-100" : "bg-amber-100"} rounded-full p-3`}>
+            <div
+              className={`${isDangerous ? "bg-red-100" : "bg-amber-100"} rounded-full p-3`}
+            >
               <AlertCircle
                 className={`w-5 h-5 ${isDangerous ? "text-red-600" : "text-amber-600"}`}
               />

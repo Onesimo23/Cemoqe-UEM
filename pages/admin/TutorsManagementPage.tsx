@@ -11,7 +11,7 @@ import {
     Star,
     Users,
     X,
-    XCircle
+    XCircle,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -27,10 +27,10 @@ import {
     updateDoc,
     where,
 } from "firebase/firestore";
+import ConfirmationModal from "../../components/ConfirmationModal";
 import { UserProfile } from "../../contexts/AuthContext";
 import { db } from "../../services/firebase";
 import { isSupabaseConfigured, supabase } from "../../services/supabase";
-import ConfirmationModal from "../../components/ConfirmationModal";
 
 interface TutorApplication {
   id: string;
@@ -169,7 +169,7 @@ const AdminTutorsPage: React.FC = () => {
 
   const handleConfirmReject = async () => {
     if (!rejectingAppId) return;
-    
+
     const app = applications.find((a) => a.id === rejectingAppId);
 
     setApplications(applications.filter((a) => a.id !== rejectingAppId));
@@ -236,13 +236,11 @@ const AdminTutorsPage: React.FC = () => {
       );
 
       if (isSupabaseConfigured) {
-        await supabase
-          .from("profiles")
-          .upsert({
-            id,
-            status: newStatus,
-            last_sync: new Date().toISOString(),
-          });
+        await supabase.from("profiles").upsert({
+          id,
+          status: newStatus,
+          last_sync: new Date().toISOString(),
+        });
       }
     } catch (e) {
       console.error("Erro ao atualizar status do tutor:", e);

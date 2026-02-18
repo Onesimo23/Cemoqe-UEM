@@ -14,9 +14,9 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import LogoutConfirmModal from "../components/LogoutConfirmModal";
 import { useAuth } from "../contexts/AuthContext";
 import { useBranding } from "../contexts/BrandingContext";
-import LogoutConfirmModal from "../components/LogoutConfirmModal";
 
 interface StudentLayoutProps {
   children: React.ReactNode;
@@ -97,7 +97,6 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
           onClick={() => setIsSidebarOpen(false)}
         ></div>
       )}
-
       {/* Sidebar */}
       <aside
         className={`
@@ -194,7 +193,6 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
           </button>
         </div>
       </aside>
-
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header Mobile */}
         <header className="bg-slate-900 text-white border-b border-white/5 py-4 px-6 md:hidden flex items-center justify-between sticky top-0 z-30">
@@ -270,7 +268,8 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
         </header>
 
         <main className="flex-1 p-6 md:p-10 overflow-y-auto">{children}</main>
-      </div>      <LogoutConfirmModal
+      </div>{" "}
+      <LogoutConfirmModal
         isOpen={isLogoutModalOpen}
         onConfirm={handleConfirmLogout}
         onCancel={handleCancelLogout}

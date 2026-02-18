@@ -13,8 +13,8 @@ import {
     X,
 } from "lucide-react";
 import React, { useState } from "react";
-import LogoutConfirmModal from "../components/LogoutConfirmModal";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import LogoutConfirmModal from "../components/LogoutConfirmModal";
 import { useAuth } from "../contexts/AuthContext";
 import { useBranding } from "../contexts/BrandingContext";
 

@@ -1,5 +1,5 @@
-import React from "react";
 import { AlertCircle, LogOut, X } from "lucide-react";
+import React from "react";
 
 interface LogoutConfirmModalProps {
   isOpen: boolean;
