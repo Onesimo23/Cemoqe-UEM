@@ -28,10 +28,10 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
           />
 
-          {/* Badge de Categoria - Substituído para Amarelo #EAB308 e removido o Gratuito */}
-          <div className="absolute top-4 left-4">
+          {/* Badge de Categoria - Alinhado à Direita com Texto Branco */}
+          <div className="absolute top-4 right-4">
             <span
-              className="px-3 py-1 text-xs font-bold rounded-md shadow-md text-black"
+              className="px-3 py-1 text-xs font-bold rounded-md shadow-md text-white"
               style={{ backgroundColor: "#EAB308" }}
             >
               {course.category}
