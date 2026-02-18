@@ -740,7 +740,15 @@ const CourseEditorPage: React.FC = () => {
       updateLesson(moduleId, lessonId, "content", file.name);
 
       const courseId = (id || "temp").toString();
-      const filePath = `courses/${courseId}/lessons/${lessonId}/${Date.now()}_${file.name}`;
+      
+      // Sanitizar nome do arquivo - remover caracteres especiais
+      const sanitizedFileName = file.name
+        .normalize("NFD") // Decompor caracteres acentuados
+        .replace(/[\u0300-\u036f]/g, "") // Remover diacríticos
+        .replace(/[^a-zA-Z0-9._-]/g, "_") // Substituir caracteres especiais por underscore
+        .replace(/_{2,}/g, "_"); // Remover underscores múltiplos
+      
+      const filePath = `courses/${courseId}/lessons/${lessonId}/${Date.now()}_${sanitizedFileName}`;
 
       if (isSupabaseConfigured) {
         try {

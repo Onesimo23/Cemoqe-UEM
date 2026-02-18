@@ -49,6 +49,7 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
 }) => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const [activeTab, setActiveTab] = useState<"summary" | "payment">("summary");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("m-pesa");
   const [transactionId, setTransactionId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -532,48 +533,117 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-md w-full mx-4 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Emitir Certificado
-          </h2>
-          <button
-            onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <X className="w-6 h-6" />
-          </button>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] flex flex-col">
+        {/* Header - Fixo */}
+        <div className="flex-shrink-0 p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Emitir Certificado
+            </h2>
+            <button
+              onClick={handleClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <p className="text-gray-600">
+            Para receber seu certificado de <strong>{courseTitle}</strong>,
+            confirme seu pagamento abaixo.
+          </p>
         </div>
 
-        <p className="text-gray-600 mb-6">
-          Para receber seu certificado de <strong>{courseTitle}</strong>,
-          confirme seu pagamento abaixo.
-        </p>
-
-        {success && (
-          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start">
-            <Check className="w-5 h-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-            <div>
-              <h4 className="font-semibold text-green-900">
-                Enviado com Sucesso!
-              </h4>
-              <p className="text-sm text-green-700 mt-1">
-                Seus dados de pagamento foram recebidos. O instrutor confirmará
-                em breve.
-              </p>
+        {/* Conteúdo - Com Scroll */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {success && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-start">
+              <Check className="w-5 h-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="font-semibold text-green-900">
+                  Enviado com Sucesso!
+                </h4>
+                <p className="text-sm text-green-700 mt-1">
+                  Seus dados de pagamento foram recebidos. O instrutor confirmará
+                  em breve.
+                </p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
-            <AlertCircle className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
-        )}
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
+              <AlertCircle className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Tabs */}
+          <div className="flex gap-2 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab("summary")}
+              className={`pb-3 px-4 font-medium border-b-2 transition text-sm ${
+                activeTab === "summary"
+                  ? "border-brand-green text-brand-green"
+                  : "border-transparent text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Resumo
+            </button>
+            <button
+              onClick={() => setActiveTab("payment")}
+              className={`pb-3 px-4 font-medium border-b-2 transition text-sm ${
+                activeTab === "payment"
+                  ? "border-brand-green text-brand-green"
+                  : "border-transparent text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Pagamento
+            </button>
+          </div>
+
+          {/* Tab: Resumo */}
+          {activeTab === "summary" && (
+            <div className="space-y-4">
+              {/* Preço do Certificado */}
+              {course?.certificatePrice && (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-2">Valor do Certificado</p>
+                  <p className="text-3xl font-bold text-brand-green">
+                    {course.certificatePrice} MZM
+                  </p>
+                  <p className="text-xs text-gray-500 mt-3">
+                    Preço definido pelo instrutor para emissão do certificado
+                  </p>
+                </div>
+              )}
+
+              {/* Resumo do Curso */}
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+                <div>
+                  <p className="text-xs text-gray-600">Curso</p>
+                  <p className="font-semibold text-gray-900 text-sm">{courseTitle}</p>
+                </div>
+                {profile?.full_name && (
+                  <div>
+                    <p className="text-xs text-gray-600">Aluno</p>
+                    <p className="font-semibold text-gray-900 text-sm">{profile.full_name}</p>
+                  </div>
+                )}
+                {instructorName && (
+                  <div>
+                    <p className="text-xs text-gray-600">Instrutor</p>
+                    <p className="font-semibold text-gray-900 text-sm">{instructorName}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Tab: Método de Pagamento */}
+          {activeTab === "payment" && (
+            <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Método de Pagamento
@@ -658,28 +728,54 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
               pagamento antes de liberar o certificado.
             </p>
           </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer - Fixo */}
+        <div className="flex-shrink-0 p-6 border-t border-gray-200 space-y-3">
+          {activeTab === "summary" && (
+            <button
+              onClick={() => setActiveTab("payment")}
+              className="w-full bg-brand-green text-white py-2 rounded-lg hover:bg-brand-dark transition font-medium"
+            >
+              Continuar para Pagamento →
+            </button>
+          )}
+
+          {activeTab === "payment" && (
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <button
+                type="submit"
+                disabled={loading || success}
+                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition font-medium"
+              >
+                {loading
+                  ? "Enviando..."
+                  : success
+                    ? "✓ Enviado"
+                    : "Enviar Dados de Pagamento"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("summary")}
+                disabled={loading}
+                className="w-full text-gray-700 py-2 rounded-lg hover:bg-gray-100 transition"
+              >
+                ← Voltar
+              </button>
+            </form>
+          )}
 
           <button
-            type="submit"
-            disabled={loading || success}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition font-medium"
-          >
-            {loading
-              ? "Enviando..."
-              : success
-                ? "✓ Enviado"
-                : "Enviar Dados de Pagamento"}
-          </button>
-
-          <button
-            type="button"
             onClick={handleClose}
             disabled={loading}
-            className="w-full text-gray-700 py-2 rounded-lg hover:bg-gray-100 transition"
+            className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition"
           >
             Cancelar
           </button>
-        </form>
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,12 @@
 import {
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore";
+import {
   AlertCircle,
   ChevronRight,
   Eye,
@@ -18,6 +26,7 @@ import {
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import AdminLayout from "../../layouts/AdminLayout";
+import { db } from "../../services/firebase";
 import { Course } from "../../types";
 
 interface Category {
@@ -28,17 +37,17 @@ interface Category {
 }
 
 const INITIAL_CATEGORIES: Category[] = [
-  { id: "1", name: "Design", count: 6, color: "bg-purple-100 text-purple-700" },
+  { id: "1", name: "Design", count: 0, color: "bg-purple-100 text-purple-700" },
   {
     id: "2",
     name: "Liderança",
-    count: 1,
+    count: 0,
     color: "bg-green-100 text-green-700",
   },
   {
     id: "3",
     name: "Desenvolvimento",
-    count: 1,
+    count: 0,
     color: "bg-emerald-100 text-emerald-700",
   },
   {
@@ -70,26 +79,50 @@ const ContentManagementPage: React.FC = () => {
     relevanceScore: 90,
   });
 
-  // Sync with LocalStorage for persistence and moderation updates
-  // Only load courses that exist in localStorage (from database)
+  // Sync with Firebase - Load all courses in real-time
   useEffect(() => {
-    const savedCourses = localStorage.getItem("uem_courses");
-    if (savedCourses) {
-      try {
-        setCourses(JSON.parse(savedCourses));
-      } catch (error) {
+    const coursesRef = collection(db, "courses");
+
+    const unsubscribe = onSnapshot(
+      coursesRef,
+      (snapshot) => {
+        const coursesList: Course[] = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          coursesList.push({
+            id: doc.id,
+            title: data.title || "Sem título",
+            instructor: data.instructor || "Sem instrutor",
+            category: data.category || "Geral",
+            rating: data.rating || 0,
+            reviewCount: data.reviewCount || 0,
+            duration: data.duration || "0h",
+            relevanceScore: data.relevanceScore || 0,
+            imageUrl: data.imageUrl || "",
+            isActive: data.isActive !== false,
+            badgeColor: data.badgeColor || "bg-stone-100 text-stone-800",
+          } as Course);
+        });
+
+        setCourses(coursesList);
+
+        // Atualizar contagem de categorias
+        const updatedCategories = INITIAL_CATEGORIES.map((cat) => ({
+          ...cat,
+          count: coursesList.filter((c) => c.category === cat.name).length,
+        }));
+        setCategories(updatedCategories);
+      },
+      (error) => {
         console.error("Erro ao carregar cursos:", error);
-        setCourses([]);
-      }
-    } else {
-      // Start with empty array - courses must come from database
-      setCourses([]);
-    }
+      },
+    );
+
+    return () => unsubscribe();
   }, []);
 
-  const updatePersistentCourses = (updatedList: Course[]) => {
+  const updateFirebaseCourses = (updatedList: Course[]) => {
     setCourses(updatedList);
-    localStorage.setItem("uem_courses", JSON.stringify(updatedList));
   };
 
   // Handle navigation from other pages (like Tutors)
@@ -126,45 +159,62 @@ const ContentManagementPage: React.FC = () => {
     setIsCategoryModalOpen(false);
   };
 
-  const handleAddCourse = (e: React.FormEvent) => {
+  const handleAddCourse = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCourse.title.trim()) return;
 
-    const courseToAdd: Course = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: newCourse.title,
-      instructor: newCourse.instructor || "UEM Cursos online Tutor",
-      category: newCourse.category,
-      rating: 5.0,
-      reviewCount: 0,
-      duration: "0h",
-      relevanceScore: Number(newCourse.relevanceScore),
-      imageUrl: `https://picsum.photos/seed/${Math.random()}/800/600`,
-      isActive: true,
-      badgeColor: "bg-stone-100 text-stone-800",
-    };
+    try {
+      // Criar documento no Firebase
+      const newDocRef = doc(collection(db, "courses"));
+      await updateDoc(newDocRef, {
+        title: newCourse.title,
+        instructor: newCourse.instructor || "UEM Cursos online Tutor",
+        category: newCourse.category,
+        rating: 5.0,
+        reviewCount: 0,
+        duration: "0h",
+        relevanceScore: Number(newCourse.relevanceScore),
+        imageUrl: `https://picsum.photos/seed/${Math.random()}/800/600`,
+        isActive: true,
+        badgeColor: "bg-stone-100 text-stone-800",
+        status: "Rascunho",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
 
-    updatePersistentCourses([courseToAdd, ...courses]);
-    setIsCourseModalOpen(false);
-    setNewCourse({
-      title: "",
-      instructor: "",
-      category: "Design",
-      relevanceScore: 90,
-    });
+      setIsCourseModalOpen(false);
+      setNewCourse({
+        title: "",
+        instructor: "",
+        category: "Design",
+        relevanceScore: 90,
+      });
+    } catch (error) {
+      console.error("Erro ao criar curso:", error);
+    }
   };
 
-  const handleDeleteCourse = (id: string) => {
-    const updated = courses.filter((c) => c.id !== id);
-    updatePersistentCourses(updated);
-    setDeleteConfirmId(null);
+  const handleDeleteCourse = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, "courses", id));
+      setDeleteConfirmId(null);
+    } catch (error) {
+      console.error("Erro ao deletar curso:", error);
+    }
   };
 
-  const toggleCourseStatus = (id: string) => {
-    const updated = courses.map((c) =>
-      c.id === id ? { ...c, isActive: !c.isActive } : c,
-    );
-    updatePersistentCourses(updated);
+  const toggleCourseStatus = async (id: string) => {
+    try {
+      const course = courses.find((c) => c.id === id);
+      if (course) {
+        await updateDoc(doc(db, "courses", id), {
+          isActive: !course.isActive,
+          updatedAt: serverTimestamp(),
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+    }
   };
 
   return (

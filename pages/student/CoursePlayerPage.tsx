@@ -239,7 +239,15 @@ const CoursePlayerPage: React.FC = () => {
     try {
       const file = e.target.files?.[0];
       if (!file || !id || !user?.uid) return;
-      const filePath = `submissions/${id}/${user.uid}/${Date.now()}_${file.name}`;
+
+      // Sanitizar nome do arquivo - remover caracteres especiais
+      const sanitizedFileName = file.name
+        .normalize("NFD") // Decompor caracteres acentuados
+        .replace(/[\u0300-\u036f]/g, "") // Remover diacríticos
+        .replace(/[^a-zA-Z0-9._-]/g, "_") // Substituir caracteres especiais por underscore
+        .replace(/_{2,}/g, "_"); // Remover underscores múltiplos
+
+      const filePath = `submissions/${id}/${user.uid}/${Date.now()}_${sanitizedFileName}`;
       let publicUrl = "";
       if (isSupabaseConfigured) {
         const { error: upErr } = await supabase.storage
