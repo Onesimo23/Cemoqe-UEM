@@ -1,29 +1,29 @@
 import {
-    collection,
-    deleteDoc,
-    doc,
-    onSnapshot,
-    serverTimestamp,
-    setDoc,
-    updateDoc
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
 } from "firebase/firestore";
 import {
-    AlertCircle,
-    ChevronRight,
-    Edit2,
-    Eye,
-    EyeOff,
-    Filter,
-    FolderPlus,
-    Hash,
-    Layers,
-    Plus,
-    Power,
-    Search,
-    Trash2,
-    TrendingUp,
-    User,
-    X,
+  AlertCircle,
+  ChevronRight,
+  Edit2,
+  Eye,
+  EyeOff,
+  Filter,
+  FolderPlus,
+  Hash,
+  Layers,
+  Plus,
+  Power,
+  Search,
+  Trash2,
+  TrendingUp,
+  User,
+  X,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -88,7 +88,10 @@ const ContentManagementPage: React.FC = () => {
   });
 
   // Função auxiliar para recalcular contagens
-  const updateCategoryCounts = (coursesList: Course[], categoriesList: Category[]) => {
+  const updateCategoryCounts = (
+    coursesList: Course[],
+    categoriesList: Category[],
+  ) => {
     const updated = categoriesList.map((cat) => ({
       ...cat,
       count: coursesList.filter((c) => c.category === cat.name).length,
