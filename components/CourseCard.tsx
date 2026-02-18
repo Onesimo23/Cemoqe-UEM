@@ -11,7 +11,6 @@ interface CourseCardProps {
 const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
   const { branding } = useBranding();
 
-  // Format review count (e.g., 1200 -> 1.2k)
   const formatReviews = (count: number) => {
     return count > 999 ? `${(count / 1000).toFixed(1)}k` : count;
   };
@@ -28,11 +27,11 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
           />
 
-          {/* Badge de Categoria - Alinhado à Direita com Texto Branco */}
+          {/* Badge: Fundo Branco, Texto Amarelo, Alinhado à Direita */}
           <div className="absolute top-4 right-4">
             <span
-              className="px-3 py-1 text-xs font-bold rounded-md shadow-md text-white"
-              style={{ backgroundColor: "#EAB308" }}
+              className="px-3 py-1 text-xs font-bold rounded-md shadow-md bg-white border border-gray-50"
+              style={{ color: "#EAB308" }}
             >
               {course.category}
             </span>
