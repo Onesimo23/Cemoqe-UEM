@@ -19,6 +19,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
   return (
     <Link to={`/cursos/${course.id}`} className="block h-full">
       <div className="bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden flex flex-col h-full group">
+
         {/* Image Container */}
         <div className="relative h-48 w-full overflow-hidden">
           <img
@@ -26,14 +27,14 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
             alt={course.title}
             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
           />
-          <div className="absolute top-4 left-4 flex gap-2">
+
+          {/* Badge de Categoria - Substituído para Amarelo #EAB308 e removido o Gratuito */}
+          <div className="absolute top-4 left-4">
             <span
-              className={`px-3 py-1 text-xs font-bold rounded-md shadow-sm ${course.badgeColor || "bg-white text-gray-800"}`}
+              className="px-3 py-1 text-xs font-bold rounded-md shadow-md text-black"
+              style={{ backgroundColor: "#EAB308" }}
             >
               {course.category}
-            </span>
-            <span className="px-3 py-1 text-xs font-bold rounded-md shadow-sm bg-brand-green text-white">
-              Gratuito
             </span>
           </div>
         </div>
