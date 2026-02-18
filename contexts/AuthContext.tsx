@@ -1,9 +1,9 @@
 import {
-    browserLocalPersistence,
-    onAuthStateChanged,
-    setPersistence,
-    signOut,
-    User,
+  browserLocalPersistence,
+  onAuthStateChanged,
+  setPersistence,
+  signOut,
+  User,
 } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import React, { createContext, useContext, useEffect, useState } from "react";
@@ -78,35 +78,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const userRef = doc(db, "profiles", firebaseUser.uid);
     const userSnap = await getDoc(userRef);
 
+    // Sempre usar displayName do Firebase se disponível
+    const fullName =
+      firebaseUser.displayName ||
+      firebaseUser.email?.split("@")[0] ||
+      "Utilizador";
+
     let profileData: UserProfile;
 
     if (userSnap.exists()) {
       profileData = {
         ...(userSnap.data() as UserProfile),
         uid: firebaseUser.uid,
+        full_name: fullName, // SEMPRE usar o displayName mais recente do Firebase
       };
-      // Garantir que nunca tenha "Novo Utilizador"
-      if (
-        profileData.full_name === "Novo Utilizador" ||
-        !profileData.full_name
-      ) {
-        profileData.full_name =
-          firebaseUser.displayName ||
-          firebaseUser.email?.split("@")[0] ||
-          "Utilizador";
-        await setDoc(
-          userRef,
-          { full_name: profileData.full_name },
-          { merge: true },
-        );
-      }
     } else {
-      // Extrair nome do Google: usar displayName, senão usar parte do email antes do @
-      const fullName =
-        firebaseUser.displayName ||
-        firebaseUser.email?.split("@")[0] ||
-        "Utilizador";
-
       profileData = {
         id: firebaseUser.uid,
         uid: firebaseUser.uid,
@@ -119,8 +105,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         createdAt: serverTimestamp(),
         lastLogin: serverTimestamp(),
       };
-      await setDoc(userRef, profileData);
     }
+
+    // SEMPRE garantir que o Firestore tem o nome correto
+    await setDoc(
+      userRef,
+      {
+        full_name: fullName,
+        lastLogin: serverTimestamp(),
+        email: firebaseUser.email,
+      },
+      { merge: true },
+    );
 
     return profileData;
   };

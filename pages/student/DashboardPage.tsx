@@ -1,9 +1,9 @@
 import {
-    collection,
-    limit,
-    onSnapshot,
-    query,
-    where,
+  collection,
+  limit,
+  onSnapshot,
+  query,
+  where,
 } from "firebase/firestore";
 import { ArrowRight, Clock, Flame, PlayCircle, Trophy } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -338,9 +338,12 @@ const DashboardPage: React.FC = () => {
   const lastCourse = items[0] || null;
 
   // Extrair o primeiro nome do perfil para a saudação
-  const firstName = profile?.full_name
-    ? profile.full_name.split(" ")[0]
-    : "Estudante";
+  const firstName = (
+    profile?.full_name ||
+    user?.displayName ||
+    user?.email?.split("@")[0] ||
+    "Utilizador"
+  ).split(" ")[0];
 
   return (
     <StudentLayout>

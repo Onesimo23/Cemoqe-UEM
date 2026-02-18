@@ -123,7 +123,10 @@ const StudentsProgressPage: React.FC = () => {
           if (!newStudentProgressMap[studentUid]) {
             newStudentProgressMap[studentUid] = {
               student_uid: studentUid,
-              student_name: enrollment.student_name || enrollment.student_email?.split('@')[0] || "Aluno",
+              student_name:
+                enrollment.student_name ||
+                enrollment.student_email?.split("@")[0] ||
+                "Aluno",
               enrollments: [],
             };
           }

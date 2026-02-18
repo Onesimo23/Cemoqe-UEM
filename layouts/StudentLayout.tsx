@@ -137,7 +137,10 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
             )}
             <div>
               <p className="font-semibold text-sm">
-                {profile?.full_name || user?.displayName || user?.email?.split('@')[0] || "Utilizador"}
+                {profile?.full_name ||
+                  user?.displayName ||
+                  user?.email?.split("@")[0] ||
+                  "Utilizador"}
               </p>
               <p className="text-[10px] text-brand-accent font-black uppercase tracking-widest">
                 Acesso de Aluno

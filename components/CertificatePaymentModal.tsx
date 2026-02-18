@@ -1,12 +1,12 @@
 import {
-    addDoc,
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    query,
-    Timestamp,
-    where,
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  Timestamp,
+  where,
 } from "firebase/firestore";
 import { AlertCircle, Check, Download, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -146,7 +146,12 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
 
       const newCertificate: Certificate = {
         student_uid: user.uid,
-        student_name: profile.full_name || profile.name || "Estudante",
+        student_name:
+          profile.full_name ||
+          profile.name ||
+          user?.displayName ||
+          user?.email?.split("@")[0] ||
+          "Utilizador",
         course_id: courseId,
         course_title: courseTitle,
         status: "pending",

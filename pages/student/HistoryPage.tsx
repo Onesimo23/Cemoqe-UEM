@@ -543,7 +543,10 @@ const HistoryPage: React.FC = () => {
                     Estudante
                   </p>
                   <p className="text-lg font-bold text-gray-900">
-                    {profile?.full_name || "Estudante UEM Cursos online"}
+                    {profile?.full_name ||
+                      user?.displayName ||
+                      user?.email?.split("@")[0] ||
+                      "Utilizador"}
                   </p>
                   <p className="text-sm text-gray-500">
                     ID: EP-{(user?.uid || "USER").substring(0, 8).toUpperCase()}
