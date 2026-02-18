@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import StudentLayout from '../../layouts/StudentLayout';
-import { User, Shield, Bell, Save, Camera, CheckCircle } from 'lucide-react';
+import { User, Shield, Bell, Save, Camera, CheckCircle, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { db, storage } from '../../services/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -12,6 +12,7 @@ const SettingsPage: React.FC = () => {
   const { profile, user, refreshProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>('profile');
   const [isSaved, setIsSaved] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -19,11 +20,13 @@ const SettingsPage: React.FC = () => {
   // Local state for the form
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [bio, setBio] = useState('');
 
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name || '');
       setEmail(profile.email || '');
+      setBio(profile.bio || '');
     }
   }, [profile]);
 
@@ -36,13 +39,18 @@ const SettingsPage: React.FC = () => {
     e.preventDefault();
     try {
       if (!user?.uid) return;
+      // Salvar no Firestore
       await setDoc(doc(db, 'profiles', user.uid), {
         full_name: fullName,
+        bio: bio,
         updatedAt: serverTimestamp(),
       }, { merge: true });
+      // Atualizar também o displayName no Firebase Auth
+      await updateProfile(user, { displayName: fullName });
+      // Recarregar perfil do contexto
       await refreshProfile();
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 3000);
+      setShowSuccessModal(true);
+      setTimeout(() => setShowSuccessModal(false), 3000);
     } catch (err) {
       console.error('Falha ao salvar perfil', err);
     }
@@ -224,7 +232,9 @@ const SettingsPage: React.FC = () => {
                     <label className="block text-sm font-bold text-gray-700 mb-2">Biografia</label>
                     <textarea 
                       rows={4} 
-                      defaultValue="Estudante apaixonado por tecnologia e design." 
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      placeholder="Conte-nos sobre você..." 
                       className="w-full px-4 py-2.5 bg-[#333333] border-transparent rounded-lg focus:ring-4 focus:ring-brand-green/20 text-white placeholder-gray-500 font-medium transition-all resize-none"
                     ></textarea>
                   </div>
@@ -277,6 +287,27 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de Sucesso */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-8 flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-6 animate-in scale-in-50 duration-500">
+                <CheckCircle className="w-8 h-8 text-emerald-600" />
+              </div>
+              <h3 className="font-bold text-slate-900 text-lg mb-2">Perfil Atualizado!</h3>
+              <p className="text-slate-500 text-sm mb-8">Suas alterações foram salvas com sucesso.</p>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full px-6 py-3 bg-brand-green text-white font-bold rounded-xl hover:bg-brand-dark transition-all shadow-lg shadow-green-900/10"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </StudentLayout>
   );
 };

@@ -1,27 +1,29 @@
 import {
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  serverTimestamp,
-  updateDoc,
+    collection,
+    deleteDoc,
+    doc,
+    onSnapshot,
+    serverTimestamp,
+    setDoc,
+    updateDoc
 } from "firebase/firestore";
 import {
-  AlertCircle,
-  ChevronRight,
-  Eye,
-  EyeOff,
-  Filter,
-  FolderPlus,
-  Hash,
-  Layers,
-  Plus,
-  Power,
-  Search,
-  Trash2,
-  TrendingUp,
-  User,
-  X,
+    AlertCircle,
+    ChevronRight,
+    Edit2,
+    Eye,
+    EyeOff,
+    Filter,
+    FolderPlus,
+    Hash,
+    Layers,
+    Plus,
+    Power,
+    Search,
+    Trash2,
+    TrendingUp,
+    User,
+    X,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -70,6 +72,12 @@ const ContentManagementPage: React.FC = () => {
   const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
+    null,
+  );
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(
+    null,
+  );
 
   // New Course Form State
   const [newCourse, setNewCourse] = useState({
@@ -79,11 +87,22 @@ const ContentManagementPage: React.FC = () => {
     relevanceScore: 90,
   });
 
-  // Sync with Firebase - Load all courses in real-time
+  // Função auxiliar para recalcular contagens
+  const updateCategoryCounts = (coursesList: Course[], categoriesList: Category[]) => {
+    const updated = categoriesList.map((cat) => ({
+      ...cat,
+      count: coursesList.filter((c) => c.category === cat.name).length,
+    }));
+    return updated.sort((a, b) => b.count - a.count);
+  };
+
+  // Sync with Firebase - Load all courses AND categories in real-time
   useEffect(() => {
     const coursesRef = collection(db, "courses");
+    const categoriesRef = collection(db, "categories");
 
-    const unsubscribe = onSnapshot(
+    // Listener de cursos
+    const unsubscribeCourses = onSnapshot(
       coursesRef,
       (snapshot) => {
         const coursesList: Course[] = [];
@@ -106,19 +125,53 @@ const ContentManagementPage: React.FC = () => {
 
         setCourses(coursesList);
 
-        // Atualizar contagem de categorias
-        const updatedCategories = INITIAL_CATEGORIES.map((cat) => ({
-          ...cat,
-          count: coursesList.filter((c) => c.category === cat.name).length,
-        }));
-        setCategories(updatedCategories);
+        // Recalcular contagens com categorias atuais
+        setCategories((prevCategories) => {
+          return updateCategoryCounts(coursesList, prevCategories);
+        });
       },
       (error) => {
         console.error("Erro ao carregar cursos:", error);
       },
     );
 
-    return () => unsubscribe();
+    // Listener de categorias
+    const unsubscribeCategories = onSnapshot(
+      categoriesRef,
+      (snapshot) => {
+        const categoriesList: Category[] = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          categoriesList.push({
+            id: doc.id,
+            name: data.name || "Sem nome",
+            count: 0, // Será recalculado logo abaixo
+            color: data.color || "bg-slate-100 text-slate-700",
+          } as Category);
+        });
+
+        // Se há categorias do Firebase, usar elas; senão usar padrão
+        if (categoriesList.length > 0) {
+          setCategories((prevCategories) => {
+            // Usa os cursos já carregados do estado
+            return updateCategoryCounts(courses, categoriesList);
+          });
+        } else {
+          // Usar categorias iniciais
+          setCategories((prevCategories) => {
+            return updateCategoryCounts(courses, INITIAL_CATEGORIES);
+          });
+        }
+      },
+      (error) => {
+        console.error("Erro ao carregar categorias:", error);
+      },
+    );
+
+    return () => {
+      unsubscribeCourses();
+      unsubscribeCategories();
+    };
   }, []);
 
   const updateFirebaseCourses = (updatedList: Course[]) => {
@@ -143,20 +196,91 @@ const ContentManagementPage: React.FC = () => {
     });
   }, [courses, searchQuery, selectedCategory]);
 
-  const handleAddCategory = (e: React.FormEvent) => {
+  const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCatName.trim()) return;
 
-    const newCat: Category = {
-      id: Date.now().toString(),
-      name: newCatName,
-      count: 0,
-      color: "bg-slate-100 text-slate-700",
-    };
+    try {
+      if (editingCategoryId) {
+        // Editar categoria existente
+        await updateDoc(doc(db, "categories", editingCategoryId), {
+          name: newCatName,
+          updatedAt: serverTimestamp(),
+        });
+        console.log(`✓ Categoria "${newCatName}" foi atualizada com sucesso!`);
+        alert(`✅ Categoria "${newCatName}" atualizada com sucesso!`);
+        setEditingCategoryId(null);
+      } else {
+        // Criar nova categoria
+        const newDocRef = doc(collection(db, "categories"));
+        await setDoc(newDocRef, {
+          name: newCatName,
+          color: "bg-slate-100 text-slate-700",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+        console.log(`✓ Categoria "${newCatName}" foi criada com sucesso!`);
+        alert(`✅ Categoria "${newCatName}" criada com sucesso!`);
+      }
 
-    setCategories([...categories, newCat]);
-    setNewCatName("");
-    setIsCategoryModalOpen(false);
+      setNewCatName("");
+      setIsCategoryModalOpen(false);
+    } catch (error) {
+      console.error("Erro ao salvar categoria:", error);
+      alert(`❌ Erro ao salvar categoria: ${error}`);
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    try {
+      const categoryToDelete = categories.find((c) => c.id === id);
+      const categoryName = categoryToDelete?.name || "Categoria";
+
+      // Deletar a categoria
+      await deleteDoc(doc(db, "categories", id));
+
+      console.log(`✓ Categoria "${categoryName}" foi removida.`);
+      alert(`✅ Categoria "${categoryName}" removida com sucesso!`);
+      setDeletingCategoryId(null);
+    } catch (error) {
+      console.error("Erro ao deletar categoria:", error);
+      alert(`❌ Erro ao remover categoria: ${error}`);
+    }
+  };
+
+  const openEditCategory = (category: Category) => {
+    setEditingCategoryId(category.id);
+    setNewCatName(category.name);
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleCleanEmptyCategories = async () => {
+    try {
+      const emptyCategories = categories.filter((cat) => cat.count === 0);
+
+      if (emptyCategories.length === 0) {
+        alert("✓ Não há categorias vazias para remover!");
+        return;
+      }
+
+      const confirmDelete = window.confirm(
+        `Tem certeza que deseja remover ${emptyCategories.length} categoria(s) vazia(s)?\n\n${emptyCategories.map((c) => `• ${c.name}`).join("\n")}`,
+      );
+
+      if (!confirmDelete) return;
+
+      for (const cat of emptyCategories) {
+        await deleteDoc(doc(db, "categories", cat.id));
+        console.log(`✓ Categoria vazia removida: "${cat.name}"`);
+      }
+
+      alert(
+        `✅ ${emptyCategories.length} categoria(s) vazia(s) foram removidas com sucesso!`,
+      );
+    } catch (error) {
+      console.error("Erro ao limpar categorias vazias:", error);
+      alert("❌ Erro ao remover categorias vazias.");
+    }
   };
 
   const handleAddCourse = async (e: React.FormEvent) => {
@@ -277,25 +401,40 @@ const ContentManagementPage: React.FC = () => {
                 </button>
 
                 {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.name)}
-                    className={`w-full flex items-center justify-between p-3.5 rounded-2xl transition-all group ${selectedCategory === cat.name ? "bg-brand-green text-white shadow-lg shadow-green-900/20" : "hover:bg-slate-50 text-slate-600"}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-bold">{cat.name}</span>
-                    </div>
-                    <span
-                      className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${selectedCategory === cat.name ? "bg-white/20 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-brand-green/10 group-hover:text-brand-green"}`}
+                  <div key={cat.id} className="flex items-center gap-2 group">
+                    <button
+                      onClick={() => setSelectedCategory(cat.name)}
+                      className={`flex-1 flex items-center justify-between p-3.5 rounded-2xl transition-all ${selectedCategory === cat.name ? "bg-brand-green text-white shadow-lg shadow-green-900/20" : "hover:bg-slate-50 text-slate-600"}`}
                     >
-                      {cat.count}
-                    </span>
-                  </button>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold">{cat.name}</span>
+                      </div>
+                      <span
+                        className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${selectedCategory === cat.name ? "bg-white/20 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-brand-green/10 group-hover:text-brand-green"}`}
+                      >
+                        {cat.count}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => openEditCategory(cat)}
+                      className={`p-2.5 rounded-xl transition-all opacity-0 group-hover:opacity-100 ${selectedCategory === cat.name ? "bg-white/20 text-white hover:bg-white/30" : "bg-slate-100 text-slate-400 hover:text-blue-500 hover:bg-blue-50"}`}
+                      title="Editar categoria"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      onClick={() => setDeletingCategoryId(cat.id)}
+                      className={`p-2.5 rounded-xl transition-all opacity-0 group-hover:opacity-100 ${selectedCategory === cat.name ? "bg-white/20 text-white hover:bg-white/30" : "bg-slate-100 text-slate-400 hover:text-red-500 hover:bg-red-50"}`}
+                      title="Deletar categoria"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 ))}
               </div>
 
               <div className="mt-8 pt-6 border-t border-slate-50">
-                <div className="bg-brand-light/30 rounded-2xl p-4 flex gap-3">
+                <div className="bg-brand-light/30 rounded-2xl p-4 flex gap-3 mb-4">
                   <AlertCircle
                     size={16}
                     className="text-brand-green shrink-0"
@@ -305,6 +444,16 @@ const ContentManagementPage: React.FC = () => {
                     automaticamente.
                   </p>
                 </div>
+
+                {categories.some((c) => c.count === 0) && (
+                  <button
+                    onClick={handleCleanEmptyCategories}
+                    className="w-full px-4 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-100 transition-all"
+                  >
+                    🗑️ Limpar Vazias (
+                    {categories.filter((c) => c.count === 0).length})
+                  </button>
+                )}
               </div>
             </div>
 
@@ -512,10 +661,14 @@ const ContentManagementPage: React.FC = () => {
             <div className="bg-white w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
               <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <h3 className="font-black text-slate-900 text-lg uppercase tracking-tight">
-                  Criar Categoria
+                  {editingCategoryId ? "Editar Categoria" : "Criar Categoria"}
                 </h3>
                 <button
-                  onClick={() => setIsCategoryModalOpen(false)}
+                  onClick={() => {
+                    setIsCategoryModalOpen(false);
+                    setEditingCategoryId(null);
+                    setNewCatName("");
+                  }}
                   className="p-2 text-slate-400 hover:text-slate-900 transition-all hover:rotate-90"
                 >
                   <X size={24} />
@@ -539,7 +692,11 @@ const ContentManagementPage: React.FC = () => {
                 <div className="flex gap-4 pt-2">
                   <button
                     type="button"
-                    onClick={() => setIsCategoryModalOpen(false)}
+                    onClick={() => {
+                      setIsCategoryModalOpen(false);
+                      setEditingCategoryId(null);
+                      setNewCatName("");
+                    }}
                     className="flex-1 h-14 text-xs font-black uppercase text-slate-400 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all"
                   >
                     Cancelar
@@ -548,7 +705,7 @@ const ContentManagementPage: React.FC = () => {
                     type="submit"
                     className="flex-1 h-14 bg-brand-green text-white font-black uppercase text-xs tracking-widest rounded-2xl hover:bg-brand-dark transition-all shadow-xl shadow-green-900/10"
                   >
-                    Confirmar
+                    {editingCategoryId ? "Salvar Alterações" : "Confirmar"}
                   </button>
                 </div>
               </form>
@@ -670,7 +827,39 @@ const ContentManagementPage: React.FC = () => {
           </div>
         )}
 
-        {/* Modal: Confirmação de Exclusão */}
+        {/* Modal: Confirmação de Exclusão de Categoria */}
+        {deletingCategoryId && (
+          <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-white w-full max-w-[340px] rounded-[32px] p-8 text-center shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100">
+              <div className="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Trash2 size={24} />
+              </div>
+              <h3 className="text-lg font-black text-slate-900 mb-2">
+                Remover categoria?
+              </h3>
+              <p className="text-xs text-slate-500 mb-8 leading-relaxed font-medium px-2">
+                Esta ação é irreversível. A categoria será removida, mas os
+                cursos nela contidos serão preservados.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeletingCategoryId(null)}
+                  className="flex-1 h-11 bg-slate-50 text-slate-500 font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-slate-100 transition-all active:scale-95"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => handleDeleteCategory(deletingCategoryId)}
+                  className="flex-1 h-11 bg-red-600 text-white font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-900/20 active:scale-95"
+                >
+                  Sim, remover
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Confirmação de Exclusão de Curso */}
         {deleteConfirmId && (
           <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="bg-white w-full max-w-[340px] rounded-[32px] p-8 text-center shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100">

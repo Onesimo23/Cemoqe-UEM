@@ -11,7 +11,8 @@ import {
   CheckCircle,
   ChevronDown,
   Check,
-  Building2
+  Building2,
+  X
 } from 'lucide-react';
 
 import { db, storage } from '../../services/firebase';
@@ -23,10 +24,14 @@ import { supabase, isSupabaseConfigured } from '../../services/supabase';
 const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'profile' | 'payout' | 'notifications'>('profile');
   const [isSaving, setIsSaving] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedBank, setSelectedBank] = useState('BCI - Banco Comercial e de Investimentos');
 
-  const { profile, user } = useAuth();
-  const instructorName = profile?.full_name || user?.displayName || 'Instrutor';
+  const { profile, user, refreshProfile } = useAuth();
+  const [fullName, setFullName] = useState('');
+  const [specialty, setSpecialty] = useState('');
+  const [bio, setBio] = useState('');
+  const instructorName = fullName || profile?.full_name || user?.displayName || 'Instrutor';
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -36,12 +41,37 @@ const SettingsPage: React.FC = () => {
     setPreviewUrl(profile?.avatar_url || user?.photoURL || '');
   }, [profile?.avatar_url, user?.photoURL]);
 
-  const handleSave = () => {
+  useEffect(() => {
+    if (profile) {
+      setFullName(profile.full_name || '');
+      setSpecialty(profile.specialty || '');
+      setBio(profile.bio || '');
+    }
+  }, [profile]);
+
+  const handleSave = async () => {
     setIsSaving(true);
-    setTimeout(() => {
+    try {
+      if (!user?.uid) return;
+      // Salvar no Firestore
+      await setDoc(doc(db, 'profiles', user.uid), {
+        full_name: fullName,
+        specialty: specialty,
+        bio: bio,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+      // Atualizar também o displayName no Firebase Auth
+      await updateProfile(user, { displayName: fullName });
+      // Recarregar perfil do contexto
+      await refreshProfile();
+      setShowSuccessModal(true);
+      setTimeout(() => setShowSuccessModal(false), 3000);
+    } catch (err) {
+      console.error('Erro ao salvar configurações:', err);
+      alert('❌ Erro ao salvar. Tente novamente.');
+    } finally {
       setIsSaving(false);
-      alert('Configurações atualizadas com sucesso!');
-    }, 1000);
+    }
   };
 
   const handlePickImage = () => fileInputRef.current?.click();
@@ -170,7 +200,8 @@ const SettingsPage: React.FC = () => {
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Nome Público</label>
                         <input 
                           type="text" 
-                          defaultValue={instructorName} 
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-brand-green/5 focus:border-brand-green transition-all shadow-sm" 
                         />
                      </div>
@@ -178,7 +209,9 @@ const SettingsPage: React.FC = () => {
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Especialidade</label>
                         <input 
                           type="text" 
-                          defaultValue="Senior Product Designer" 
+                          value={specialty}
+                          onChange={(e) => setSpecialty(e.target.value)}
+                          placeholder="Ex: Senior Product Designer"
                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-brand-green/5 focus:border-brand-green transition-all shadow-sm" 
                         />
                      </div>
@@ -186,7 +219,9 @@ const SettingsPage: React.FC = () => {
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Mini Biografia</label>
                         <textarea 
                           rows={4} 
-                          defaultValue="Especialista em UX/UI com foco em acessibilidade e Design Systems. Já liderou equipes em grandes startups." 
+                          value={bio}
+                          onChange={(e) => setBio(e.target.value)}
+                          placeholder="Conte sobre sua experiência e especialidades..."
                           className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-brand-green/5 focus:border-brand-green transition-all shadow-sm resize-none" 
                         />
                      </div>
@@ -261,6 +296,27 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de Sucesso */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-8 flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-6 animate-in scale-in-50 duration-500">
+                <CheckCircle className="w-8 h-8 text-emerald-600" />
+              </div>
+              <h3 className="font-bold text-slate-900 text-lg mb-2">Configurações Salvas!</h3>
+              <p className="text-slate-500 text-sm mb-8">Suas alterações foram salvas com sucesso.</p>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full px-6 py-3 bg-brand-green text-white font-bold rounded-xl hover:bg-brand-dark transition-all shadow-lg shadow-green-900/10"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </InstructorLayout>
   );
 };

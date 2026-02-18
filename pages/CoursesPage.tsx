@@ -1,5 +1,5 @@
 import { collection, onSnapshot, query, where } from "firebase/firestore";
-import { BookOpen, Filter, Loader, Search } from "lucide-react";
+import { BookOpen, Filter, Loader, Search, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import CourseCard from "../components/CourseCard";
 import { cacheService } from "../services/cacheService";
@@ -9,6 +9,10 @@ import { Course } from "../types";
 const CoursesPage: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("relevance");
   const CACHE_KEY = "courses_list";
   const CACHE_TTL = 60; // 60 minutos
 
@@ -20,6 +24,24 @@ const CoursesPage: React.FC = () => {
       setLoading(false);
       console.log("Cursos carregados do cache");
     }
+
+    // Carrega categorias do Firebase
+    const categoriesRef = collection(db, "categories");
+    const unsubCategories = onSnapshot(
+      categoriesRef,
+      (snapshot) => {
+        const categoryList: string[] = ["Todos"];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          categoryList.push(data.name);
+        });
+        setCategories(categoryList.sort());
+        console.log("Categorias carregadas:", categoryList);
+      },
+      (error) => {
+        console.error("Erro ao carregar categorias:", error);
+      },
+    );
 
     // Continua buscando dados frescos em background
     const q = query(collection(db, "courses"), where("isActive", "==", true));
@@ -59,14 +81,49 @@ const CoursesPage: React.FC = () => {
         setLoading(false);
       },
     );
-    return () => unsub();
+    return () => {
+      unsub();
+      unsubCategories();
+    };
   }, []);
 
-  // Filter active courses first, then duplicate for demonstration if needed
-  const activeCourses = courses.filter((c) => c.isActive !== false);
+  // Aplica filtros e ordenação
+  let filteredCourses = courses.filter((c) => c.isActive !== false);
 
-  // Create a fuller list only with active courses
-  const allCourses = [...activeCourses];
+  // Filtro por categoria
+  if (selectedCategory !== "Todos") {
+    filteredCourses = filteredCourses.filter(
+      (c) => c.category === selectedCategory,
+    );
+  }
+
+  // Filtro por busca
+  if (searchTerm.trim()) {
+    const term = searchTerm.toLowerCase();
+    filteredCourses = filteredCourses.filter(
+      (c) =>
+        c.title.toLowerCase().includes(term) ||
+        c.instructor.toLowerCase().includes(term) ||
+        c.category.toLowerCase().includes(term),
+    );
+  }
+
+  // Ordenação
+  if (sortBy === "recent") {
+    // Ordena por relevance score (simulando recentes)
+    filteredCourses = [...filteredCourses].sort(
+      (a, b) => b.relevanceScore - a.relevanceScore,
+    );
+  } else if (sortBy === "rating") {
+    filteredCourses = [...filteredCourses].sort((a, b) => b.rating - a.rating);
+  } else {
+    // relevance (padrão)
+    filteredCourses = [...filteredCourses].sort(
+      (a, b) => b.relevanceScore - a.relevanceScore,
+    );
+  }
+
+  const allCourses = filteredCourses;
 
   return (
     <div className="bg-gray-50 min-h-screen pb-20">
@@ -97,42 +154,49 @@ const CoursesPage: React.FC = () => {
             <input
               type="text"
               placeholder="O que você quer aprender hoje? (ex: Python, Gestão...)"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-3.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green shadow-sm text-gray-700 placeholder-gray-400 transition-all"
             />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
             <button className="flex items-center gap-2 px-6 py-3.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium hover:bg-gray-50 shadow-sm whitespace-nowrap transition-colors">
               <Filter className="w-4 h-4" />
               Filtros
             </button>
-            <select className="px-4 py-3.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium hover:bg-gray-50 shadow-sm cursor-pointer outline-none focus:border-brand-green">
-              <option>Mais Relevantes</option>
-              <option>Mais Recentes</option>
-              <option>Melhor Avaliados</option>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-4 py-3.5 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium hover:bg-gray-50 shadow-sm cursor-pointer outline-none focus:border-brand-green"
+            >
+              <option value="relevance">Mais Relevantes</option>
+              <option value="recent">Mais Recentes</option>
+              <option value="rating">Melhor Avaliados</option>
             </select>
           </div>
         </div>
 
-        {/* Categories Tags */}
+        {/* Categories Tags - Now from database */}
         <div className="flex flex-wrap gap-2 mb-8">
-          {[
-            "Todos",
-            "Desenvolvimento",
-            "Negócios",
-            "Design",
-            "Data Science",
-            "Marketing",
-            "Liderança",
-          ].map((tag, idx) => (
+          {categories.map((category) => (
             <button
-              key={tag}
+              key={category}
+              onClick={() => setSelectedCategory(category)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                idx === 0
-                  ? "bg-brand-dark text-white"
+                selectedCategory === category
+                  ? "bg-brand-green text-white"
                   : "bg-white text-gray-600 border border-gray-200 hover:border-brand-green hover:text-brand-green"
               }`}
             >
-              {tag}
+              {category}
             </button>
           ))}
         </div>
