@@ -42,7 +42,7 @@ const CoursePlayerPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     "overview" | "materials" | "uploads" | "comments" | "interactive"
   >("overview");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [openModules, setOpenModules] = useState<string[]>([]);
   const [currentLessonId, setCurrentLessonId] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
@@ -1100,9 +1100,10 @@ const CoursePlayerPage: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <button
-            className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             style={{ color: "#0E7038" }}
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            title={isSidebarOpen ? "Fechar painel" : "Abrir painel"}
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -1710,8 +1711,8 @@ const CoursePlayerPage: React.FC = () => {
         {/* Right: Sidebar / Playlist */}
         <aside
           className={`
-            fixed inset-y-0 right-0 z-30 w-80 bg-slate-50 border-l border-gray-200 transform transition-transform duration-300 ease-in-out flex flex-col pt-16 md:pt-0 md:relative md:translate-x-0
-            ${isSidebarOpen ? "translate-x-0" : "translate-x-full"}
+            fixed inset-y-0 right-0 z-30 w-80 bg-slate-50 border-l border-gray-200 transform transition-all duration-300 ease-in-out flex flex-col pt-16 md:pt-0 md:relative md:inset-auto
+            ${isSidebarOpen ? "translate-x-0 md:w-80" : "translate-x-full md:w-0 md:overflow-hidden"}
           `}
         >
           <div className="p-5 border-b border-gray-100 flex items-center justify-between">
