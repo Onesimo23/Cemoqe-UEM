@@ -217,7 +217,10 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
         {/* Header Desktop */}
         <header className="hidden md:flex bg-white border-b border-gray-200 py-4 px-8 items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-4">
-            <Link to="/" className="text-lg font-bold text-slate-700 hover:text-brand-green transition-colors px-4 py-2 rounded-lg hover:bg-slate-50">
+            <Link
+              to="/"
+              className="text-lg font-bold text-slate-700 hover:text-brand-green transition-colors px-4 py-2 rounded-lg hover:bg-slate-50"
+            >
               ← Voltar para o Site
             </Link>
             <div className="h-6 w-px bg-gray-200"></div>

@@ -1,6 +1,7 @@
 import {
     BarChart3,
     Bell,
+    Clock,
     FileText,
     Key,
     Layers,
@@ -12,9 +13,8 @@ import {
     UserCheck,
     Users,
     X,
-    Clock,
 } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import LogoutConfirmModal from "../components/LogoutConfirmModal";
 import { useAuth } from "../contexts/AuthContext";
@@ -219,7 +219,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         {/* Header Desktop */}
         <header className="hidden md:flex bg-white border-b border-slate-200 py-4 px-8 items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-6">
-            <Link to="/" className="text-sm font-bold text-slate-700 hover:text-brand-green transition-colors px-4 py-2 rounded-lg hover:bg-slate-50">
+            <Link
+              to="/"
+              className="text-sm font-bold text-slate-700 hover:text-brand-green transition-colors px-4 py-2 rounded-lg hover:bg-slate-50"
+            >
               ← Voltar para o Site
             </Link>
             <div className="h-6 w-px bg-slate-100"></div>
