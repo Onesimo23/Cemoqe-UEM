@@ -110,6 +110,7 @@ const CourseEditorPage: React.FC = () => {
     "basic" | "descriptions" | "curriculum" | "interactive"
   >("basic");
   const [isSaving, setIsSaving] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error" | "info";
@@ -123,13 +124,13 @@ const CourseEditorPage: React.FC = () => {
   const [formData, setFormData] = useState({
     title: id ? "UX/UI Design Moderno e Acessível" : "",
     category: "Design",
-    certificatePrice: "0,00",
+    certificatePrice: "",
     cardDescription:
       "Domine as habilidades essenciais para se destacar no mercado de trabalho.",
     fullDescription:
       "Este curso foi meticulosamente planejado para levar você do nível iniciante ao avançado.",
     language: "Português",
-    duration: "0h",
+    duration: "0",
     learningOutcomes: [] as string[],
     modules: [
       {
@@ -172,14 +173,22 @@ const CourseEditorPage: React.FC = () => {
         const snap = await getDoc(ref);
         if (snap.exists()) {
           const data: any = snap.data();
+          // Formata o certificatePrice de número para string formatada
+          const formattedPrice = data?.certificatePrice
+            ? data.certificatePrice.toString().replace(".", ",")
+            : "0,00";
+          // Remove "h" da duração se existir
+          const duration = data?.duration
+            ? data.duration.toString().replace("h", "")
+            : "0";
           setFormData({
             title: data?.title || "",
             category: data?.category || "Design",
-            price: data?.price || "0,00",
+            certificatePrice: formattedPrice,
             cardDescription: data?.cardDescription || "",
             fullDescription: data?.fullDescription || "",
             language: data?.language || "Português",
-            duration: data?.duration || "0h",
+            duration: duration,
             learningOutcomes: Array.isArray(data?.learningOutcomes)
               ? data.learningOutcomes
               : [],
@@ -188,8 +197,10 @@ const CourseEditorPage: React.FC = () => {
               ? data.interactiveExercises
               : [],
           });
-          setImageUrl(data?.imageUrl || "");
-          setPreviewImage("");
+          const imgUrl = data?.imageUrl || "";
+          setImageUrl(imgUrl);
+          // Define previewImage com a URL da imagem para exibição
+          setPreviewImage(imgUrl);
         }
       } catch (e) {
         console.error("Falha ao carregar curso:", e);
@@ -198,7 +209,35 @@ const CourseEditorPage: React.FC = () => {
     load();
   }, [id]);
 
-  const handleSave = async () => {
+  // Validar campos obrigatórios
+  const validateForm = (): boolean => {
+    if (!formData.title || formData.title.trim().length === 0) {
+      showToast("Por favor, preencha o título do curso.", "error");
+      return false;
+    }
+    if (!formData.duration || parseInt(formData.duration) === 0) {
+      showToast("Por favor, defina a duração do curso.", "error");
+      return false;
+    }
+    if (
+      !formData.certificatePrice ||
+      formData.certificatePrice.trim().length === 0 ||
+      parseFloat(formData.certificatePrice.replace(",", ".")) <= 0
+    ) {
+      showToast("Por favor, defina o preço do certificado.", "error");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSaveClick = () => {
+    if (validateForm()) {
+      setShowConfirmModal(true);
+    }
+  };
+
+  const handleConfirmSave = async () => {
+    setShowConfirmModal(false);
     if (!user?.uid) {
       showToast("Sessão inválida. Entre novamente.", "error");
       return;
@@ -223,7 +262,7 @@ const CourseEditorPage: React.FC = () => {
         cardDescription: formData.cardDescription || "",
         fullDescription: formData.fullDescription || "",
         language: formData.language || "Português",
-        duration: formData.duration || "0h",
+        duration: formData.duration ? `${formData.duration}h` : "0h",
         learningOutcomes: Array.isArray(formData.learningOutcomes)
           ? formData.learningOutcomes
               .filter((s) => s && s.trim().length > 0)
@@ -780,7 +819,7 @@ const CourseEditorPage: React.FC = () => {
               Visualizar
             </button>
             <button
-              onClick={handleSave}
+              onClick={handleSaveClick}
               disabled={isSaving}
               className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-brand-green text-white font-bold px-8 py-2.5 rounded-xl hover:bg-brand-dark transition-all shadow-lg shadow-green-900/10 disabled:opacity-70"
             >
@@ -834,7 +873,8 @@ const CourseEditorPage: React.FC = () => {
                       setFormData({ ...formData, title: e.target.value })
                     }
                     placeholder="Ex: Masterizando Figma do Zero"
-                    className="w-full px-4 py-3 bg-[#262626] border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green outline-none"
+                    required
+                    className="w-full px-4 py-3 bg-[#262626] border border-gray-700 rounded-xl text-white placeholder-gray-600 focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green outline-none"
                   />
                 </InputGroup>
 
@@ -869,16 +909,18 @@ const CourseEditorPage: React.FC = () => {
                   >
                     <div className="relative">
                       <input
-                        type="text"
-                        value={formData.certificatePrice}
+                        type="number"
+                        value={formData.certificatePrice.replace(",", ".")}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
-                            certificatePrice: e.target.value,
+                            certificatePrice: e.target.value.replace(".", ","),
                           })
                         }
-                        placeholder="0,00"
-                        className="w-full pl-4 pr-16 py-3 bg-[#262626] border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green outline-none"
+                        placeholder="250"
+                        min="0"
+                        required
+                        className="w-full pl-4 pr-16 py-3 bg-[#262626] border border-gray-700 rounded-xl text-white placeholder-gray-600 focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green outline-none"
                       />
                       <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-gray-500 uppercase">
                         MZM
@@ -912,17 +954,27 @@ const CourseEditorPage: React.FC = () => {
 
                   <InputGroup
                     label="Duração total do curso"
-                    help="Ex.: 10h 30m"
+                    help="Digite apenas o número de horas"
                   >
-                    <input
-                      type="text"
-                      value={formData.duration}
-                      onChange={(e) =>
-                        setFormData({ ...formData, duration: e.target.value })
-                      }
-                      placeholder="0h"
-                      className="w-full px-4 py-3 bg-[#262626] border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green outline-none"
-                    />
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={formData.duration.replace("h", "")}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            duration: e.target.value || "0",
+                          })
+                        }
+                        placeholder="40"
+                        min="0"
+                        required
+                        className="w-full pl-4 pr-12 py-3 bg-[#262626] border border-gray-700 rounded-xl text-white placeholder-gray-600 focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green outline-none"
+                      />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-gray-500 uppercase">
+                        H
+                      </div>
+                    </div>
                   </InputGroup>
                 </div>
               </div>
@@ -1906,6 +1958,63 @@ const CourseEditorPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 animate-in zoom-in-95 duration-200">
+            <div className="p-8">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-brand-green/10 mb-4">
+                <Check className="w-6 h-6 text-brand-green" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                Confirmar Salvamento
+              </h2>
+              <p className="text-slate-600 mb-6">
+                Tem certeza que deseja salvar este curso com as informações
+                fornecidas?
+              </p>
+              <div className="bg-slate-50 rounded-lg p-4 mb-6 space-y-2 text-sm">
+                <p>
+                  <span className="font-semibold text-slate-700">Título:</span>{" "}
+                  {formData.title}
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-700">Duração:</span>{" "}
+                  {formData.duration}h
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-700">
+                    Preço Certificado:
+                  </span>{" "}
+                  {formData.certificatePrice} MZM
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-700">
+                    Categoria:
+                  </span>{" "}
+                  {formData.category}
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className="flex-1 px-4 py-2.5 text-slate-700 border border-gray-300 rounded-xl hover:bg-gray-50 transition-all font-semibold"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmSave}
+                  disabled={isSaving}
+                  className="flex-1 px-4 py-2.5 bg-brand-green text-white rounded-xl hover:bg-brand-dark transition-all font-semibold disabled:opacity-70"
+                >
+                  {isSaving ? "Salvando..." : "Confirmar"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notification */}
       {toast && (

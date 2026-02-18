@@ -12,7 +12,7 @@ export const BrandingConfig = {
 
   // === LOGO/ÍCONE ===
   // Opção 1: Use uma URL de imagem
-  logoUrl: "/UEM.png",
+  logoUrl: "/logo-plataforma.png",
 
   // Opção 2: Use texto (será exibido como logo)
   // logoText: "UEM",

@@ -41,11 +41,12 @@ const Hero: React.FC = () => {
             className="text-4xl md:text-6xl font-extrabold leading-tight mb-6"
             style={{ color: branding.appearance.primaryColor }}
           >
-            Acelere o Seu <br />
-            <span className="relative">Crescimento</span>{" "}
+            Universidade Eduardo Mondlane <br />
+
             <span style={{ color: branding.appearance.accentColor }}>
-              Profissional
+              Cursos
             </span>
+            <span className="relative"> Online</span>{" "}
           </h1>
 
           {/* Subtext */}

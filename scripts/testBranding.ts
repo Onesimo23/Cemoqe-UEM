@@ -24,7 +24,7 @@ const BRANDING_EXAMPLES = {
       primaryColor: "#0E7038",
       accentColor: "#EAB308",
       fontFamily: "Inter",
-      logoUrl: "/UEM.png",
+      logoUrl: "/logo-plataforma.png",
     },
     system: {
       maintenanceMode: false,

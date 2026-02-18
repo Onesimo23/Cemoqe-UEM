@@ -1,16 +1,16 @@
 import {
-  Award,
-  Bell,
-  BookOpen,
-  DollarSign,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  MessageSquare,
-  Settings,
-  TrendingUp,
-  Users,
-  X
+    Award,
+    Bell,
+    BookOpen,
+    DollarSign,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    MessageSquare,
+    Settings,
+    TrendingUp,
+    Users,
+    X,
 } from "lucide-react";
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -112,7 +112,7 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
               <img
                 src={branding.appearance.logoUrl}
                 alt="Logo"
-                className="h-10 w-auto"
+                className="h-14 w-auto"
               />
             ) : (
               <div
@@ -122,25 +122,8 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
                 {branding.appearance.logoText?.charAt(0) || "U"}
               </div>
             )}
-            <div className="flex flex-col">
-              <span
-                className="text-lg font-bold leading-none"
-                style={{ fontFamily: branding.appearance.fontFamily }}
-              >
-                {branding.appearance.logoText ||
-                  branding.appearance.platformName}
-              </span>
-              {branding.appearance.logoSubtext && (
-                <span
-                  className="text-[10px] font-black leading-tight"
-                  style={{ color: branding.appearance.accentColor }}
-                >
-                  {branding.appearance.logoSubtext}
-                </span>
-              )}
-            </div>
             <span className="ml-1 text-[10px] bg-brand-accent text-brand-dark px-1.5 py-0.5 rounded font-black uppercase">
-              Pro
+              Instrutor
             </span>
           </Link>
           <button

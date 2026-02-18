@@ -52,7 +52,7 @@ const Navbar: React.FC = () => {
             <img
               src={branding.appearance.logoUrl}
               alt="Logo"
-              className="h-10 w-auto"
+              className="h-12 w-auto"
             />
           ) : (
             <div
@@ -62,29 +62,6 @@ const Navbar: React.FC = () => {
               {branding.appearance.logoText?.charAt(0) || "U"}
             </div>
           )}
-          <div className="flex flex-col">
-            <span
-              className="font-bold text-sm leading-none"
-              style={{
-                color: branding.appearance.primaryColor,
-                fontFamily: branding.appearance.fontFamily,
-              }}
-            >
-              {branding.appearance.logoText ||
-                branding.appearance.applicationName.split(" ")[0]}
-            </span>
-            {branding.appearance.logoSubtext && (
-              <span
-                className="text-xs font-bold leading-tight"
-                style={{
-                  color: branding.appearance.accentColor,
-                  fontFamily: branding.appearance.fontFamily,
-                }}
-              >
-                {branding.appearance.logoSubtext}
-              </span>
-            )}
-          </div>
         </Link>
 
         {/* Desktop Links */}

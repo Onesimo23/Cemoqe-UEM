@@ -1,16 +1,16 @@
 import {
-  Award,
-  Bell,
-  BookOpen,
-  History,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  MessageSquare,
-  Search,
-  Settings,
-  Star,
-  X,
+    Award,
+    Bell,
+    BookOpen,
+    History,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    MessageSquare,
+    Search,
+    Settings,
+    Star,
+    X,
 } from "lucide-react";
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -100,7 +100,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
               <img
                 src={branding.appearance.logoUrl}
                 alt="Logo"
-                className="h-10 w-auto"
+                className="h-14 w-auto"
               />
             ) : (
               <div
@@ -110,26 +110,6 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
                 {branding.appearance.logoText?.charAt(0) || "U"}
               </div>
             )}
-            <div className="flex flex-col">
-              <span
-                className="text-lg font-bold leading-none"
-                style={{ fontFamily: branding.appearance.fontFamily }}
-              >
-                {branding.appearance.logoText ||
-                  branding.appearance.platformName}
-              </span>
-              {branding.appearance.logoSubtext && (
-                <span
-                  className="text-[10px] font-black leading-tight"
-                  style={{
-                    color: branding.appearance.accentColor,
-                    fontFamily: branding.appearance.fontFamily,
-                  }}
-                >
-                  {branding.appearance.logoSubtext}
-                </span>
-              )}
-            </div>
             <span className="ml-2 text-[10px] bg-brand-accent text-brand-dark px-1.5 py-0.5 rounded font-black uppercase">
               Aluno
             </span>
@@ -215,7 +195,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
               <img
                 src={branding.appearance.logoUrl}
                 alt="Logo"
-                className="h-6 w-auto"
+                className="h-8 w-auto"
               />
             ) : (
               <div
@@ -225,18 +205,6 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
                 {branding.appearance.logoText?.charAt(0) || "U"}
               </div>
             )}
-            <span
-              className="font-bold text-sm"
-              style={{ fontFamily: branding.appearance.fontFamily }}
-            >
-              {branding.appearance.logoText || branding.appearance.platformName}{" "}
-              <span style={{ color: branding.appearance.accentColor }}>
-                Aluno
-              </span>
-            </span>
-          </div>
-          <div className="w-8 h-8 bg-brand-green rounded-full flex items-center justify-center font-bold text-xs">
-            AL
           </div>
         </header>
 

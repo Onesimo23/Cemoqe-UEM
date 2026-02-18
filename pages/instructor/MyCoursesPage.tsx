@@ -1,30 +1,32 @@
 import {
-  collection,
-  doc,
-  getDocs,
-  limit,
-  onSnapshot,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
+    collection,
+    deleteDoc,
+    doc,
+    getDocs,
+    limit,
+    onSnapshot,
+    query,
+    serverTimestamp,
+    updateDoc,
+    where,
 } from "firebase/firestore";
 import {
-  BookOpen,
-  Check,
-  ChevronDown,
-  DollarSign,
-  Edit3,
-  Eye,
-  EyeOff,
-  Filter,
-  MoreVertical,
-  Plus,
-  Power,
-  Search,
-  Star,
-  TrendingUp,
-  Users
+    AlertTriangle,
+    BookOpen,
+    Check,
+    ChevronDown,
+    DollarSign,
+    Edit3,
+    Eye,
+    EyeOff,
+    Filter,
+    Plus,
+    Power,
+    Search,
+    Star,
+    Trash2,
+    TrendingUp,
+    Users,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -50,6 +52,11 @@ const InstructorCoursesPage: React.FC = () => {
   // Estado local para permitir a ativação/desativação
   const [courses, setCourses] = useState<InstructorCourse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<InstructorCourse | null>(
+    null,
+  );
+  const [isDeleting, setIsDeleting] = useState(false);
   const { user } = useAuth();
   const courseMetricsRef = useRef<{ [key: string]: any }>({});
 
@@ -298,6 +305,33 @@ const InstructorCoursesPage: React.FC = () => {
         ),
       );
       console.error("Falha ao alterar status do curso:", e);
+    }
+  };
+
+  const handleDeleteCourse = async () => {
+    if (!courseToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      // Deleta do Firestore
+      await deleteDoc(doc(db, "courses", courseToDelete.id));
+
+      // Remove do cache
+      if (user?.uid) {
+        cacheService.remove(`instructor_courses_${user.uid}`);
+      }
+
+      // Remove da UI
+      setCourses((prev) => prev.filter((c) => c.id !== courseToDelete.id));
+
+      // Fecha o modal
+      setShowDeleteModal(false);
+      setCourseToDelete(null);
+    } catch (e) {
+      console.error("Falha ao deletar curso:", e);
+      alert("Não foi possível deletar o curso. Tente novamente.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -586,8 +620,15 @@ const InstructorCoursesPage: React.FC = () => {
                           >
                             <Eye size={18} />
                           </Link>
-                          <button className="p-2 text-slate-400 hover:text-slate-900 rounded-lg transition-all">
-                            <MoreVertical size={18} />
+                          <button
+                            onClick={() => {
+                              setCourseToDelete(course);
+                              setShowDeleteModal(true);
+                            }}
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            title="Deletar Curso"
+                          >
+                            <Trash2 size={18} />
                           </button>
                         </div>
                       </td>
@@ -611,6 +652,47 @@ const InstructorCoursesPage: React.FC = () => {
                 <button className="px-4 py-2 text-xs font-bold text-brand-green border border-brand-green/20 rounded-lg bg-white hover:bg-brand-green/5 transition-colors shadow-sm">
                   Próximo
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && courseToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 animate-in zoom-in-95 duration-200">
+              <div className="p-8">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mb-4">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                  Deletar Curso
+                </h2>
+                <p className="text-slate-600 mb-6">
+                  Tem certeza que deseja deletar o curso{" "}
+                  <strong>{courseToDelete.title}</strong>? Esta ação é
+                  irreversível.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setCourseToDelete(null);
+                    }}
+                    disabled={isDeleting}
+                    className="flex-1 px-4 py-2.5 text-slate-700 border border-gray-300 rounded-xl hover:bg-gray-50 transition-all font-semibold disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleDeleteCourse}
+                    disabled={isDeleting}
+                    className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-semibold disabled:opacity-70 flex items-center justify-center gap-2"
+                  >
+                    <Trash2 size={16} />
+                    {isDeleting ? "Deletando..." : "Deletar"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
