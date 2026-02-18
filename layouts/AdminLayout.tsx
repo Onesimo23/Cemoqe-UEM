@@ -14,6 +14,7 @@ import {
     X,
 } from "lucide-react";
 import React, { useState } from "react";
+import LogoutConfirmModal from "../components/LogoutConfirmModal";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useBranding } from "../contexts/BrandingContext";
@@ -24,19 +25,30 @@ interface AdminLayoutProps {
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, profile, user } = useAuth();
   const { branding } = useBranding();
 
-  const handleLogout = async () => {
-    if (window.confirm("Encerrar sessão administrativa?")) {
-      try {
-        await logout();
-      } finally {
-        navigate("/", { replace: true });
-      }
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const handleConfirmLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      setIsLogoutModalOpen(false);
+      navigate("/", { replace: true });
+    } finally {
+      setIsLoggingOut(false);
     }
+  };
+
+  const handleCancelLogout = () => {
+    setIsLogoutModalOpen(false);
   };
 
   const menuItems = [
@@ -177,7 +189,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
         <div className="p-4 border-t border-white/10">
           <button
-            onClick={handleLogout}
+            onClick={handleLogoutClick}
             className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-sm font-black uppercase tracking-widest text-slate-400 hover:bg-red-500 hover:text-white transition-all active:scale-95 group"
           >
             <LogOut className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -273,8 +285,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </header>
 
         <main className="flex-1 p-6 md:p-10 overflow-y-auto">{children}</main>
-      </div>
-    </div>
+      </div>      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onConfirm={handleConfirmLogout}
+        onCancel={handleCancelLogout}
+        title="Confirmar Saída"
+        message="Encerrar sessão administrativa?"
+        isLoading={isLoggingOut}
+      />    </div>
   );
 };
 

@@ -30,6 +30,7 @@ import {
 import { UserProfile } from "../../contexts/AuthContext";
 import { db } from "../../services/firebase";
 import { isSupabaseConfigured, supabase } from "../../services/supabase";
+import ConfirmationModal from "../../components/ConfirmationModal";
 
 interface TutorApplication {
   id: string;
@@ -64,6 +65,8 @@ const AdminTutorsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [specialtyFilter, setSpecialtyFilter] = useState("Todas");
   const [selectedTutor, setSelectedTutor] = useState<ActiveTutor | null>(null);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [rejectingAppId, setRejectingAppId] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(
@@ -160,28 +163,40 @@ const AdminTutorsPage: React.FC = () => {
   };
 
   const handleReject = async (appId: string) => {
-    if (window.confirm("Deseja realmente rejeitar esta candidatura?")) {
-      const app = applications.find((a) => a.id === appId);
+    setRejectingAppId(appId);
+    setIsRejectModalOpen(true);
+  };
 
-      setApplications(applications.filter((a) => a.id !== appId));
+  const handleConfirmReject = async () => {
+    if (!rejectingAppId) return;
+    
+    const app = applications.find((a) => a.id === rejectingAppId);
 
-      // Registar log da rejeição
-      if (app) {
-        try {
-          await addDoc(collection(db, "admin_logs"), {
-            action: "Candidatura de Tutor Rejeitada",
-            details: `${app.name} (${app.email}) foi rejeitado como tutor`,
-            targetUserName: app.name,
-            targetUserRole: "instructor",
-            timestamp: serverTimestamp(),
-            adminName: "Admin Panel",
-            createdAt: new Date().toISOString(),
-          });
-        } catch (error) {
-          console.error("Erro ao registar log:", error);
-        }
+    setApplications(applications.filter((a) => a.id !== rejectingAppId));
+    setIsRejectModalOpen(false);
+    setRejectingAppId(null);
+
+    // Registar log da rejeição
+    if (app) {
+      try {
+        await addDoc(collection(db, "admin_logs"), {
+          action: "Candidatura de Tutor Rejeitada",
+          details: `${app.name} (${app.email}) foi rejeitado como tutor`,
+          targetUserName: app.name,
+          targetUserRole: "instructor",
+          timestamp: serverTimestamp(),
+          adminName: "Admin Panel",
+          createdAt: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error("Erro ao registar log:", error);
       }
     }
+  };
+
+  const handleCancelReject = () => {
+    setIsRejectModalOpen(false);
+    setRejectingAppId(null);
   };
 
   const logActivity = async (
@@ -518,6 +533,15 @@ const AdminTutorsPage: React.FC = () => {
           </div>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={isRejectModalOpen}
+        onConfirm={handleConfirmReject}
+        onCancel={handleCancelReject}
+        title="Rejeitar Candidatura"
+        message="Deseja realmente rejeitar esta candidatura de tutor?"
+        confirmText="Rejeitar"
+        isDangerous={true}
+      />
     </AdminLayout>
   );
 };

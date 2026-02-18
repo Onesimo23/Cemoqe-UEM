@@ -13,6 +13,7 @@ import {
     X,
 } from "lucide-react";
 import React, { useState } from "react";
+import LogoutConfirmModal from "../components/LogoutConfirmModal";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useBranding } from "../contexts/BrandingContext";
@@ -23,6 +24,8 @@ interface InstructorLayoutProps {
 
 const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, profile, user } = useAuth();
@@ -36,14 +39,23 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
     user?.photoURL ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(instructorName)}&background=0e7038&color=fff`;
 
-  const handleLogout = async () => {
-    if (window.confirm("Tem certeza que deseja sair do Painel do Instrutor?")) {
-      try {
-        await logout();
-      } finally {
-        navigate("/", { replace: true });
-      }
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const handleConfirmLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      setIsLogoutModalOpen(false);
+      navigate("/", { replace: true });
+    } finally {
+      setIsLoggingOut(false);
     }
+  };
+
+  const handleCancelLogout = () => {
+    setIsLogoutModalOpen(false);
   };
 
   const menuItems = [
@@ -177,7 +189,7 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
         {/* Sidebar Footer Logout Button */}
         <div className="p-4 border-t border-white/10">
           <button
-            onClick={handleLogout}
+            onClick={handleLogoutClick}
             className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-sm font-black uppercase tracking-widest text-slate-400 hover:bg-red-500 hover:text-white transition-all active:scale-95 group"
           >
             <LogOut className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -218,7 +230,7 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
             </button>
             <div className="h-8 w-px bg-gray-200 mx-2"></div>
             <button
-              onClick={handleLogout}
+              onClick={handleLogoutClick}
               className="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
               title="Encerrar Sessão"
             >
@@ -229,6 +241,14 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
 
         <main className="flex-1 p-6 md:p-8 overflow-y-auto">{children}</main>
       </div>
+      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onConfirm={handleConfirmLogout}
+        onCancel={handleCancelLogout}
+        title="Confirmar Saída"
+        message="Tem a certeza que deseja sair do Painel do Instrutor?"
+        isLoading={isLoggingOut}
+      />
     </div>
   );
 };

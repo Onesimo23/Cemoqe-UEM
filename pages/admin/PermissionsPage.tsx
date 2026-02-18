@@ -1,6 +1,6 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
+import ConfirmationModal from '../../components/ConfirmationModal';
 import { 
   Key, 
   ShieldAlert, 
@@ -75,6 +75,7 @@ const DEFAULT_PERMISSIONS: PermissionItem[] = [
 const AdminPermissionsPage: React.FC = () => {
   const [permissions, setPermissions] = useState<PermissionItem[]>(DEFAULT_PERMISSIONS);
   const [isSaving, setIsSaving] = useState(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; msg: string }>({ show: false, msg: '' });
 
   const togglePermission = (permissionId: string, role: keyof RolePermissions) => {
@@ -107,15 +108,18 @@ const AdminPermissionsPage: React.FC = () => {
   };
 
   const handleReset = () => {
-    const confirmed = window.confirm(
-      'Atenção: Esta ação irá restaurar todas as permissões para as configurações recomendadas de fábrica. Deseja continuar?'
-    );
-    
-    if (confirmed) {
-      // Criamos uma nova cópia do array constante para garantir a atualização do estado
-      setPermissions(JSON.parse(JSON.stringify(DEFAULT_PERMISSIONS)));
-      showFeedback('Configurações padrão restauradas com sucesso!');
-    }
+    setIsResetModalOpen(true);
+  };
+
+  const handleConfirmReset = () => {
+    // Criamos uma nova cópia do array constante para garantir a atualização do estado
+    setPermissions(JSON.parse(JSON.stringify(DEFAULT_PERMISSIONS)));
+    setIsResetModalOpen(false);
+    showFeedback('Configurações padrão restauradas com sucesso!');
+  };
+
+  const handleCancelReset = () => {
+    setIsResetModalOpen(false);
   };
 
   return (
@@ -256,6 +260,15 @@ const AdminPermissionsPage: React.FC = () => {
            </div>
         </div>
       </div>
+      <ConfirmationModal
+        isOpen={isResetModalOpen}
+        onConfirm={handleConfirmReset}
+        onCancel={handleCancelReset}
+        title="Restaurar Configurações Padrão"
+        message="Atenção: Esta ação irá restaurar todas as permissões para as configurações recomendadas de fábrica. Deseja continuar?"
+        confirmText="Restaurar"
+        isDangerous={true}
+      />
     </AdminLayout>
   );
 };

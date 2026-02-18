@@ -16,6 +16,7 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useBranding } from "../contexts/BrandingContext";
+import LogoutConfirmModal from "../components/LogoutConfirmModal";
 
 interface StudentLayoutProps {
   children: React.ReactNode;
@@ -23,20 +24,30 @@ interface StudentLayoutProps {
 
 const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { profile, user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { branding } = useBranding();
 
-  const handleLogout = async () => {
-    if (window.confirm("Deseja realmente encerrar a sua sessão?")) {
-      try {
-        await logout();
-        navigate("/", { replace: true });
-      } finally {
-        // Garante limpeza de contexto
-      }
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const handleConfirmLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      setIsLogoutModalOpen(false);
+      navigate("/", { replace: true });
+    } finally {
+      setIsLoggingOut(false);
     }
+  };
+
+  const handleCancelLogout = () => {
+    setIsLogoutModalOpen(false);
   };
 
   const menuItems = [
@@ -175,7 +186,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
 
         <div className="p-4 border-t border-white/10">
           <button
-            onClick={handleLogout}
+            onClick={handleLogoutClick}
             className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-sm font-black uppercase tracking-widest text-slate-400 hover:bg-red-500 hover:text-white transition-all active:scale-95 group"
           >
             <LogOut className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -259,7 +270,14 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
         </header>
 
         <main className="flex-1 p-6 md:p-10 overflow-y-auto">{children}</main>
-      </div>
+      </div>      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onConfirm={handleConfirmLogout}
+        onCancel={handleCancelLogout}
+        title="Confirmar Saída"
+        message="Deseja realmente encerrar a sua sessão?"
+        isLoading={isLoggingOut}
+      />
     </div>
   );
 };
