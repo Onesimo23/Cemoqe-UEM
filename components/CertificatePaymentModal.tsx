@@ -1,12 +1,12 @@
 import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  Timestamp,
-  where,
+    addDoc,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    query,
+    Timestamp,
+    where,
 } from "firebase/firestore";
 import { AlertCircle, Check, Download, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -565,8 +565,8 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
                   Enviado com Sucesso!
                 </h4>
                 <p className="text-sm text-green-700 mt-1">
-                  Seus dados de pagamento foram recebidos. O instrutor confirmará
-                  em breve.
+                  Seus dados de pagamento foram recebidos. O instrutor
+                  confirmará em breve.
                 </p>
               </div>
             </div>
@@ -609,7 +609,9 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
               {/* Preço do Certificado */}
               {course?.certificatePrice && (
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-2">Valor do Certificado</p>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Valor do Certificado
+                  </p>
                   <p className="text-3xl font-bold text-brand-green">
                     {course.certificatePrice} MZM
                   </p>
@@ -623,18 +625,24 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
                 <div>
                   <p className="text-xs text-gray-600">Curso</p>
-                  <p className="font-semibold text-gray-900 text-sm">{courseTitle}</p>
+                  <p className="font-semibold text-gray-900 text-sm">
+                    {courseTitle}
+                  </p>
                 </div>
                 {profile?.full_name && (
                   <div>
                     <p className="text-xs text-gray-600">Aluno</p>
-                    <p className="font-semibold text-gray-900 text-sm">{profile.full_name}</p>
+                    <p className="font-semibold text-gray-900 text-sm">
+                      {profile.full_name}
+                    </p>
                   </div>
                 )}
                 {instructorName && (
                   <div>
                     <p className="text-xs text-gray-600">Instrutor</p>
-                    <p className="font-semibold text-gray-900 text-sm">{instructorName}</p>
+                    <p className="font-semibold text-gray-900 text-sm">
+                      {instructorName}
+                    </p>
                   </div>
                 )}
               </div>
@@ -644,90 +652,90 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
           {/* Tab: Método de Pagamento */}
           {activeTab === "payment" && (
             <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Método de Pagamento
-            </label>
-            <select
-              value={paymentMethod}
-              onChange={(e) =>
-                setPaymentMethod(e.target.value as PaymentMethod)
-              }
-              disabled={loading || success}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="m-pesa">M-Pesa</option>
-              <option value="e-mola">E-Mola</option>
-              <option value="bank">Transferência Bancária</option>
-            </select>
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Método de Pagamento
+                </label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) =>
+                    setPaymentMethod(e.target.value as PaymentMethod)
+                  }
+                  disabled={loading || success}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="m-pesa">M-Pesa</option>
+                  <option value="e-mola">E-Mola</option>
+                  <option value="bank">Transferência Bancária</option>
+                </select>
+              </div>
 
-          {/* Dados de Pagamento por Método */}
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-            <p className="text-sm font-semibold text-amber-900 mb-2">
-              Dados para Transferência:
-            </p>
-            {paymentMethod === "m-pesa" && (
-              <div className="text-sm text-amber-800">
-                <p className="font-medium">
-                  M-Pesa: <span className="font-bold">846909999</span>
+              {/* Dados de Pagamento por Método */}
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-sm font-semibold text-amber-900 mb-2">
+                  Dados para Transferência:
                 </p>
-                <p className="text-xs text-amber-700 mt-1">
-                  Faça a transferência para este número e insira o ID da
-                  transação abaixo.
+                {paymentMethod === "m-pesa" && (
+                  <div className="text-sm text-amber-800">
+                    <p className="font-medium">
+                      M-Pesa: <span className="font-bold">846909999</span>
+                    </p>
+                    <p className="text-xs text-amber-700 mt-1">
+                      Faça a transferência para este número e insira o ID da
+                      transação abaixo.
+                    </p>
+                  </div>
+                )}
+                {paymentMethod === "e-mola" && (
+                  <div className="text-sm text-amber-800">
+                    <p className="font-medium">
+                      E-Mola: <span className="font-bold">(870509214)</span>
+                    </p>
+                    <p className="text-xs text-amber-700 mt-1">
+                      Faça a transferência para este número e insira o ID da
+                      transação abaixo.
+                    </p>
+                  </div>
+                )}
+                {paymentMethod === "bank" && (
+                  <div className="text-sm text-amber-800">
+                    <p className="font-medium">
+                      BCI:{" "}
+                      <span className="font-bold">(000800000971671710113)</span>
+                    </p>
+                    <p className="text-xs text-amber-700 mt-1">
+                      Faça a transferência para esta conta e insira o ID da
+                      transação abaixo.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  ID da Transação
+                </label>
+                <input
+                  type="text"
+                  value={transactionId}
+                  onChange={(e) => setTransactionId(e.target.value)}
+                  disabled={loading || success}
+                  placeholder="Ex: TRX123456789"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Cole o ID ou número de referência da sua transação
                 </p>
               </div>
-            )}
-            {paymentMethod === "e-mola" && (
-              <div className="text-sm text-amber-800">
-                <p className="font-medium">
-                  E-Mola: <span className="font-bold">(870509214)</span>
-                </p>
-                <p className="text-xs text-amber-700 mt-1">
-                  Faça a transferência para este número e insira o ID da
-                  transação abaixo.
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-xs text-blue-800">
+                  <strong>Nota:</strong> Certifique-se de que o pagamento foi
+                  processado antes de enviar os dados. O instrutor confirmará
+                  seu pagamento antes de liberar o certificado.
                 </p>
               </div>
-            )}
-            {paymentMethod === "bank" && (
-              <div className="text-sm text-amber-800">
-                <p className="font-medium">
-                  BCI:{" "}
-                  <span className="font-bold">(000800000971671710113)</span>
-                </p>
-                <p className="text-xs text-amber-700 mt-1">
-                  Faça a transferência para esta conta e insira o ID da
-                  transação abaixo.
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              ID da Transação
-            </label>
-            <input
-              type="text"
-              value={transactionId}
-              onChange={(e) => setTransactionId(e.target.value)}
-              disabled={loading || success}
-              placeholder="Ex: TRX123456789"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Cole o ID ou número de referência da sua transação
-            </p>
-          </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <p className="text-xs text-blue-800">
-              <strong>Nota:</strong> Certifique-se de que o pagamento foi
-              processado antes de enviar os dados. O instrutor confirmará seu
-              pagamento antes de liberar o certificado.
-            </p>
-          </div>
             </div>
           )}
         </div>
