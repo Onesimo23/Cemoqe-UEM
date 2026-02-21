@@ -264,7 +264,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 <p className="font-semibold text-slate-900">
                   {profile?.full_name || "Admin"}
                 </p>
-                <p className="text-xs text-slate-500">Acesso de Nível 1</p>
+                <p className="text-xs text-slate-500">Acesso do Admin</p>
               </div>
             </div>
           </div>

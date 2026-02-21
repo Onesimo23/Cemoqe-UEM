@@ -1,17 +1,17 @@
 import {
-    Award,
-    Bell,
-    BookOpen,
-    Clock,
-    History,
-    LayoutDashboard,
-    LogOut,
-    Menu,
-    MessageSquare,
-    Search,
-    Settings,
-    Star,
-    X,
+  Award,
+  Bell,
+  BookOpen,
+  Clock,
+  History,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  MessageSquare,
+  Search,
+  Settings,
+  Star,
+  X,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -140,7 +140,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
               </div>
             )}
             <span className="ml-2 text-[10px] bg-brand-accent text-brand-dark px-1.5 py-0.5 rounded font-black uppercase">
-              Aluno
+              Formando
             </span>
           </Link>
           <button
@@ -157,7 +157,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
               <img
                 src={profile?.avatar_url || user?.photoURL || ""}
                 className="w-10 h-10 rounded-full border-2 border-brand-accent/30 object-cover"
-                alt="Aluno"
+                alt="Formando"
               />
             ) : (
               <div className="w-10 h-10 rounded-full bg-brand-green flex items-center justify-center font-bold text-white shadow-inner border-2 border-brand-accent/30">
@@ -172,7 +172,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
                   "Utilizador"}
               </p>
               <p className="text-[10px] text-brand-accent font-black uppercase tracking-widest">
-                Acesso de Aluno
+                Acesso do Formando
               </p>
             </div>
           </div>
@@ -276,7 +276,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
                 <img
                   src={profile?.avatar_url || user?.photoURL || ""}
                   className="w-8 h-8 rounded-full border-2 border-slate-100 object-cover"
-                  alt="Aluno"
+                  alt="Formando"
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-brand-green text-white font-bold grid place-items-center border-2 border-slate-100">
@@ -285,9 +285,9 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
               )}
               <div className="text-sm">
                 <p className="font-semibold text-slate-900">
-                  {profile?.full_name || "Estudante"}
+                  {profile?.full_name || "Formando"}
                 </p>
-                <p className="text-xs text-slate-500">Acesso de Aluno</p>
+                <p className="text-xs text-slate-500">Acesso do Formando</p>
               </div>
             </div>
           </div>

@@ -4,14 +4,14 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import {
-  AlertCircle,
-  ArrowRight,
-  Check,
-  Eye,
-  EyeOff,
-  Loader2,
-  Lock,
-  Mail,
+    AlertCircle,
+    ArrowRight,
+    Check,
+    Eye,
+    EyeOff,
+    Loader2,
+    Lock,
+    Mail,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { auth, db, googleProvider } from "../services/firebase";
@@ -170,7 +170,7 @@ const LoginPage: React.FC = () => {
                 ))}
               </div>
               <p className="text-sm font-bold text-brand-light">
-                Milhares de alunos ativos
+                Milhares de formandos ativos
               </p>
             </div>
             <div className="h-1.5 w-24 bg-brand-accent rounded-full"></div>

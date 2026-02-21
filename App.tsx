@@ -37,7 +37,6 @@ import StudentSettingsPage from "./pages/student/SettingsPage";
 import InstructorCertificatesPage from "./pages/instructor/CertificatesManagementPage";
 import InstructorCourseEditorPage from "./pages/instructor/CourseEditorPage";
 import InstructorDashboardPage from "./pages/instructor/DashboardPage";
-import InstructorFinancePage from "./pages/instructor/FinanceiroPage";
 import InstructorCoursesPage from "./pages/instructor/MyCoursesPage";
 import InstructorStudentsPage from "./pages/instructor/MyStudentsPage";
 import InstructorQuestionsPage from "./pages/instructor/QuestionsPage";
@@ -297,14 +296,6 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute allowedRole="instructor">
                   <InstructorStudentsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/instrutor/financeiro"
-              element={
-                <ProtectedRoute allowedRole="instructor">
-                  <InstructorFinancePage />
                 </ProtectedRoute>
               }
             />

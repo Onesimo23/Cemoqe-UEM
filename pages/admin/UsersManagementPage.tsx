@@ -1,33 +1,33 @@
 import { deleteApp, initializeApp } from "firebase/app";
 import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
 import {
-    addDoc,
-    collection,
-    deleteDoc,
-    doc,
-    onSnapshot,
-    query,
-    serverTimestamp,
-    setDoc,
-    updateDoc,
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
 } from "firebase/firestore";
 import {
-    CheckCircle,
-    CheckCircle2,
-    Copy,
-    Database,
-    Edit,
-    Eye,
-    EyeOff,
-    Fingerprint,
-    Loader2,
-    Lock,
-    Mail,
-    Search,
-    Shield,
-    Trash2,
-    UserPlus,
-    X,
+  CheckCircle,
+  CheckCircle2,
+  Copy,
+  Database,
+  Edit,
+  Eye,
+  EyeOff,
+  Fingerprint,
+  Loader2,
+  Lock,
+  Mail,
+  Search,
+  Shield,
+  Trash2,
+  UserPlus,
+  X,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { UserProfile } from "../../contexts/AuthContext";
@@ -317,7 +317,7 @@ const UsersManagementPage: React.FC = () => {
       const matchesSearch = name.includes(search) || email.includes(search);
 
       const roleMap: any = {
-        student: "Alunos",
+        student: "Formandos",
         instructor: "Tutores",
         admin: "Admins",
       };
@@ -382,7 +382,7 @@ const UsersManagementPage: React.FC = () => {
             className="h-14 px-4 bg-white border border-slate-200 rounded-[20px] text-xs font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer shadow-sm"
           >
             <option value="Todos">Todos os Cargos</option>
-            <option value="Alunos">Alunos</option>
+            <option value="Formandos">Formandos</option>
             <option value="Tutores">Tutores</option>
             <option value="Admins">Admins</option>
           </select>
@@ -481,7 +481,7 @@ const UsersManagementPage: React.FC = () => {
                                 ? "Admin"
                                 : user.role === "instructor"
                                   ? "Tutor"
-                                  : "Aluno"}
+                                  : "Formando"}
                             </span>
                             <span
                               className={`text-[9px] font-black uppercase ${user.status === "Ativo" ? "text-emerald-600" : "text-red-600"}`}

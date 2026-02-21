@@ -7,7 +7,7 @@ import {
     ChevronDown,
     CreditCard,
     Save,
-    User
+    User,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -387,7 +387,7 @@ const SettingsPage: React.FC = () => {
               <div className="space-y-6 animate-in fade-in duration-300">
                 <ToggleOption
                   label="Nova Matrícula"
-                  description="Receber e-mail sempre que um aluno se inscrever no curso."
+                  description="Receber e-mail sempre que um formando se inscrever no curso."
                   defaultChecked
                 />
                 <ToggleOption

@@ -1,14 +1,14 @@
 import {
-  ArrowLeft,
-  Award,
-  Calendar,
-  Globe,
-  Linkedin,
-  Mail,
-  PlayCircle,
-  Star,
-  Twitter,
-  Users,
+    ArrowLeft,
+    Award,
+    Calendar,
+    Globe,
+    Linkedin,
+    Mail,
+    PlayCircle,
+    Star,
+    Twitter,
+    Users,
 } from "lucide-react";
 import React from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
@@ -111,7 +111,7 @@ const InstructorDetailsPage: React.FC = () => {
                   <p className="text-2xl font-bold text-white">
                     {tutor.total_students || 0}
                   </p>
-                  <p className="text-xs text-white/80">Alunos</p>
+                  <p className="text-xs text-white/80">Formandos</p>
                 </div>
                 <div
                   style={{
@@ -187,7 +187,7 @@ const InstructorDetailsPage: React.FC = () => {
               <div className="bg-gray-50 rounded-lg p-8">
                 <p className="text-gray-700 leading-relaxed text-lg">
                   {tutor.bio ||
-                    "Instrutor certificado e experiente na plataforma UEM Cursos online com um excelente histórico de ensino e satisfação dos alunos."}
+                    "Instrutor certificado e experiente na plataforma UEM Cursos online com um excelente histórico de ensino e satisfação dos formandos."}
                 </p>
               </div>
             </section>

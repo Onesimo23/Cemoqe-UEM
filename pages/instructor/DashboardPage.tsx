@@ -1,24 +1,22 @@
 import {
-  collection,
-  doc,
-  getDoc,
-  onSnapshot,
-  query,
-  where,
+    collection,
+    doc,
+    getDoc,
+    onSnapshot,
+    query,
+    where,
 } from "firebase/firestore";
 import {
-  AlertCircle,
-  ArrowDownRight,
-  ArrowUpRight,
-  BarChart3,
-  BookOpen,
-  Check,
-  ChevronDown,
-  DollarSign,
-  Filter,
-  Star,
-  TrendingUp,
-  Users,
+    ArrowDownRight,
+    ArrowUpRight,
+    BarChart3,
+    BookOpen,
+    Check,
+    ChevronDown,
+    Filter,
+    Star,
+    TrendingUp,
+    Users
 } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -324,8 +322,8 @@ const InstructorDashboardPage: React.FC = () => {
               try {
                 const ps = await getDoc(doc(db, "profiles", r.user_uid));
                 const name = ps.exists()
-                  ? (ps.data() as any)?.full_name || "Aluno"
-                  : "Aluno";
+                  ? (ps.data() as any)?.full_name || "Formando"
+                  : "Formando";
                 const when = r.ts
                   ? new Intl.RelativeTimeFormat("pt-PT", {
                       numeric: "auto",
@@ -339,7 +337,7 @@ const InstructorDashboardPage: React.FC = () => {
               } catch {
                 return {
                   id: r.user_uid,
-                  name: "Aluno",
+                  name: "Formando",
                   when: "",
                   course: "Curso",
                 };
@@ -463,6 +461,8 @@ const InstructorDashboardPage: React.FC = () => {
 
         {/* Stats Grid - 5 Cards (Including Active Courses) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+          {/* REMOVIDO: Cards financeiros - O instrutor não gerencia finanças */}
+          {/*
           <InstructorStatCard
             label="Receita Total"
             value={`MZM ${stats.totalRevenue.toLocaleString("pt-MZ", { minimumFractionDigits: 2 })}`}
@@ -477,6 +477,7 @@ const InstructorDashboardPage: React.FC = () => {
             trend="Revenue do mês"
             trendType="up"
           />
+          */}
           <InstructorStatCard
             label="Cursos Ativos"
             value={String(stats.activeCourses).padStart(2, "0")}
@@ -485,12 +486,14 @@ const InstructorDashboardPage: React.FC = () => {
             trendType="neutral"
           />
           <InstructorStatCard
-            label="Total de Alunos"
+            label="Total de Formandos"
             value={stats.totalStudents.toString()}
             icon={<Users className="text-brand-accent" />}
             trend={`${stats.activeStudents} ativos`}
             trendType="up"
           />
+          {/* REMOVIDO: Taxa de Conversão - Métrica financeira */}
+          {/*
           <InstructorStatCard
             label="Taxa de Conversão"
             value={`${stats.conversionRate}%`}
@@ -498,6 +501,7 @@ const InstructorDashboardPage: React.FC = () => {
             trend="com certificado"
             trendType={stats.conversionRate > 50 ? "up" : "down"}
           />
+          */}
           <InstructorStatCard
             label="Avaliação Média"
             value={stats.avgRating.toFixed(1)}
@@ -511,6 +515,8 @@ const InstructorDashboardPage: React.FC = () => {
           {/* Main Column */}
           <div className="lg:col-span-2 space-y-8">
             {/* Alertas de Performance */}
+            {/* REMOVIDO: Alerta de Taxa de Conversão - Métrica financeira */}
+            {/*
             {stats.conversionRate < 30 && (
               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
                 <AlertCircle
@@ -522,13 +528,14 @@ const InstructorDashboardPage: React.FC = () => {
                     Taxa de Conversão Baixa
                   </p>
                   <p className="text-xs text-amber-700">
-                    Apenas {stats.conversionRate}% dos alunos compraram
+                    Apenas {stats.conversionRate}% dos formandos compraram
                     certificados. Considere adicionar mais conteúdo de
                     qualidade.
                   </p>
                 </div>
               </div>
             )}
+            */}
 
             {stats.pendingCertificates > 0 && (
               <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-start gap-3">
@@ -573,7 +580,9 @@ const InstructorDashboardPage: React.FC = () => {
                           <p className="text-2xl font-bold text-slate-900">
                             {course.students}
                           </p>
-                          <p className="text-[10px] text-slate-500">Alunos</p>
+                          <p className="text-[10px] text-slate-500">
+                            Formandos
+                          </p>
                         </div>
                         <div>
                           <p className="text-2xl font-bold text-blue-600">
@@ -584,10 +593,13 @@ const InstructorDashboardPage: React.FC = () => {
                           </p>
                         </div>
                         <div>
+                          {/* REMOVIDO: Dados de receita */}
+                          {/*
                           <p className="text-2xl font-bold text-emerald-600">
                             MZM {(course.revenue / 1000).toFixed(0)}k
                           </p>
                           <p className="text-[10px] text-slate-500">Receita</p>
+                          */}
                         </div>
                         <div>
                           <p className="text-2xl font-bold text-yellow-500">
@@ -641,108 +653,12 @@ const InstructorDashboardPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Gráfico de Crescimento de Vendas (Barras) */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-brand-green" />
-                  <h3 className="font-bold text-slate-800">
-                    Crescimento de Vendas
-                  </h3>
-                </div>
-
-                <Select
-                  className="w-full sm:w-44"
-                  value={salesFilter}
-                  onValueChange={setSalesFilter}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectPopover>
-                    <SelectListBox>
-                      <SelectItem value="Últimos 7 dias">
-                        Últimos 7 dias
-                      </SelectItem>
-                      <SelectItem value="Últimos 30 dias">
-                        Últimos 30 dias
-                      </SelectItem>
-                      <SelectItem value="Último trimestre">
-                        Último trimestre
-                      </SelectItem>
-                    </SelectListBox>
-                  </SelectPopover>
-                </Select>
-              </div>
-
-              {/* Sales Bar Chart - High Visibility Version */}
-              <div className="relative h-72 w-full mt-4 flex items-end">
-                {/* Background Grid Lines */}
-                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8 pt-4">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="w-full border-t border-slate-50 relative"
-                    >
-                      <span className="absolute -left-2 -top-2 text-[8px] font-black text-slate-300">
-                        {Math.round((maxSales / 4) * (5 - i))}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Bars Container */}
-                <div className="flex-1 h-full flex items-end justify-around gap-2 px-2 z-10">
-                  {series.map((data, idx) => (
-                    <div
-                      key={idx}
-                      className="flex-1 flex flex-col items-center group relative h-full justify-end"
-                    >
-                      {/* Value Label (Top of Bar) */}
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-8 bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded shadow-xl pointer-events-none z-20">
-                        MZM {data.value.toLocaleString("pt-MZ")}
-                      </div>
-
-                      {/* Bar */}
-                      <div
-                        className="w-full max-w-[40px] bg-gradient-to-t from-brand-green to-brand-green/80 rounded-t-lg transition-all duration-500 hover:brightness-110 shadow-sm"
-                        style={{ height: `${(data.value / maxSales) * 85}%` }}
-                      >
-                        {/* Inner Accent Line */}
-                        <div className="w-full h-1 bg-white/20 rounded-t-lg"></div>
-                      </div>
-
-                      {/* Axis Label */}
-                      <span className="mt-4 text-[10px] font-black text-slate-400 uppercase tracking-tighter truncate max-w-full">
-                        {data.label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-10 pt-6 border-t border-slate-50 flex items-center justify-center gap-8">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-brand-green"></div>
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                    Vendas em MZM
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-slate-100 border border-slate-200"></div>
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                    Meta Diária
-                  </span>
-                </div>
-              </div>
-            </div>
+            {/* REMOVIDO: Gráfico de Crescimento de Vendas - Conteúdo financeiro */}
           </div>
-
-          {/* Sidebar */}
           <div className="space-y-8">
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
               <h3 className="font-bold text-slate-800 mb-6 flex items-center justify-between">
-                Alunos Recentes
+                Formandos Recentes
                 <button className="text-xs text-brand-green font-bold hover:underline">
                   Ver todos
                 </button>
@@ -781,6 +697,7 @@ const InstructorDashboardPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Dica: Qualidade do Conteúdo */}
             <div className="bg-slate-900 rounded-3xl p-6 text-white relative overflow-hidden shadow-2xl">
               {/* Decorative blob */}
               <div className="absolute -top-10 -right-10 w-32 h-32 bg-brand-green/20 rounded-full blur-3xl"></div>
@@ -789,28 +706,30 @@ const InstructorDashboardPage: React.FC = () => {
                 <div className="bg-brand-green/20 w-12 h-12 rounded-2xl flex items-center justify-center mb-6">
                   <TrendingUp className="text-brand-accent w-7 h-7" />
                 </div>
-                <h3 className="text-lg font-bold mb-2">Dica: Aumente Vendas</h3>
+                <h3 className="text-lg font-bold mb-2">
+                  Dica: Melhore a Qualidade
+                </h3>
                 <p className="text-xs text-slate-300 leading-relaxed mb-5">
-                  Alunos que recebem certificados nos primeiros 7 dias têm 85%
-                  mais probabilidade de comprar cursos adicionais. Mantenha
-                  engajamento alto!
+                  Formandos que recebem feedback nos primeiros 7 dias de estudo
+                  têm 85% mais engajamento no curso e completam com sucesso.
+                  Mantenha uma comunicação ativa!
                 </p>
                 <div className="grid grid-cols-2 gap-2 text-xs mb-5">
                   <div className="bg-white/10 rounded-lg p-2">
                     <p className="font-bold text-brand-green">
-                      +{Math.round(stats.activeStudents * 0.25)}
+                      {stats.activeStudents}
                     </p>
-                    <p className="text-slate-400">potencial alunos</p>
+                    <p className="text-slate-400">formandos ativos agora</p>
                   </div>
                   <div className="bg-white/10 rounded-lg p-2">
-                    <p className="font-bold text-emerald-400">
-                      MZM +{Math.round(stats.totalRevenue * 0.15)}
+                    <p className="font-bold text-blue-400">
+                      {stats.completionRate}%
                     </p>
-                    <p className="text-slate-400">receita extra</p>
+                    <p className="text-slate-400">taxa de conclusão</p>
                   </div>
                 </div>
                 <button className="w-full py-2.5 bg-brand-green hover:bg-brand-dark text-white rounded-lg font-bold text-xs transition-all shadow-lg shadow-black/30">
-                  Otimizar Cursos
+                  Acessar Mensagens
                 </button>
               </div>
             </div>
@@ -861,7 +780,7 @@ const CourseRegistrationBar = ({ label, count, total, color }: any) => (
         {label}
       </span>
       <span className="text-[10px] font-black text-slate-400">
-        {count} ALUNOS
+        {count} FORMANDOS
       </span>
     </div>
     <div className="w-full h-2.5 bg-slate-50 border border-slate-100 rounded-full overflow-hidden">
