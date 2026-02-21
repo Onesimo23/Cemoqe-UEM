@@ -14,22 +14,27 @@ import {
 } from "firebase/storage";
 import {
     ArrowLeft,
+    Bold,
     Check,
     CheckCircle,
     ChevronDown,
     File as FileIcon,
     FileText,
     FileUp,
+    GripVertical,
+    Heading,
     HelpCircle,
     Image as ImageIcon,
     Info,
     Layout,
     Link as LinkIcon,
     List,
+    ListOrdered,
     MonitorPlay,
     Plus,
     PlusCircle,
     Plus as PlusIcon,
+    Quote,
     Save,
     Trash2,
     Type,
@@ -103,19 +108,24 @@ interface InteractiveExercise {
 }
 
 // Block Content Interfaces
-export type BlockType = "h1" | "h2" | "p" | "image" | "quote" | "list";
+export type BlockType = "h1" | "h2" | "p" | "image" | "quote" | "list" | "file";
 
 export interface ContentBlock {
   id: string;
   type: BlockType;
   value: string;
+  emoji?: string;
+  iconUrl?: string;
+  fileName?: string;
 }
+
+const COMMON_EMOJIS = ["💡", "📝", "🎯", "🚀", "📢", "❓", "✅", "⭐", "🔥", "💎"];
 
 const LessonBlockEditor: React.FC<{
   blocksJson: string;
   onChange: (json: string) => void;
-  onUploadImage: (file: File) => Promise<string>;
-}> = ({ blocksJson, onChange, onUploadImage }) => {
+  onUploadFile: (file: File) => Promise<string>;
+}> = ({ blocksJson, onChange, onUploadFile }) => {
   const [blocks, setBlocks] = useState<ContentBlock[]>(() => {
     try {
       const parsed = JSON.parse(blocksJson);
@@ -124,6 +134,8 @@ const LessonBlockEditor: React.FC<{
       return [{ id: "1", type: "p", value: blocksJson || "" }];
     }
   });
+
+  const [activeEmojiPicker, setActiveEmojiPicker] = useState<string | null>(null);
 
   useEffect(() => {
     onChange(JSON.stringify(blocks));
@@ -138,8 +150,35 @@ const LessonBlockEditor: React.FC<{
     setBlocks([...blocks, newBlock]);
   };
 
-  const updateBlock = (id: string, value: string) => {
-    setBlocks(blocks.map((b) => (b.id === id ? { ...b, value } : b)));
+  const updateBlock = (id: string, value: string, fileName?: string) => {
+    setBlocks(blocks.map((b) => (b.id === id ? { ...b, value, fileName: fileName || b.fileName } : b)));
+  };
+
+  const updateEmoji = (id: string, emoji: string, iconUrl?: string) => {
+    setBlocks(blocks.map((b) => (b.id === id ? { ...b, emoji, iconUrl: iconUrl ?? "" } : b)));
+    setActiveEmojiPicker(null);
+  };
+
+  const handleFileUploadInBlock = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const url = await onUploadFile(file);
+      updateBlock(id, url, file.name);
+    } catch (err) {
+      console.error("File upload failed:", err);
+    }
+  };
+
+  const handleMiniIconUpload = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const url = await onUploadFile(file);
+      updateEmoji(id, "", url);
+    } catch (err) {
+      console.error("Mini icon upload failed:", err);
+    }
   };
 
   const removeBlock = (id: string) => {
@@ -162,7 +201,7 @@ const LessonBlockEditor: React.FC<{
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const url = await onUploadImage(file);
+      const url = await onUploadFile(file);
       updateBlock(id, url);
     } catch (err) {
       console.error("Image upload failed:", err);
@@ -202,6 +241,13 @@ const LessonBlockEditor: React.FC<{
         </button>
         <button
           type="button"
+          onClick={() => addBlock("file")}
+          className="p-2 bg-white border border-gray-200 rounded-lg hover:border-brand-green text-xs flex items-center gap-1"
+        >
+          <FileIcon size={14} /> Ficheiro
+        </button>
+        <button
+          type="button"
           onClick={() => addBlock("quote")}
           className="p-2 bg-white border border-gray-200 rounded-lg hover:border-brand-green text-xs flex items-center gap-1"
         >
@@ -231,13 +277,77 @@ const LessonBlockEditor: React.FC<{
 
             <div className="flex items-start gap-3">
               <div className="flex-1">
+                {/* Ícone Redondo e Grande no topo direito */}
+                <div className="absolute -top-3 -right-3 flex items-center gap-2 z-20">
+                  {(block.emoji || block.iconUrl) && (
+                    <div className="w-10 h-10 bg-white rounded-full border-2 border-brand-green/10 shadow-xl flex items-center justify-center overflow-hidden group-hover:scale-110 transition-transform">
+                      {block.emoji ? (
+                        <span className="text-xl">{block.emoji}</span>
+                      ) : (
+                        <img src={block.iconUrl} className="w-full h-full object-cover" alt="icon" />
+                      )}
+                    </div>
+                  )}
+                  
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setActiveEmojiPicker(activeEmojiPicker === block.id ? null : block.id)}
+                      className="p-1.5 bg-white border border-gray-100 text-gray-400 hover:text-brand-green hover:border-brand-green rounded-full shadow-sm transition-all"
+                      title="Alterar Ícone"
+                    >
+                      <PlusIcon size={14} />
+                    </button>
+                    
+                    {activeEmojiPicker === block.id && (
+                      <div className="absolute right-0 top-full mt-2 bg-white border border-gray-100 shadow-2xl rounded-2xl p-3 flex flex-col gap-3 w-56 z-[100] animate-in fade-in zoom-in duration-200">
+                        <div className="flex flex-wrap gap-2">
+                          {COMMON_EMOJIS.map((e) => (
+                            <button
+                              key={e}
+                              type="button"
+                              onClick={() => updateEmoji(block.id, e, "")}
+                              className="p-2 hover:bg-gray-50 rounded-lg text-2xl transition-transform hover:scale-125"
+                            >
+                              {e}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="border-t border-gray-50 pt-3">
+                          <button
+                            type="button"
+                            onClick={() => document.getElementById(`mini-img-${block.id}`)?.click()}
+                            className="w-full text-xs flex items-center justify-center gap-2 py-2.5 bg-gray-50 hover:bg-brand-green/10 text-brand-green rounded-xl transition-colors font-bold"
+                          >
+                            <ImageIcon size={14} /> Upload de Imagem
+                          </button>
+                          <input
+                            id={`mini-img-${block.id}`}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleMiniIconUpload(block.id, e)}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateEmoji(block.id, "", "")}
+                          className="w-full text-[10px] text-gray-400 hover:text-red-500 font-bold uppercase tracking-widest pt-1 border-t border-gray-50"
+                        >
+                          Remover Ícone
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {block.type === "h1" && (
                   <input
                     type="text"
                     value={block.value}
                     onChange={(e) => updateBlock(block.id, e.target.value)}
                     placeholder="Título Principal..."
-                    className="w-full text-xl font-bold border-none outline-none focus:ring-0 placeholder:text-gray-300"
+                    className="w-full text-xl font-bold border-none outline-none focus:ring-0 placeholder:text-gray-300 pr-12"
                   />
                 )}
                 {block.type === "h2" && (
@@ -246,7 +356,7 @@ const LessonBlockEditor: React.FC<{
                     value={block.value}
                     onChange={(e) => updateBlock(block.id, e.target.value)}
                     placeholder="Subtítulo..."
-                    className="w-full text-lg font-bold border-none outline-none focus:ring-0 placeholder:text-gray-300 text-gray-700"
+                    className="w-full text-lg font-bold border-none outline-none focus:ring-0 placeholder:text-gray-300 text-gray-700 pr-12"
                   />
                 )}
                 {block.type === "p" && (
@@ -254,7 +364,7 @@ const LessonBlockEditor: React.FC<{
                     value={block.value}
                     onChange={(e) => updateBlock(block.id, e.target.value)}
                     placeholder="Escreva seu parágrafo..."
-                    className="w-full text-sm border-none outline-none focus:ring-0 placeholder:text-gray-300 resize-none overflow-hidden min-h-[1.5rem]"
+                    className="w-full text-sm border-none outline-none focus:ring-0 placeholder:text-gray-300 resize-none overflow-hidden min-h-[1.5rem] pr-12"
                     rows={1}
                     onInput={(e) => {
                       const target = e.target as HTMLTextAreaElement;
@@ -269,7 +379,7 @@ const LessonBlockEditor: React.FC<{
                       value={block.value}
                       onChange={(e) => updateBlock(block.id, e.target.value)}
                       placeholder="Citação importante..."
-                      className="w-full text-sm border-none outline-none focus:ring-0 bg-transparent placeholder:text-gray-300 resize-none overflow-hidden"
+                      className="w-full text-sm border-none outline-none focus:ring-0 bg-transparent placeholder:text-gray-300 resize-none overflow-hidden pr-12"
                       rows={1}
                     />
                   </div>
@@ -281,21 +391,22 @@ const LessonBlockEditor: React.FC<{
                       value={block.value}
                       onChange={(e) => updateBlock(block.id, e.target.value)}
                       placeholder="Item da lista..."
-                      className="w-full text-sm border-none outline-none focus:ring-0 placeholder:text-gray-300 resize-none overflow-hidden"
+                      className="w-full text-sm border-none outline-none focus:ring-0 placeholder:text-gray-300 resize-none overflow-hidden pr-12"
                       rows={1}
                     />
                   </div>
                 )}
                 {block.type === "image" && (
-                  <div className="space-y-2">
+                  <div className="space-y-2 pr-12">
                     {block.value ? (
-                      <div className="relative rounded-lg overflow-hidden border border-gray-100">
-                        <img src={block.value} alt="Block image" className="max-w-full h-auto" />
+                      <div className="relative rounded-xl overflow-hidden border border-gray-100 shadow-lg max-w-xl mx-auto group">
+                        <img src={block.value} alt="Block image" className="w-full h-auto" />
                         <button
+                          type="button"
                           onClick={() => updateBlock(block.id, "")}
-                          className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-md"
+                          className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <X size={12} />
+                          <X size={14} />
                         </button>
                       </div>
                     ) : (
@@ -313,10 +424,44 @@ const LessonBlockEditor: React.FC<{
                     )}
                   </div>
                 )}
+
+                {block.type === "file" && (
+                  <div className="space-y-2 pr-12">
+                    {block.value ? (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="p-2 bg-white rounded-lg shadow-sm text-brand-green">
+                          <FileIcon size={20} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-slate-700 truncate">{block.fileName || "Ficheiro"}</p>
+                          <p className="text-[10px] text-gray-400 uppercase tracking-tighter">Download disponível no player</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateBlock(block.id, "", "")}
+                          className="p-1.5 text-gray-300 hover:text-red-500"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed border-gray-100 rounded-lg hover:border-brand-green/50 cursor-pointer transition-all" onClick={() => document.getElementById(`blk-file-${block.id}`)?.click()}>
+                        <FileUp size={24} className="text-gray-300 mb-2" />
+                        <span className="text-xs text-gray-400">Clique para anexar ficheiro (PDF, ZIP, DOCX, etc)</span>
+                        <input
+                          id={`blk-file-${block.id}`}
+                          type="file"
+                          className="hidden"
+                          onChange={(e) => handleFileUploadInBlock(block.id, e)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <button
                 onClick={() => removeBlock(block.id)}
-                className="p-1 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="p-1 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity relative z-10"
               >
                 <Trash2 size={14} />
               </button>
@@ -2104,7 +2249,7 @@ const CourseEditorPage: React.FC = () => {
                                     json,
                                   )
                                 }
-                                onUploadImage={async (file) => {
+                                onUploadFile={async (file) => {
                                   const sanitizedFileName = file.name
                                     .normalize("NFD")
                                     .replace(/[\u0300-\u036f]/g, "")
