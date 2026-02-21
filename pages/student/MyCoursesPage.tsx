@@ -279,13 +279,21 @@ const MyCoursesPage: React.FC = () => {
       });
     };
 
-    const handleEnrollSnap = (snap: any) => {
+    // Mantém os IDs por origem de listener para poder construir a
+    // união correta entre ambos os listeners (`user_uid` e `userId`).
+    const enrollSources = new Map<string, Set<string>>();
+
+    const handleEnrollSnap = (snap: any, source: string) => {
       console.log(
-        "👤 [MyCoursesPage] handleEnrollSnap chamado:",
+        "👤 [MyCoursesPage] handleEnrollSnap chamado (source):",
+        source,
         snap.size,
         "inscrições encontradas",
       );
-      const ids = new Set<string>();
+
+      const idsFromSnap = new Set<string>();
+      const fallbackFromSnap = new Map<string, any>();
+
       snap.docs.forEach((d: any) => {
         const data: any = d.data();
         console.log("  📝 Inscrição encontrada:", d.id, data);
@@ -300,8 +308,8 @@ const MyCoursesPage: React.FC = () => {
           console.log("    ❌ Sem course_id! Pulando este documento");
           return;
         }
-        ids.add(cid);
-        enrollsMap.set(cid, {
+        idsFromSnap.add(cid);
+        fallbackFromSnap.set(cid, {
           ts: ts || undefined,
           fallback: {
             title: data?.course_title,
@@ -312,24 +320,70 @@ const MyCoursesPage: React.FC = () => {
           },
         });
       });
+
+      // Atualiza a coleção de IDs desta origem
+      enrollSources.set(source, idsFromSnap);
+
+      // Recomputar o conjunto união de todos os sources
+      const unionIds = new Set<string>();
+      for (const s of enrollSources.values())
+        for (const id of s) unionIds.add(id);
+
+      // Remover do enrollsMap entradas que não fazem mais parte da união
+      for (const existingId of Array.from(enrollsMap.keys())) {
+        if (!unionIds.has(existingId)) {
+          enrollsMap.delete(existingId);
+        }
+      }
+
+      // Para cada id da união, garantir que exista uma entrada em enrollsMap
+      // preservando dados já existentes, ou usando fallback do snapshot atual
+      unionIds.forEach((cid) => {
+        if (!enrollsMap.has(cid)) {
+          if (fallbackFromSnap.has(cid)) {
+            enrollsMap.set(cid, fallbackFromSnap.get(cid));
+          } else {
+            enrollsMap.set(cid, { ts: undefined, fallback: {} });
+          }
+        } else {
+          // Se já existe, mas temos ts/fallback mais nova no snapshot atual,
+          // podemos preferir atualizar campos não-nulos.
+          const existing = enrollsMap.get(cid) as any;
+          const fb = fallbackFromSnap.get(cid) as any;
+          if (fb) {
+            enrollsMap.set(cid, {
+              ts: fb.ts || existing.ts,
+              fallback: {
+                title: fb.fallback?.title || existing.fallback?.title,
+                category: fb.fallback?.category || existing.fallback?.category,
+                imageUrl: fb.fallback?.imageUrl || existing.fallback?.imageUrl,
+                instructor: fb.fallback?.instructor || existing.fallback?.instructor,
+                totalLessons: fb.fallback?.totalLessons || existing.fallback?.totalLessons,
+              },
+            });
+          }
+        }
+      });
+
       console.log(
-        "🎓 [MyCoursesPage] Total de IDs extraídos:",
-        Array.from(ids),
+        "🎓 [MyCoursesPage] Total de IDs (união das fontes):",
+        Array.from(enrollsMap.keys()),
       );
+
       recompute();
-      subscribeByCourse(Array.from(ids));
+      subscribeByCourse(Array.from(enrollsMap.keys()));
     };
 
     console.log("🔗 [MyCoursesPage] Configurando listeners...");
     const u1 = onSnapshot(
       query(collection(db, "enrollments"), where("user_uid", "==", user.uid)),
-      handleEnrollSnap,
+      (snap) => handleEnrollSnap(snap, "user_uid"),
       (error) =>
         console.error("❌ [MyCoursesPage] Erro no listener u1:", error),
     );
     const u2 = onSnapshot(
       query(collection(db, "enrollments"), where("userId", "==", user.uid)),
-      handleEnrollSnap,
+      (snap) => handleEnrollSnap(snap, "userId"),
       (error) =>
         console.error("❌ [MyCoursesPage] Erro no listener u2:", error),
     );

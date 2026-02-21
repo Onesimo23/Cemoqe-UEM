@@ -1,6 +1,7 @@
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import {
     Award,
+    Check,
     CheckCircle,
     Clock,
     Download,
@@ -13,12 +14,17 @@ import { useAuth } from "../../contexts/AuthContext";
 import StudentLayout from "../../layouts/StudentLayout";
 import { db } from "../../services/firebase";
 import { EnrolledCourse } from "../../types";
+import CertificatePaymentModal, { Certificate } from "../../components/CertificatePaymentModal";
 
 const CERTIFICATE_DATA: EnrolledCourse[] = [];
 
 const CertificatesPage: React.FC = () => {
   const { user } = useAuth();
   const [items, setItems] = useState<EnrolledCourse[]>([]);
+  const [certMap, setCertMap] = useState<Map<string, Certificate | null>>(new Map());
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalCourseId, setModalCourseId] = useState<string>("");
+  const [modalCourseTitle, setModalCourseTitle] = useState<string>("");
 
   useEffect(() => {
     if (!user?.uid) {
@@ -162,6 +168,30 @@ const CertificatesPage: React.FC = () => {
           recompute();
         });
         subsUnsubs.push(ulc);
+
+        // Escutar certificados nesta batch para este estudante
+        const qCert = query(
+          collection(db, "certificates"),
+          where("student_uid", "==", user.uid),
+          where("course_id", "in", ids),
+        );
+        const ucCert = onSnapshot(qCert, (snap) => {
+          // Atualiza certMap com últimos documentos (assume 1 por estudante+course)
+          setCertMap((prev) => {
+            const next = new Map(prev);
+            snap.docs.forEach((d) => {
+              const data: any = d.data();
+              if (!data || !data.course_id) return;
+              next.set(data.course_id, { id: d.id, ...data } as Certificate);
+            });
+            // Garantir nulos para courses sem certificado retornado
+            ids.forEach((cid) => {
+              if (!next.has(cid)) next.set(cid, null);
+            });
+            return next;
+          });
+        });
+        subsUnsubs.push(ucCert);
       });
     };
 
@@ -229,15 +259,24 @@ const CertificatesPage: React.FC = () => {
             <div>
               <p className="text-sm font-medium text-gray-500">Em Andamento</p>
               <p className="text-2xl font-bold text-gray-900">
-                {CERTIFICATE_DATA.length - completedCount}
+                {items.length - completedCount}
               </p>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {CERTIFICATE_DATA.map((course) => (
-            <CertificateCard key={course.id} course={course} />
+          {items.map((course) => (
+            <CertificateCard
+              key={course.id}
+              course={course}
+              existingCert={certMap.get(course.id)}
+              onRequest={(id, title) => {
+                setModalCourseId(id);
+                setModalCourseTitle(title);
+                setModalOpen(true);
+              }}
+            />
           ))}
         </div>
 
@@ -258,12 +297,24 @@ const CertificatesPage: React.FC = () => {
             Falar com Suporte
           </button>
         </div>
+        {/* Certificate modal (abre para solicitar ou baixar) */}
+        {modalOpen && (
+          <CertificatePaymentModal
+            isOpen={modalOpen}
+            onClose={() => setModalOpen(false)}
+            courseId={modalCourseId}
+            courseTitle={modalCourseTitle}
+            onSuccess={() => {
+              setModalOpen(false);
+            }}
+          />
+        )}
       </div>
     </StudentLayout>
   );
 };
 
-const CertificateCard: React.FC<{ course: EnrolledCourse }> = ({ course }) => {
+const CertificateCard: React.FC<{ course: EnrolledCourse; onRequest: (id: string, title: string) => void; existingCert?: Certificate | null }> = ({ course, onRequest, existingCert }) => {
   const isCompleted = course.progress === 100;
   const navigate = useNavigate();
 
@@ -329,9 +380,10 @@ const CertificateCard: React.FC<{ course: EnrolledCourse }> = ({ course }) => {
             </div>
           </div>
 
-          <button
-            disabled={!isCompleted}
-            onClick={() => navigate(`/aluno/certificado/${course.id}`)}
+          <div className="space-y-2">
+            <button
+              disabled={!isCompleted}
+              onClick={() => navigate(`/aluno/certificado/${course.id}`)}
             className={`
               w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all
               ${
@@ -353,6 +405,26 @@ const CertificateCard: React.FC<{ course: EnrolledCourse }> = ({ course }) => {
               </>
             )}
           </button>
+
+            {/* Solicitar / Gerir pagamento */}
+            <button
+              onClick={() => onRequest(course.id, course.title)}
+              disabled={!isCompleted}
+              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all ${isCompleted ? "bg-brand-green text-white hover:bg-brand-dark" : "bg-gray-100 text-gray-400 cursor-not-allowed"}`}
+            >
+              {existingCert?.status === "confirmed" ? (
+                <>
+                  <Download className="w-4 h-4" />
+                  Baixar / Gerir Certificado
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  Solicitar Certificado
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -360,3 +432,5 @@ const CertificateCard: React.FC<{ course: EnrolledCourse }> = ({ course }) => {
 };
 
 export default CertificatesPage;
+
+// Modal render colocado no final do arquivo para manter componente principal limpo
