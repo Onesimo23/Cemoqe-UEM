@@ -357,8 +357,10 @@ const MyCoursesPage: React.FC = () => {
                 title: fb.fallback?.title || existing.fallback?.title,
                 category: fb.fallback?.category || existing.fallback?.category,
                 imageUrl: fb.fallback?.imageUrl || existing.fallback?.imageUrl,
-                instructor: fb.fallback?.instructor || existing.fallback?.instructor,
-                totalLessons: fb.fallback?.totalLessons || existing.fallback?.totalLessons,
+                instructor:
+                  fb.fallback?.instructor || existing.fallback?.instructor,
+                totalLessons:
+                  fb.fallback?.totalLessons || existing.fallback?.totalLessons,
               },
             });
           }

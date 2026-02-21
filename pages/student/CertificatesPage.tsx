@@ -10,18 +10,22 @@ import {
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import CertificatePaymentModal, {
+    Certificate,
+} from "../../components/CertificatePaymentModal";
 import { useAuth } from "../../contexts/AuthContext";
 import StudentLayout from "../../layouts/StudentLayout";
 import { db } from "../../services/firebase";
 import { EnrolledCourse } from "../../types";
-import CertificatePaymentModal, { Certificate } from "../../components/CertificatePaymentModal";
 
 const CERTIFICATE_DATA: EnrolledCourse[] = [];
 
 const CertificatesPage: React.FC = () => {
   const { user } = useAuth();
   const [items, setItems] = useState<EnrolledCourse[]>([]);
-  const [certMap, setCertMap] = useState<Map<string, Certificate | null>>(new Map());
+  const [certMap, setCertMap] = useState<Map<string, Certificate | null>>(
+    new Map(),
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [modalCourseId, setModalCourseId] = useState<string>("");
   const [modalCourseTitle, setModalCourseTitle] = useState<string>("");
@@ -314,7 +318,11 @@ const CertificatesPage: React.FC = () => {
   );
 };
 
-const CertificateCard: React.FC<{ course: EnrolledCourse; onRequest: (id: string, title: string) => void; existingCert?: Certificate | null }> = ({ course, onRequest, existingCert }) => {
+const CertificateCard: React.FC<{
+  course: EnrolledCourse;
+  onRequest: (id: string, title: string) => void;
+  existingCert?: Certificate | null;
+}> = ({ course, onRequest, existingCert }) => {
   const isCompleted = course.progress === 100;
   const navigate = useNavigate();
 
@@ -384,7 +392,7 @@ const CertificateCard: React.FC<{ course: EnrolledCourse; onRequest: (id: string
             <button
               disabled={!isCompleted}
               onClick={() => navigate(`/aluno/certificado/${course.id}`)}
-            className={`
+              className={`
               w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all
               ${
                 isCompleted
@@ -392,19 +400,19 @@ const CertificateCard: React.FC<{ course: EnrolledCourse; onRequest: (id: string
                   : "bg-gray-100 text-gray-400 cursor-not-allowed"
               }
             `}
-          >
-            {isCompleted ? (
-              <>
-                <Download className="w-4 h-4" />
-                Baixar Certificado
-              </>
-            ) : (
-              <>
-                <Lock className="w-4 h-4" />
-                Certificado Indisponível
-              </>
-            )}
-          </button>
+            >
+              {isCompleted ? (
+                <>
+                  <Download className="w-4 h-4" />
+                  Baixar Certificado
+                </>
+              ) : (
+                <>
+                  <Lock className="w-4 h-4" />
+                  Certificado Indisponível
+                </>
+              )}
+            </button>
 
             {/* Solicitar / Gerir pagamento */}
             <button
