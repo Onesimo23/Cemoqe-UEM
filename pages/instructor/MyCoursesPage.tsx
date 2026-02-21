@@ -1,31 +1,31 @@
 import {
-    addDoc,
-    collection,
-    doc,
-    getDocs,
-    limit,
-    onSnapshot,
-    query,
-    serverTimestamp,
-    updateDoc,
-    where
+  addDoc,
+  collection,
+  doc,
+  getDocs,
+  limit,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
 } from "firebase/firestore";
 import {
-    AlertTriangle,
-    BookOpen,
-    Check,
-    ChevronDown,
-    Edit3,
-    Eye,
-    EyeOff,
-    Filter,
-    Plus,
-    Power,
-    Search,
-    Star,
-    Trash2,
-    TrendingUp,
-    Users,
+  AlertTriangle,
+  BookOpen,
+  Check,
+  ChevronDown,
+  Edit3,
+  Eye,
+  EyeOff,
+  Filter,
+  Plus,
+  Power,
+  Search,
+  Star,
+  Trash2,
+  TrendingUp,
+  Users,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -57,8 +57,21 @@ const InstructorCoursesPage: React.FC = () => {
     null,
   );
   const [isDeleting, setIsDeleting] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error" | "info";
+  } | null>(null);
   const { user } = useAuth();
   const courseMetricsRef = useRef<{ [key: string]: any }>({});
+
+  // Mostrar toast notification
+  const showToast = (
+    message: string,
+    type: "success" | "error" | "info" = "info",
+  ) => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   // Carrega cursos rapidamente SEM aguardar sub-coleções
   // Depois carrega métricas em background
@@ -110,6 +123,7 @@ const InstructorCoursesPage: React.FC = () => {
           badgeColor: data?.badgeColor || "blue",
           isActive: status === "Publicado",
           status,
+          approvalStatus: data?.approvalStatus || "pending",
           // Dados agregados (com valores padrão do banco)
           enrollmentCount: data?.enrollmentCount || 0,
           revenue: data?.totalRevenue || 0,
@@ -272,6 +286,19 @@ const InstructorCoursesPage: React.FC = () => {
   const toggleCourseStatus = async (id: string) => {
     const current = courses.find((c) => c.id === id);
     if (!current) return;
+
+    // Verificar se o curso foi aprovado pelo admin
+    if (
+      current.status === "Rascunho" &&
+      current.approvalStatus !== "approved"
+    ) {
+      showToast(
+        "Você não pode ativar este curso. Aguarde a aprovação do administrador.",
+        "error",
+      );
+      return;
+    }
+
     const newStatus: "Publicado" | "Rascunho" =
       current.status === "Publicado" ? "Rascunho" : "Publicado";
     // Atualiza UI otimisticamente
@@ -533,18 +560,47 @@ const InstructorCoursesPage: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-black uppercase transition-all duration-300 ${
-                            course.status === "Rascunho"
-                              ? "bg-amber-50 text-amber-600"
-                              : "bg-emerald-50 text-emerald-600"
-                          }`}
-                        >
+                        <div className="flex flex-col gap-2">
                           <span
-                            className={`w-1.5 h-1.5 rounded-full animate-pulse ${course.status === "Rascunho" ? "bg-amber-500" : "bg-emerald-500"}`}
-                          ></span>
-                          {course.status}
-                        </span>
+                            className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-black uppercase transition-all duration-300 ${
+                              course.status === "Rascunho"
+                                ? "bg-amber-50 text-amber-600"
+                                : "bg-emerald-50 text-emerald-600"
+                            }`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full animate-pulse ${course.status === "Rascunho" ? "bg-amber-500" : "bg-emerald-500"}`}
+                            ></span>
+                            {course.status}
+                          </span>
+                          {/* Badge de status de aprovação */}
+                          {course.approvalStatus && (
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-black uppercase ${
+                                course.approvalStatus === "pending"
+                                  ? "bg-blue-50 text-blue-600"
+                                  : course.approvalStatus === "approved"
+                                    ? "bg-green-50 text-green-600"
+                                    : "bg-red-50 text-red-600"
+                              }`}
+                            >
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  course.approvalStatus === "pending"
+                                    ? "bg-blue-500"
+                                    : course.approvalStatus === "approved"
+                                      ? "bg-green-500"
+                                      : "bg-red-500"
+                                }`}
+                              ></span>
+                              {course.approvalStatus === "pending"
+                                ? "Pendente"
+                                : course.approvalStatus === "approved"
+                                  ? "Aprovado"
+                                  : "Rejeitado"}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-6">
@@ -576,15 +632,25 @@ const InstructorCoursesPage: React.FC = () => {
                           {/* Botão de Ativar/Desativar */}
                           <button
                             onClick={() => toggleCourseStatus(course.id)}
+                            disabled={
+                              course.status === "Rascunho" &&
+                              course.approvalStatus !== "approved"
+                            }
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border transition-all active:scale-95 ${
-                              course.status === "Publicado"
-                                ? "bg-red-50 text-red-600 border-red-100 hover:bg-red-100"
-                                : "bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100"
+                              course.status === "Rascunho" &&
+                              course.approvalStatus !== "approved"
+                                ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed"
+                                : course.status === "Publicado"
+                                  ? "bg-red-50 text-red-600 border-red-100 hover:bg-red-100"
+                                  : "bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100"
                             }`}
                             title={
-                              course.status === "Publicado"
-                                ? "Desativar (Tornar Rascunho)"
-                                : "Ativar (Publicar)"
+                              course.status === "Rascunho" &&
+                              course.approvalStatus !== "approved"
+                                ? "Aguarde aprovação do administrador"
+                                : course.status === "Publicado"
+                                  ? "Desativar (Tornar Rascunho)"
+                                  : "Ativar (Publicar)"
                             }
                           >
                             {course.status === "Publicado" ? (
@@ -742,6 +808,21 @@ const InstructorCoursesPage: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Toast Notification */}
+        {toast && (
+          <div
+            className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-lg shadow-lg font-semibold text-white transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 ${
+              toast.type === "success"
+                ? "bg-green-600 hover:bg-green-700"
+                : toast.type === "error"
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            {toast.message}
           </div>
         )}
       </div>

@@ -1,31 +1,31 @@
 import {
-    collection,
-    deleteDoc,
-    doc,
-    onSnapshot,
-    serverTimestamp,
-    setDoc,
-    updateDoc
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
 } from "firebase/firestore";
 import {
-    AlertCircle,
-    CheckCircle,
-    ChevronRight,
-    Clock,
-    Edit2,
-    Eye,
-    EyeOff,
-    Filter,
-    FolderPlus,
-    Hash,
-    Layers,
-    Plus,
-    Power,
-    Search,
-    Trash2,
-    TrendingUp,
-    User,
-    X,
+  AlertCircle,
+  CheckCircle,
+  ChevronRight,
+  Clock,
+  Edit2,
+  Eye,
+  EyeOff,
+  Filter,
+  FolderPlus,
+  Hash,
+  Layers,
+  Plus,
+  Power,
+  Search,
+  Trash2,
+  TrendingUp,
+  User,
+  X,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -103,6 +103,15 @@ const ContentManagementPage: React.FC = () => {
     courseId: string;
     courseTitle: string;
   } | null>(null);
+  const [courseApprovalModal, setCourseApprovalModal] = useState<{
+    action: "approve" | "reject";
+    courseId: string;
+    courseTitle: string;
+    instructor: string;
+  } | null>(null);
+  const [approvalTab, setApprovalTab] = useState<
+    "pending" | "approved" | "rejected"
+  >("pending");
 
   // Modals
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -169,6 +178,7 @@ const ContentManagementPage: React.FC = () => {
             imageUrl: data.imageUrl || "",
             isActive: data.isActive !== false,
             badgeColor: data.badgeColor || "bg-stone-100 text-stone-800",
+            approvalStatus: data.approvalStatus || "pending",
           } as Course);
         });
 
@@ -351,6 +361,10 @@ const ContentManagementPage: React.FC = () => {
     );
   }, [allDeletionRequests, deletionRequestsTab]);
 
+  const filteredCoursesByApproval = useMemo(() => {
+    return courses.filter((course) => course.approvalStatus === approvalTab);
+  }, [courses, approvalTab]);
+
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCatName.trim()) return;
@@ -479,6 +493,39 @@ const ContentManagementPage: React.FC = () => {
       setDeleteConfirmId(null);
     } catch (error) {
       console.error("Erro ao deletar curso:", error);
+    }
+  };
+
+  const handleApproveCourse = async (courseId: string, courseTitle: string) => {
+    try {
+      await updateDoc(doc(db, "courses", courseId), {
+        approvalStatus: "approved",
+        updatedAt: serverTimestamp(),
+      });
+      showToast(
+        `✅ Curso "${courseTitle}" foi aprovado com sucesso!`,
+        "success",
+      );
+      setCourseApprovalModal(null);
+    } catch (error) {
+      console.error("Erro ao aprovar curso:", error);
+      showToast("Erro ao aprovar curso.", "error");
+      setCourseApprovalModal(null);
+    }
+  };
+
+  const handleRejectCourse = async (courseId: string, courseTitle: string) => {
+    try {
+      await updateDoc(doc(db, "courses", courseId), {
+        approvalStatus: "rejected",
+        updatedAt: serverTimestamp(),
+      });
+      showToast(`✗ Curso "${courseTitle}" foi rejeitado.`, "success");
+      setCourseApprovalModal(null);
+    } catch (error) {
+      console.error("Erro ao rejeitar curso:", error);
+      showToast("Erro ao rejeitar curso.", "error");
+      setCourseApprovalModal(null);
     }
   };
 
