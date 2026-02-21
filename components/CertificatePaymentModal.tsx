@@ -1,12 +1,12 @@
 import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  Timestamp,
-  where,
+    addDoc,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    query,
+    Timestamp,
+    where,
 } from "firebase/firestore";
 import { AlertCircle, Check, Download, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -293,7 +293,7 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
 
       // Nome do aluno
       ctx.font = "bold 44px Georgia";
-      ctx.fillText(profile?.full_name || "Estudante", 500, y);
+      ctx.fillText(profile?.full_name || "Formando", 500, y);
       y += 65;
 
       // Descrição - linha 1
@@ -636,7 +636,7 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
                 </div>
                 {profile?.full_name && (
                   <div>
-                    <p className="text-xs text-gray-600">Aluno</p>
+                    <p className="text-xs text-gray-600">Formando</p>
                     <p className="font-semibold text-gray-900 text-sm">
                       {profile.full_name}
                     </p>

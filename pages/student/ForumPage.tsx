@@ -4,7 +4,7 @@ import {
     onSnapshot,
     query,
     serverTimestamp,
-    where,
+    where
 } from "firebase/firestore";
 import {
     Filter,
@@ -12,6 +12,7 @@ import {
     MessageSquare,
     MoreHorizontal,
     Plus,
+    Reply,
     Search,
     ThumbsUp,
     TrendingUp,
@@ -26,21 +27,38 @@ interface Topic {
   id: string;
   title: string;
   author: string;
+  authorUid: string;
   avatar: string;
   category: "Técnico" | "Carreira" | "Projetos" | "Geral";
   snippet: string;
   replies: number;
   likes: number;
   date: string;
+  createdAt: Date;
+  content: string;
+}
+
+interface Reply {
+  id: string;
+  author: string;
+  authorUid: string;
+  avatar: string;
+  content: string;
+  date: string;
+  likes: number;
+  createdAt: Date;
 }
 
 const CATEGORIES = ["Técnico", "Carreira", "Projetos", "Geral"];
 
-const ForumPage: React.FC = () => {
+const CommunityPage: React.FC = () => {
   const { user, profile } = useAuth();
   const [topics, setTopics] = useState<Topic[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
+  const [replies, setReplies] = useState<Reply[]>([]);
+  const [newReply, setNewReply] = useState("");
   const [newTopic, setNewTopic] = useState({
     title: "",
     category: "Técnico",
@@ -192,7 +210,7 @@ const ForumPage: React.FC = () => {
           category: newTopic.category,
           course_id: courseId,
           user_uid: user.uid,
-          user_name: profile?.full_name || "Estudante",
+          user_name: profile?.full_name || "Formando",
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
           repliesCount: 0,

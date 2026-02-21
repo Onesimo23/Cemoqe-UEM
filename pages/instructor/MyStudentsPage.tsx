@@ -4,7 +4,7 @@ import {
     getDoc,
     onSnapshot,
     query,
-    where
+    where,
 } from "firebase/firestore";
 import {
     Activity,
@@ -21,7 +21,7 @@ import {
     Send,
     TrendingUp,
     UserCheck,
-    X
+    X,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -172,7 +172,7 @@ const MyStudentsPage: React.FC = () => {
               : "";
             return {
               id: uid,
-              name: "Aluno",
+              name: "Formando",
               email: "",
               avatar: "https://i.pravatar.cc/150?u=" + uid,
               course,
@@ -198,7 +198,7 @@ const MyStudentsPage: React.FC = () => {
                       const pd: any = ps.data();
                       return {
                         uid,
-                        name: pd?.full_name || "Aluno",
+                        name: pd?.full_name || "Formando",
                         email: pd?.email || "",
                         avatar:
                           pd?.avatar_url ||
@@ -208,7 +208,7 @@ const MyStudentsPage: React.FC = () => {
                   } catch {}
                   return {
                     uid,
-                    name: "Aluno",
+                    name: "Formando",
                     email: "",
                     avatar: "https://i.pravatar.cc/150?u=" + uid,
                   };
@@ -310,7 +310,7 @@ const MyStudentsPage: React.FC = () => {
             : "";
           return {
             id: uid,
-            name: "Aluno",
+            name: "Formando",
             email: "",
             avatar: "https://i.pravatar.cc/150?u=" + uid,
             course,
@@ -336,7 +336,7 @@ const MyStudentsPage: React.FC = () => {
                     const pd: any = ps.data();
                     return {
                       uid,
-                      name: pd?.full_name || "Aluno",
+                      name: pd?.full_name || "Formando",
                       email: pd?.email || "",
                       avatar:
                         pd?.avatar_url || "https://i.pravatar.cc/150?u=" + uid,
@@ -345,7 +345,7 @@ const MyStudentsPage: React.FC = () => {
                 } catch {}
                 return {
                   uid,
-                  name: "Aluno",
+                  name: "Formando",
                   email: "",
                   avatar: "https://i.pravatar.cc/150?u=" + uid,
                 };
@@ -487,7 +487,7 @@ const MyStudentsPage: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
-              Meus Alunos
+              Meus Formandos
             </h1>
             <p className="text-slate-500 mt-1">
               Gerencie inscritos, acompanhe o progresso e interaja diretamente.
@@ -515,7 +515,7 @@ const MyStudentsPage: React.FC = () => {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Pesquisar por nome ou e-mail do aluno..."
+              placeholder="Pesquisar por nome ou e-mail do formando..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-12 pr-4 h-12 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-brand-green/5 focus:border-brand-green transition-all shadow-sm"
@@ -689,8 +689,8 @@ const MyStudentsPage: React.FC = () => {
                           }`}
                           title={
                             student.status === "blocked"
-                              ? "Desbloquear Aluno"
-                              : "Bloquear Aluno"
+                              ? "Desbloquear Formando"
+                              : "Bloquear Formando"
                           }
                         >
                           {student.status === "blocked" ? (
@@ -832,7 +832,7 @@ const MyStudentsPage: React.FC = () => {
                     {activeChat.name}
                   </p>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                    Aluno Verificado
+                    Formando Verificado
                   </p>
                 </div>
               </div>

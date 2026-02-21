@@ -12,6 +12,7 @@ export interface Course {
   isActive?: boolean; // Controls if it appears on public landing/course pages
   certificatePrice?: number; // Preço do certificado em MZM (0 = gratuito)
   currency?: string; // Moeda (padrão: MZM)
+  approvalStatus?: "pending" | "approved" | "rejected"; // Status de aprovação do admin
 }
 
 export interface EnrolledCourse extends Course {
