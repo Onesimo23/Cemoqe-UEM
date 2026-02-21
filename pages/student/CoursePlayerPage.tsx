@@ -398,6 +398,30 @@ const CoursePlayerPage: React.FC = () => {
           "Parabéns! Você completou todas as aulas do curso!",
           "success",
         );
+        
+        // Se era a última aula, marcar como completo no enrollment
+        const newCompleted = new Set(completedLessons);
+        newCompleted.add(current.lesson.id);
+        const newProgress = Math.round((newCompleted.size / allLessons.length) * 100);
+        if (newProgress === 100) {
+          try {
+            const enrollmentQ = query(
+              collection(db, "enrollments"),
+              where("course_id", "==", id),
+              where("user_uid", "==", user.uid),
+            );
+            const enrollmentSnap = await getDocs(enrollmentQ);
+            enrollmentSnap.forEach(async (enrollDoc) => {
+              await updateDoc(enrollDoc.ref, {
+                progress: 100,
+                completed: true,
+                completedAt: serverTimestamp(),
+              });
+            });
+          } catch (err) {
+            console.warn("Erro ao atualizar enrollment com conclusão:", err);
+          }
+        }
       }
     } catch (err) {
       console.error("Erro ao marcar aula como concluída:", err);
@@ -826,6 +850,41 @@ const CoursePlayerPage: React.FC = () => {
   const progressWidth = useMemo(() => {
     return Math.max(5, progressPercentage); // mínimo de 5% para visibilidade
   }, [progressPercentage]);
+
+  // Atualizar progresso no enrollment em tempo real
+  useEffect(() => {
+    if (!id || !user?.uid || allLessons.length === 0 || !isEnrolled) return;
+
+    const newProgress = Math.round((completedLessons.size / allLessons.length) * 100);
+    
+    // Apenas atualizar se o progresso mudou significativamente
+    if (newProgress > 0 && newProgress % 10 === 0) {
+      (async () => {
+        try {
+          const enrollmentQ = query(
+            collection(db, "enrollments"),
+            where("course_id", "==", id),
+            where("user_uid", "==", user.uid),
+          );
+          const enrollmentSnap = await getDocs(enrollmentQ);
+          enrollmentSnap.forEach(async (enrollDoc) => {
+            const currentData = enrollDoc.data();
+            const currentProgress = currentData.progress || 0;
+            
+            // Só atualizar se houve progresso
+            if (newProgress > currentProgress) {
+              await updateDoc(enrollDoc.ref, {
+                progress: newProgress,
+                lastUpdated: serverTimestamp(),
+              });
+            }
+          });
+        } catch (err) {
+          console.warn("Erro ao atualizar progresso no enrollment:", err);
+        }
+      })();
+    }
+  }, [completedLessons.size, allLessons.length, id, user?.uid, isEnrolled]);
 
   // Determinar se uma aula está bloqueada (não pode ser acessada)
   const isLessonLocked = (lessonId: string): boolean => {
