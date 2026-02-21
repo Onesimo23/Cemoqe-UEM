@@ -398,11 +398,13 @@ const CoursePlayerPage: React.FC = () => {
           "Parabéns! Você completou todas as aulas do curso!",
           "success",
         );
-        
+
         // Se era a última aula, marcar como completo no enrollment
         const newCompleted = new Set(completedLessons);
         newCompleted.add(current.lesson.id);
-        const newProgress = Math.round((newCompleted.size / allLessons.length) * 100);
+        const newProgress = Math.round(
+          (newCompleted.size / allLessons.length) * 100,
+        );
         if (newProgress === 100) {
           try {
             const enrollmentQ = query(
@@ -855,8 +857,10 @@ const CoursePlayerPage: React.FC = () => {
   useEffect(() => {
     if (!id || !user?.uid || allLessons.length === 0 || !isEnrolled) return;
 
-    const newProgress = Math.round((completedLessons.size / allLessons.length) * 100);
-    
+    const newProgress = Math.round(
+      (completedLessons.size / allLessons.length) * 100,
+    );
+
     // Apenas atualizar se o progresso mudou significativamente
     if (newProgress > 0 && newProgress % 10 === 0) {
       (async () => {
@@ -870,7 +874,7 @@ const CoursePlayerPage: React.FC = () => {
           enrollmentSnap.forEach(async (enrollDoc) => {
             const currentData = enrollDoc.data();
             const currentProgress = currentData.progress || 0;
-            
+
             // Só atualizar se houve progresso
             if (newProgress > currentProgress) {
               await updateDoc(enrollDoc.ref, {
