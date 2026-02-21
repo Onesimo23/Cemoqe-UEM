@@ -15,7 +15,7 @@ import {
     Search,
     ThumbsUp,
     TrendingUp,
-    X
+    X,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -192,7 +192,7 @@ const ForumPage: React.FC = () => {
           category: newTopic.category,
           course_id: courseId,
           user_uid: user.uid,
-          user_name: profile?.full_name || "Estudante",
+          user_name: profile?.full_name || "Formando",
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
           repliesCount: 0,

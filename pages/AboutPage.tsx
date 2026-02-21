@@ -1,5 +1,5 @@
-import React from 'react';
-import { Target, Shield, Zap, Globe, Award, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Globe, Shield, Target, Zap } from "lucide-react";
+import React from "react";
 
 const AboutPage: React.FC = () => {
   return (
@@ -8,10 +8,13 @@ const AboutPage: React.FC = () => {
       <div className="relative py-20 px-6 bg-gradient-to-b from-brand-light/30 to-white">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-extrabold text-brand-dark mb-6 leading-tight">
-            Transformando o futuro através da <span className="text-brand-green">educação acessível</span>
+            Transformando o futuro através da{" "}
+            <span className="text-brand-green">educação acessível</span>
           </h1>
           <p className="text-gray-500 text-xl leading-relaxed max-w-2xl mx-auto">
-            A UEM Cursos online nasceu com uma missão simples: democratizar o conhecimento de alta qualidade e conectar profissionais às oportunidades do mercado global.
+            A UEM Cursos online nasceu com uma missão simples: democratizar o
+            conhecimento de alta qualidade e conectar profissionais às
+            oportunidades do mercado global.
           </p>
         </div>
       </div>
@@ -33,10 +36,15 @@ const AboutPage: React.FC = () => {
               <Target className="w-4 h-4" />
               Nossa Missão
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">Educação que Gera Impacto Real</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">
+              Educação que Gera Impacto Real
+            </h2>
             <div className="space-y-6 text-gray-600">
               <p>
-                Acreditamos que a educação deve ser prática, relevante e contínua. Nossos cursos são desenhados não apenas para transmitir teoria, mas para construir competências aplicáveis imediatamente.
+                Acreditamos que a educação deve ser prática, relevante e
+                contínua. Nossos cursos são desenhados não apenas para
+                transmitir teoria, mas para construir competências aplicáveis
+                imediatamente.
               </p>
               <ul className="space-y-3">
                 <ListItem text="Metodologia baseada em projetos reais" />
@@ -51,7 +59,7 @@ const AboutPage: React.FC = () => {
       {/* Stats Section */}
       <div className="bg-brand-dark py-20 text-white">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          <StatBox number="50k+" label="Alunos Formados" />
+          <StatBox number="50k+" label="Formandos" />
           <StatBox number="120+" label="Cursos Disponíveis" />
           <StatBox number="4.8" label="Nota Média" />
           <StatBox number="25" label="Países Alcançados" />
@@ -61,9 +69,12 @@ const AboutPage: React.FC = () => {
       {/* Values */}
       <div className="max-w-7xl mx-auto px-6 py-24">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold text-brand-dark mb-4">Nossos Valores</h2>
+          <h2 className="text-3xl font-bold text-brand-dark mb-4">
+            Nossos Valores
+          </h2>
           <p className="text-gray-500 max-w-xl mx-auto">
-            Os pilares que sustentam cada aula, cada linha de código e cada interação em nossa plataforma.
+            Os pilares que sustentam cada aula, cada linha de código e cada
+            interação em nossa plataforma.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -84,7 +95,6 @@ const AboutPage: React.FC = () => {
           />
         </div>
       </div>
-
     </div>
   );
 };
@@ -96,9 +106,11 @@ const ListItem = ({ text }: { text: string }) => (
   </li>
 );
 
-const StatBox = ({ number, label }: { number: string, label: string }) => (
+const StatBox = ({ number, label }: { number: string; label: string }) => (
   <div>
-    <p className="text-4xl md:text-5xl font-bold mb-2 text-brand-accent">{number}</p>
+    <p className="text-4xl md:text-5xl font-bold mb-2 text-brand-accent">
+      {number}
+    </p>
     <p className="text-brand-light/70 font-medium">{label}</p>
   </div>
 );

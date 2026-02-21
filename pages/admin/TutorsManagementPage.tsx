@@ -1,31 +1,31 @@
 import {
-    Ban,
-    BookOpen,
-    Check,
-    CheckCircle,
-    ExternalLink,
-    FileCheck,
-    Filter,
-    Mail,
-    Search,
-    Star,
-    Users,
-    X,
-    XCircle,
+  Ban,
+  BookOpen,
+  Check,
+  CheckCircle,
+  ExternalLink,
+  FileCheck,
+  Filter,
+  Mail,
+  Search,
+  Star,
+  Users,
+  X,
+  XCircle,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "../../layouts/AdminLayout";
 
 import {
-    addDoc,
-    collection,
-    doc,
-    onSnapshot,
-    query,
-    serverTimestamp,
-    updateDoc,
-    where,
+  addDoc,
+  collection,
+  doc,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
 } from "firebase/firestore";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import { UserProfile } from "../../contexts/AuthContext";
@@ -446,7 +446,7 @@ const AdminTutorsPage: React.FC = () => {
                       icon={<BookOpen size={12} />}
                     />
                     <MetricSmall
-                      label="Alunos"
+                      label="Formandos"
                       value={selectedTutor.students}
                       icon={<Users size={12} />}
                     />

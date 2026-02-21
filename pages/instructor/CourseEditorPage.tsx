@@ -818,7 +818,7 @@ const CourseEditorPage: React.FC = () => {
                 {id ? "Editar Curso" : "Criar Novo Curso"}
               </h1>
               <p className="text-slate-500 text-sm">
-                Preencha os detalhes fundamentais para os seus alunos.
+                Preencha os detalhes fundamentais para os seus formandos.
               </p>
             </div>
           </div>
@@ -1322,7 +1322,7 @@ const CourseEditorPage: React.FC = () => {
                               setDragPrompt(ex.id, e.target.value)
                             }
                             className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-brand-green"
-                            placeholder="Descreva o que o aluno deve fazer"
+                            placeholder="Descreva o que o formando deve fazer"
                           />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
@@ -1672,7 +1672,8 @@ const CourseEditorPage: React.FC = () => {
                 <div className="space-y-2">
                   {formData.learningOutcomes.length === 0 && (
                     <div className="text-xs text-slate-400">
-                      Adicione os tópicos principais que o aluno vai aprender.
+                      Adicione os tópicos principais que o formando vai
+                      aprender.
                     </div>
                   )}
                   {formData.learningOutcomes.map((item, idx) => (

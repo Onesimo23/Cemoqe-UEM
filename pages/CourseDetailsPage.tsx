@@ -379,7 +379,7 @@ const CourseDetailsPage: React.FC = () => {
               <span className="hidden sm:inline text-slate-500">|</span>
               <div className="flex items-center gap-1.5 text-slate-100">
                 <Users className="w-4 h-4" />
-                <span>{enrollmentCount.toLocaleString()} alunos</span>
+                <span>{enrollmentCount.toLocaleString()} formandos</span>
               </div>
             </div>
 
@@ -550,7 +550,7 @@ const CourseDetailsPage: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Award className="w-4 h-4 text-gray-400" />
-                      <span>{enrollmentCount.toLocaleString()} Alunos</span>
+                      <span>{enrollmentCount.toLocaleString()} Formandos</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <PlayCircle className="w-4 h-4 text-gray-400" />
@@ -589,7 +589,7 @@ const CourseDetailsPage: React.FC = () => {
                   <div className="flex items-end gap-3 mb-6">
                     {enrollmentCount > 0 && (
                       <span className="text-xs text-gray-500 font-medium">
-                        {enrollmentCount.toLocaleString()} alunos inscritos
+                        {enrollmentCount.toLocaleString()} formandos inscritos
                       </span>
                     )}
                   </div>

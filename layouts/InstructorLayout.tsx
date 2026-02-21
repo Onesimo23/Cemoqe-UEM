@@ -2,7 +2,6 @@ import {
     Award,
     Bell,
     BookOpen,
-    DollarSign,
     LayoutDashboard,
     LogOut,
     Menu,
@@ -10,7 +9,7 @@ import {
     Settings,
     TrendingUp,
     Users,
-    X,
+    X
 } from "lucide-react";
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -71,18 +70,13 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
     },
     {
       icon: <Users className="w-5 h-5" />,
-      label: "Meus Alunos",
+      label: "Meus Formandos",
       href: "/instrutor/alunos",
     },
     {
       icon: <Award className="w-5 h-5" />,
       label: "Certificados",
       href: "/instrutor/certificados",
-    },
-    {
-      icon: <DollarSign className="w-5 h-5" />,
-      label: "Financeiro",
-      href: "/instrutor/financeiro",
     },
     {
       icon: <MessageSquare className="w-5 h-5" />,

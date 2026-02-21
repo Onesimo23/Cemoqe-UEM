@@ -269,7 +269,7 @@ const CoursePlayerPage: React.FC = () => {
         course_id: id,
         lesson_id: currentLessonId || null,
         user_uid: user.uid,
-        user_name: user.displayName || "Aluno",
+        user_name: user.displayName || "Formando",
         instructor_uid: course?.instructor_uid || course?.creator_uid || null,
         course_title: course?.title || "",
         lesson_title: current?.lesson?.title || "",
@@ -369,7 +369,7 @@ const CoursePlayerPage: React.FC = () => {
         course_id: id,
         lesson_id: current.lesson.id,
         user_uid: user.uid,
-        user_name: user.displayName || "Aluno",
+        user_name: user.displayName || "Formando",
         course_title: course?.title || "",
         lesson_title: current.lesson.title || "",
         instructor_uid: course?.instructor_uid || course?.creator_uid || null,
@@ -1637,7 +1637,7 @@ const CoursePlayerPage: React.FC = () => {
                                 course_id: id,
                                 lesson_id: currentLessonId || null,
                                 user_uid: user.uid,
-                                user_name: user.displayName || "Aluno",
+                                user_name: user.displayName || "Formando",
                                 instructor_uid:
                                   course?.instructor_uid ||
                                   course?.creator_uid ||
@@ -1672,7 +1672,7 @@ const CoursePlayerPage: React.FC = () => {
                       {questions.map((q: any) => (
                         <Comment
                           key={q.id}
-                          author={q.user_name || "Aluno"}
+                          author={q.user_name || "Formando"}
                           date={
                             q.createdAt?.toDate
                               ? q.createdAt.toDate().toLocaleString()
@@ -2267,7 +2267,7 @@ const Comment = ({
             >
               <div className="flex justify-between items-center mb-1">
                 <span className="text-xs font-bold text-gray-700">
-                  {a.author_role === "instructor" ? "Instrutor" : "Aluno"}
+                  {a.author_role === "instructor" ? "Instrutor" : "Formando"}
                 </span>
                 <span className="text-[10px] text-gray-400">
                   {a.createdAt?.toDate

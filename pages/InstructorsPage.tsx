@@ -1,12 +1,12 @@
 import {
-  ArrowRight,
-  Award,
-  Globe,
-  Linkedin,
-  PlayCircle,
-  Star,
-  Twitter,
-  Users,
+    ArrowRight,
+    Award,
+    Globe,
+    Linkedin,
+    PlayCircle,
+    Star,
+    Twitter,
+    Users,
 } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
@@ -53,8 +53,8 @@ const InstructorsPage: React.FC = () => {
             o mercado
           </h1>
           <p className="text-brand-light/80 text-lg md:text-xl max-w-2xl mx-auto">
-            Nossos tutores são especialistas selecionados a dedo, atuantes nas
-            maiores empresas de tecnologia e inovação do mundo.
+            Nossos tutores são especialistas selecionados a dedo, os melhores da
+            Universidade Eduardo Mondlane.
           </p>
         </div>
       </section>
@@ -139,7 +139,7 @@ const InstructorsPage: React.FC = () => {
                       <span className="font-bold">
                         {tutor.total_students || 0}
                       </span>
-                      <span className="text-xs">alunos</span>
+                      <span className="text-xs">formandos</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-sm text-gray-600">
                       <Star

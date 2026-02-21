@@ -27,7 +27,6 @@ const ROLE_BASED_ROUTES: Record<UserRole, string[]> = {
     "/instrutor/cursos/novo",
     "/instrutor/cursos/editar",
     "/instrutor/alunos",
-    "/instrutor/financeiro",
     "/instrutor/duvidas",
     "/instrutor/relatorios",
     "/instrutor/configuracoes",

@@ -1,4 +1,5 @@
 import {
+    addDoc,
     collection,
     deleteDoc,
     doc,
@@ -15,7 +16,6 @@ import {
     BookOpen,
     Check,
     ChevronDown,
-    DollarSign,
     Edit3,
     Eye,
     EyeOff,
@@ -53,6 +53,7 @@ const InstructorCoursesPage: React.FC = () => {
   const [courses, setCourses] = useState<InstructorCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteRequestModal, setShowDeleteRequestModal] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState<InstructorCourse | null>(
     null,
   );
@@ -258,9 +259,6 @@ const InstructorCoursesPage: React.FC = () => {
       case "Melhor avaliados":
         filtered.sort((a, b) => b.rating - a.rating);
         break;
-      case "Maior receita":
-        filtered.sort((a, b) => b.revenue - a.revenue);
-        break;
       case "Mais recentes":
       default:
         // Já está ordenado por data
@@ -309,27 +307,51 @@ const InstructorCoursesPage: React.FC = () => {
   };
 
   const handleDeleteCourse = async () => {
-    if (!courseToDelete) return;
+    if (!courseToDelete || !user?.uid) return;
 
     setIsDeleting(true);
     try {
-      // Deleta do Firestore
-      await deleteDoc(doc(db, "courses", courseToDelete.id));
+      // 1. Desativar o curso automaticamente
+      await updateDoc(doc(db, "courses", courseToDelete.id), {
+        status: "Rascunho",
+        isActive: false,
+        deletionRequestedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      // 2. Criar solicitação de exclusão
+      await addDoc(collection(db, "courseDeletionRequests"), {
+        courseId: courseToDelete.id,
+        courseTitle: courseToDelete.title,
+        instructorId: user.uid,
+        instructorName: user.displayName || "Instrutor",
+        status: "pending", // pending, approved, rejected
+        requestedAt: serverTimestamp(),
+        approvedAt: null,
+        approvedBy: null,
+        rejectionReason: null,
+      });
+
+      // 3. Atualizar UI localmente
+      setCourses((prev) =>
+        prev.map((c) =>
+          c.id === courseToDelete.id
+            ? { ...c, status: "Rascunho", isActive: false }
+            : c,
+        ),
+      );
 
       // Remove do cache
       if (user?.uid) {
         cacheService.remove(`instructor_courses_${user.uid}`);
       }
 
-      // Remove da UI
-      setCourses((prev) => prev.filter((c) => c.id !== courseToDelete.id));
-
-      // Fecha o modal
+      // Fecha o modal de confirmação e abre o de sucesso
       setShowDeleteModal(false);
-      setCourseToDelete(null);
+      setShowDeleteRequestModal(true);
     } catch (e) {
-      console.error("Falha ao deletar curso:", e);
-      alert("Não foi possível deletar o curso. Tente novamente.");
+      console.error("Falha ao solicitar exclusão do curso:", e);
+      alert("Não foi possível solicitar a exclusão do curso. Tente novamente.");
     } finally {
       setIsDeleting(false);
     }
@@ -399,7 +421,6 @@ const InstructorCoursesPage: React.FC = () => {
                   <SelectItem value="Melhor avaliados">
                     Melhor avaliados
                   </SelectItem>
-                  <SelectItem value="Maior receita">Maior receita</SelectItem>
                 </SelectListBox>
               </SelectPopover>
             </Select>
@@ -445,7 +466,7 @@ const InstructorCoursesPage: React.FC = () => {
                       Status
                     </th>
                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                      Métricas (MZM)
+                      Métricas
                     </th>
                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">
                       Ações
@@ -534,21 +555,7 @@ const InstructorCoursesPage: React.FC = () => {
                               {course.enrollmentCount}
                             </span>
                             <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">
-                              Alunos
-                            </span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="flex items-center gap-1 text-xs font-bold text-slate-700">
-                              <DollarSign
-                                size={12}
-                                className="text-emerald-500"
-                              />{" "}
-                              {course.revenue.toLocaleString("pt-MZ", {
-                                minimumFractionDigits: 2,
-                              })}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">
-                              MZM
+                              Formandos
                             </span>
                           </div>
                           <div className="flex flex-col">
@@ -666,12 +673,15 @@ const InstructorCoursesPage: React.FC = () => {
                   <AlertTriangle className="w-6 h-6 text-red-600" />
                 </div>
                 <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                  Deletar Curso
+                  Solicitar Exclusão de Curso
                 </h2>
-                <p className="text-slate-600 mb-6">
-                  Tem certeza que deseja deletar o curso{" "}
-                  <strong>{courseToDelete.title}</strong>? Esta ação é
-                  irreversível.
+                <p className="text-slate-600 mb-2">
+                  Tem certeza que deseja solicitar a exclusão do curso{" "}
+                  <strong>{courseToDelete.title}</strong>?
+                </p>
+                <p className="text-sm text-slate-500 mb-6">
+                  O curso será desativado imediatamente e um administrador
+                  verificará seu pedido.
                 </p>
                 <div className="flex gap-3">
                   <button
@@ -693,6 +703,43 @@ const InstructorCoursesPage: React.FC = () => {
                     {isDeleting ? "Deletando..." : "Deletar"}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Deletion Request Submitted Modal */}
+        {showDeleteRequestModal && courseToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 animate-in zoom-in-95 duration-200">
+              <div className="p-8">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 mb-4">
+                  <Check className="w-6 h-6 text-blue-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                  Solicitação Enviada
+                </h2>
+                <p className="text-slate-600 mb-6">
+                  Seu pedido de exclusão para <strong>{courseToDelete.title}</strong> foi
+                  enviado com sucesso. O curso foi desativado e um administrador
+                  revisará em breve.
+                </p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-blue-800">
+                    📋 <strong>Próximo Passo:</strong> Um administrador irá
+                    revisar e aprovar ou rejeitar sua solicitação. Você receberá
+                    uma notificação quando houver uma decisão.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowDeleteRequestModal(false);
+                    setCourseToDelete(null);
+                  }}
+                  className="w-full px-4 py-2.5 bg-brand-green text-white rounded-xl hover:bg-brand-dark transition-all font-semibold"
+                >
+                  Entendido
+                </button>
               </div>
             </div>
           </div>

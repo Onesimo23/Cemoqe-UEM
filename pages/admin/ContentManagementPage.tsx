@@ -3,13 +3,17 @@ import {
   deleteDoc,
   doc,
   onSnapshot,
+  query,
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import {
   AlertCircle,
+  CheckCircle,
   ChevronRight,
+  Clock,
   Edit2,
   Eye,
   EyeOff,
@@ -36,6 +40,19 @@ interface Category {
   name: string;
   count: number;
   color: string;
+}
+
+interface CourseDeletionRequest {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  instructorId: string;
+  instructorName: string;
+  status: "pending" | "approved" | "rejected";
+  requestedAt: Date;
+  approvedAt?: Date | null;
+  approvedBy?: string | null;
+  rejectionReason?: string | null;
 }
 
 const INITIAL_CATEGORIES: Category[] = [
@@ -66,6 +83,12 @@ const ContentManagementPage: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [deletionRequests, setDeletionRequests] = useState<CourseDeletionRequest[]>([]);
+  const [expandedDeleteRequest, setExpandedDeleteRequest] = useState<string | null>(null);
+  const [deletionRequestsTab, setDeletionRequestsTab] = useState<"pending" | "approved" | "rejected">("pending");
+  const [allDeletionRequests, setAllDeletionRequests] = useState<CourseDeletionRequest[]>([]);
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [confirmationModal, setConfirmationModal] = useState<{ action: "approve" | "reject"; requestId: string; courseId: string; courseTitle: string } | null>(null);
 
   // Modals
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -97,6 +120,12 @@ const ContentManagementPage: React.FC = () => {
       count: coursesList.filter((c) => c.category === cat.name).length,
     }));
     return updated.sort((a, b) => b.count - a.count);
+  };
+
+  // Helper para mostrar toast
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
   };
 
   // Sync with Firebase - Load all courses AND categories in real-time
@@ -177,8 +206,93 @@ const ContentManagementPage: React.FC = () => {
     };
   }, []);
 
+  // Listener para solicitações de exclusão
+  useEffect(() => {
+    const deletionRequestsRef = collection(db, "courseDeletionRequests");
+
+    const unsubscribeDeletionRequests = onSnapshot(
+      deletionRequestsRef,
+      (snapshot) => {
+        const requests: CourseDeletionRequest[] = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          requests.push({
+            id: doc.id,
+            courseId: data.courseId,
+            courseTitle: data.courseTitle,
+            instructorId: data.instructorId,
+            instructorName: data.instructorName,
+            status: data.status || "pending",
+            requestedAt: data.requestedAt?.toDate?.() || new Date(),
+            approvedAt: data.approvedAt?.toDate?.() || null,
+            approvedBy: data.approvedBy || null,
+            rejectionReason: data.rejectionReason || null,
+          });
+        });
+        setAllDeletionRequests(requests);
+        // Filtrar apenas pendentes para o estado anterior (compatibilidade)
+        setDeletionRequests(requests.filter(r => r.status === "pending"));
+      },
+      (error) => {
+        console.error("Erro ao carregar solicitações de exclusão:", error);
+      },
+    );
+
+    return () => unsubscribeDeletionRequests();
+  }, []);
+
   const updateFirebaseCourses = (updatedList: Course[]) => {
     setCourses(updatedList);
+  };
+
+  const handleApproveDeletionRequest = async (requestId: string, courseId: string, courseTitle: string) => {
+    try {
+      // Deletar o curso
+      await deleteDoc(doc(db, "courses", courseId));
+      
+      // Atualizar status da solicitação
+      await updateDoc(doc(db, "courseDeletionRequests", requestId), {
+        status: "approved",
+        approvedAt: serverTimestamp(),
+        approvedBy: "admin",
+      });
+      
+      showToast(`✅ Curso "${courseTitle}" foi excluído permanentemente!`, "success");
+      setExpandedDeleteRequest(null);
+      setConfirmationModal(null);
+    } catch (error) {
+      console.error("Erro ao aprovar exclusão:", error);
+      showToast("Erro ao aprovar exclusão do curso.", "error");
+      setConfirmationModal(null);
+    }
+  };
+
+  const handleRejectDeletionRequest = async (requestId: string, courseTitle: string) => {
+    try {
+      const courseId = allDeletionRequests.find(r => r.id === requestId)?.courseId;
+      if (courseId) {
+        // Reativar o curso
+        await updateDoc(doc(db, "courses", courseId), {
+          status: "Publicado",
+          isActive: true,
+          updatedAt: serverTimestamp(),
+        });
+      }
+      
+      // Atualizar status da solicitação
+      await updateDoc(doc(db, "courseDeletionRequests", requestId), {
+        status: "rejected",
+        rejectionReason: "Rejeitado pelo administrador",
+      });
+      
+      showToast(`✗ Solicitação de "${courseTitle}" foi rejeitada. Curso reativado!`, "success");
+      setExpandedDeleteRequest(null);
+      setConfirmationModal(null);
+    } catch (error) {
+      console.error("Erro ao rejeitar exclusão:", error);
+      showToast("Erro ao rejeitar solicitação.", "error");
+      setConfirmationModal(null);
+    }
   };
 
   // Handle navigation from other pages (like Tutors)
@@ -198,6 +312,10 @@ const ContentManagementPage: React.FC = () => {
       return matchesSearch && matchesCategory;
     });
   }, [courses, searchQuery, selectedCategory]);
+
+  const filteredDeletionRequests = useMemo(() => {
+    return allDeletionRequests.filter((request) => request.status === deletionRequestsTab);
+  }, [allDeletionRequests, deletionRequestsTab]);
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -331,6 +449,18 @@ const ContentManagementPage: React.FC = () => {
   };
 
   const toggleCourseStatus = async (id: string) => {
+    // Verificar se tem uma solicitação de exclusão pendente
+    const hasPendingDeletion = deletionRequests.some(
+      (r) => r.courseId === id && r.status === "pending"
+    );
+
+    if (hasPendingDeletion) {
+      alert(
+        "Este curso tem uma solicitação de exclusão pendente. Rejeite a solicitação primeiro para reativá-lo."
+      );
+      return;
+    }
+
     try {
       const course = courses.find((c) => c.id === id);
       if (course) {
@@ -891,6 +1021,209 @@ const ContentManagementPage: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Deletion Requests Section */}
+        <div className="space-y-6">
+          <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+                  <Trash2 size={28} className="text-red-500" />
+                  Solicitações de Exclusão de Cursos
+                </h2>
+                <p className="text-xs text-slate-400 mt-2">
+                  Gerencie as solicitações de exclusão de cursos feitas pelos instrutores
+                </p>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-4 mb-8 border-b border-slate-100 pb-6">
+              {(["pending", "approved", "rejected"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setDeletionRequestsTab(tab)}
+                  className={`px-6 py-3 text-xs font-black uppercase tracking-widest transition-all relative ${
+                    deletionRequestsTab === tab
+                      ? "text-brand-green"
+                      : "text-slate-400 hover:text-slate-600"
+                  }`}
+                >
+                  {tab === "pending" ? "Pendentes" : tab === "approved" ? "Aprovadas" : "Rejeitadas"}
+                  {deletionRequestsTab === tab && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-brand-green rounded-full" />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Deletion Requests List */}
+            {filteredDeletionRequests.length === 0 ? (
+              <div className="text-center py-12">
+                <Clock size={48} className="text-slate-200 mx-auto mb-4" />
+                <p className="text-slate-400 font-medium">
+                  {deletionRequestsTab === "pending"
+                    ? "Nenhuma solicitação pendente"
+                    : deletionRequestsTab === "approved"
+                    ? "Nenhuma solicitação aprovada"
+                    : "Nenhuma solicitação rejeitada"}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredDeletionRequests.map((request) => (
+                  <div
+                    key={request.id}
+                    className="bg-slate-50 rounded-2xl p-6 border border-slate-100 hover:border-slate-200 transition-all"
+                  >
+                    <div className="flex items-start justify-between gap-4 mb-4">
+                      <div className="flex-1">
+                        <h3 className="font-black text-slate-900 text-sm mb-2">
+                          {request.courseTitle}
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          Instrutor: <span className="font-bold text-slate-700">{request.instructorName}</span>
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Solicitado em:{" "}
+                          <span className="font-bold text-slate-700">
+                            {new Date(request.requestedAt).toLocaleDateString("pt-BR")}
+                          </span>
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {request.status === "pending" && (
+                          <span className="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                            Pendente
+                          </span>
+                        )}
+                        {request.status === "approved" && (
+                          <span className="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                            <CheckCircle size={14} /> Aprovada
+                          </span>
+                        )}
+                        {request.status === "rejected" && (
+                          <span className="bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                            <X size={14} /> Rejeitada
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {request.status === "pending" && (
+                      <div className="flex gap-3 pt-4 border-t border-slate-200">
+                        <button
+                          onClick={() =>
+                            setConfirmationModal({
+                              action: "reject",
+                              requestId: request.id,
+                              courseId: request.courseId,
+                              courseTitle: request.courseTitle,
+                            })
+                          }
+                          className="flex-1 h-10 bg-red-50 text-red-600 border border-red-200 font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-red-100 transition-all active:scale-95"
+                        >
+                          Rejeitar
+                        </button>
+                        <button
+                          onClick={() =>
+                            setConfirmationModal({
+                              action: "approve",
+                              requestId: request.id,
+                              courseId: request.courseId,
+                              courseTitle: request.courseTitle,
+                            })
+                          }
+                          className="flex-1 h-10 bg-emerald-600 text-white font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-900/20 active:scale-95"
+                        >
+                          Aprovar & Deletar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Modal: Confirmação de Aprovação/Rejeição */}
+        {confirmationModal && (
+          <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-white w-full max-w-[340px] rounded-[32px] p-8 text-center shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100">
+              <div
+                className={`w-12 h-12 ${
+                  confirmationModal.action === "approve"
+                    ? "bg-emerald-50 text-emerald-500"
+                    : "bg-red-50 text-red-500"
+                } rounded-2xl flex items-center justify-center mx-auto mb-6`}
+              >
+                {confirmationModal.action === "approve" ? (
+                  <CheckCircle size={24} />
+                ) : (
+                  <X size={24} />
+                )}
+              </div>
+              <h3 className="text-lg font-black text-slate-900 mb-2">
+                {confirmationModal.action === "approve"
+                  ? "Aprovar Exclusão?"
+                  : "Rejeitar Solicitação?"}
+              </h3>
+              <p className="text-xs text-slate-500 mb-8 leading-relaxed font-medium px-2">
+                {confirmationModal.action === "approve"
+                  ? `O curso "${confirmationModal.courseTitle}" será deletado permanentemente. Esta ação não poderá ser desfeita.`
+                  : `A solicitação será rejeitada e o curso "${confirmationModal.courseTitle}" será reativado.`}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmationModal(null)}
+                  className="flex-1 h-11 bg-slate-50 text-slate-500 font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-slate-100 transition-all active:scale-95"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirmationModal.action === "approve") {
+                      handleApproveDeletionRequest(
+                        confirmationModal.requestId,
+                        confirmationModal.courseId,
+                        confirmationModal.courseTitle
+                      );
+                    } else {
+                      handleRejectDeletionRequest(
+                        confirmationModal.requestId,
+                        confirmationModal.courseTitle
+                      );
+                    }
+                  }}
+                  className={`flex-1 h-11 ${
+                    confirmationModal.action === "approve"
+                      ? "bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-900/20"
+                      : "bg-red-600 hover:bg-red-700 shadow-lg shadow-red-900/20"
+                  } text-white font-black uppercase text-[10px] tracking-widest rounded-xl transition-all active:scale-95`}
+                >
+                  {confirmationModal.action === "approve" ? "Sim, Deletar" : "Sim, Rejeitar"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Toast Notification */}
+        {toast && (
+          <div className={`fixed bottom-6 right-6 z-[200] px-6 py-3 rounded-xl font-bold text-sm shadow-lg animate-in fade-in slide-in-from-bottom-5 duration-300 flex items-center gap-3 ${
+            toast.type === "success"
+              ? "bg-emerald-600 text-white"
+              : "bg-red-600 text-white"
+          }`}>
+            {toast.type === "success" ? (
+              <CheckCircle size={20} />
+            ) : (
+              <AlertCircle size={20} />
+            )}
+            {toast.message}
           </div>
         )}
       </div>

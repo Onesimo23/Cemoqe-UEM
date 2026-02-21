@@ -126,7 +126,7 @@ const StudentsProgressPage: React.FC = () => {
               student_name:
                 enrollment.student_name ||
                 enrollment.student_email?.split("@")[0] ||
-                "Aluno",
+                "Formando",
               enrollments: [],
             };
           }
@@ -228,7 +228,7 @@ const StudentsProgressPage: React.FC = () => {
 
   const exportToCSV = () => {
     let csv =
-      "Estudante,Curso,Data Inscrição,Progresso,Aulas,Status Certificado\n";
+      "Formando,Curso,Data Inscrição,Progresso,Aulas,Status Certificado\n";
 
     studentsProgress.forEach((student) => {
       student.enrollments.forEach((enrollment) => {
