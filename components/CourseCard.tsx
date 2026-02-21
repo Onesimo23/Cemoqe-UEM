@@ -20,7 +20,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
       <div className="bg-white rounded-xl border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden flex flex-col h-full group">
 
         {/* Image Container */}
-        <div className="relative h-48 w-full overflow-hidden">
+        <div className="relative h-40 w-full overflow-hidden">
           <img
             src={course.imageUrl}
             alt={course.title}

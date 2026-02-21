@@ -84,6 +84,11 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
       href: "/instrutor/duvidas",
     },
     {
+      icon: <Users className="w-5 h-5" />,
+      label: "Comunidade",
+      href: "/instrutor/comunidade",
+    },
+    {
       icon: <TrendingUp className="w-5 h-5" />,
       label: "Relatórios",
       href: "/instrutor/relatorios",

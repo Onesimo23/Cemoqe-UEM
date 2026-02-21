@@ -533,7 +533,7 @@ const CourseDetailsPage: React.FC = () => {
                     `https://ui-avatars.com/api/?name=${encodeURIComponent(course?.instructor || "Instrutor")}&background=0e7038&color=fff&size=128`
                   }
                   alt={course?.instructor || "Instrutor"}
-                  className="w-20 h-20 rounded-full object-cover border-4 border-gray-50 shadow-sm"
+                  className="w-16 h-16 rounded-full object-cover border-4 border-gray-50 shadow-sm"
                 />
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 mb-1">
@@ -669,7 +669,7 @@ const CourseDetailsPage: React.FC = () => {
 
 // --- Sub-components for this page ---
 
-const LearningPoint = ({ text }: { text: string }) => (
+const LearningPoint: React.FC<{ text: string }> = ({ text }) => (
   <div className="flex items-start gap-3">
     <Check className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
     <span className="text-sm text-gray-700">{text}</span>
@@ -715,16 +715,16 @@ const TimedHtml5Preview: React.FC<{ src?: string }> = ({ src }) => {
   );
 };
 
-const AccordionItem = ({
-  title,
-  details,
-  isOpen = false,
-  lessons = [] as any[],
-}: {
+const AccordionItem: React.FC<{
   title: string;
   details: string;
   isOpen?: boolean;
   lessons?: any[];
+}> = ({
+  title,
+  details,
+  isOpen = false,
+  lessons = [] as any[],
 }) => {
   const [open, setOpen] = React.useState(isOpen);
   React.useEffect(() => {

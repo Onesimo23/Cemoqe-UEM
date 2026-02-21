@@ -64,6 +64,7 @@ const MyCoursesPage: React.FC = () => {
         const prog = progressMap.get(cid) || {
           completed: 0,
           total: totalLessons,
+          lastTs: undefined,
         };
         const progress =
           totalLessons > 0
@@ -522,7 +523,7 @@ const CourseProgressCard: React.FC<{ course: EnrolledCourse }> = ({
       {/* Image Area */}
       <Link
         to={`/aluno/sala-de-aula/${course.id}`}
-        className="relative h-40 w-full overflow-hidden block"
+        className="relative h-32 w-full overflow-hidden block"
       >
         <img
           src={course.imageUrl}
