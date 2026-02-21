@@ -1238,6 +1238,51 @@ const CoursePlayerPage: React.FC = () => {
                 <article className="prose prose-green max-w-none">
                   {(() => {
                     const c = String(current?.lesson?.content || "");
+                    
+                    // Tentar visualizar como blocos nativos
+                    try {
+                      const blocks = JSON.parse(c);
+                      if (Array.isArray(blocks)) {
+                        return (
+                          <div className="space-y-6">
+                            {blocks.map((block: any) => {
+                              switch (block.type) {
+                                case "h1":
+                                  return <h1 key={block.id} className="text-3xl font-extrabold text-gray-900 border-b pb-2 mb-4">{block.value}</h1>;
+                                case "h2":
+                                  return <h2 key={block.id} className="text-2xl font-bold text-gray-800 mt-8 mb-3">{block.value}</h2>;
+                                case "p":
+                                  return <p key={block.id} className="text-gray-700 leading-relaxed text-lg mb-4">{block.value}</p>;
+                                case "quote":
+                                  return (
+                                    <blockquote key={block.id} className="border-l-4 border-brand-green bg-green-50/50 p-6 rounded-r-xl my-6 italic text-gray-700 text-lg shadow-sm">
+                                      {block.value}
+                                    </blockquote>
+                                  );
+                                case "list":
+                                  return (
+                                    <div key={block.id} className="flex gap-3 items-start mb-3">
+                                      <div className="w-2 h-2 rounded-full bg-brand-green mt-2.5 shrink-0" />
+                                      <p className="text-gray-700 text-lg">{block.value}</p>
+                                    </div>
+                                  );
+                                case "image":
+                                  return (
+                                    <div key={block.id} className="my-8 rounded-2xl overflow-hidden shadow-lg border border-gray-100 group transition-transform hover:scale-[1.01]">
+                                      <img src={block.value} alt="Conteúdo da aula" className="w-full h-auto" />
+                                    </div>
+                                  );
+                                default:
+                                  return null;
+                              }
+                            })}
+                          </div>
+                        );
+                      }
+                    } catch (e) {
+                      // Se falhar o parse, trata como HTML ou Texto Puro (fallback)
+                    }
+
                     const isHtml = /<[^>]+>/.test(c);
                     if (isHtml) {
                       return (
@@ -1248,7 +1293,7 @@ const CoursePlayerPage: React.FC = () => {
                       );
                     }
                     return (
-                      <div className="text-gray-700 whitespace-pre-wrap">
+                      <div className="text-gray-700 whitespace-pre-wrap text-lg leading-relaxed">
                         {c}
                       </div>
                     );

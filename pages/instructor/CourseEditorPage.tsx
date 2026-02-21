@@ -14,22 +14,27 @@ import {
 } from "firebase/storage";
 import {
     ArrowLeft,
+    Bold,
     Check,
     CheckCircle,
     ChevronDown,
     File as FileIcon,
     FileText,
     FileUp,
+    GripVertical,
+    Heading,
     HelpCircle,
     Image as ImageIcon,
     Info,
     Layout,
     Link as LinkIcon,
     List,
+    ListOrdered,
     MonitorPlay,
     Plus,
     PlusCircle,
     Plus as PlusIcon,
+    Quote,
     Save,
     Trash2,
     Type,
@@ -101,6 +106,232 @@ interface InteractiveExercise {
   truefalse?: { statements: TFStatement[] };
   fillblank?: { prompt: string; blanks: FillBlankBlank[] };
 }
+
+// Block Content Interfaces
+export type BlockType = "h1" | "h2" | "p" | "image" | "quote" | "list";
+
+export interface ContentBlock {
+  id: string;
+  type: BlockType;
+  value: string;
+}
+
+const LessonBlockEditor: React.FC<{
+  blocksJson: string;
+  onChange: (json: string) => void;
+  onUploadImage: (file: File) => Promise<string>;
+}> = ({ blocksJson, onChange, onUploadImage }) => {
+  const [blocks, setBlocks] = useState<ContentBlock[]>(() => {
+    try {
+      const parsed = JSON.parse(blocksJson);
+      return Array.isArray(parsed) ? parsed : [{ id: "1", type: "p", value: blocksJson }];
+    } catch {
+      return [{ id: "1", type: "p", value: blocksJson || "" }];
+    }
+  });
+
+  useEffect(() => {
+    onChange(JSON.stringify(blocks));
+  }, [blocks]);
+
+  const addBlock = (type: BlockType) => {
+    const newBlock: ContentBlock = {
+      id: Math.random().toString(36).substr(2, 9),
+      type,
+      value: "",
+    };
+    setBlocks([...blocks, newBlock]);
+  };
+
+  const updateBlock = (id: string, value: string) => {
+    setBlocks(blocks.map((b) => (b.id === id ? { ...b, value } : b)));
+  };
+
+  const removeBlock = (id: string) => {
+    if (blocks.length === 1) {
+      setBlocks([{ id: "1", type: "p", value: "" }]);
+      return;
+    }
+    setBlocks(blocks.filter((b) => b.id !== id));
+  };
+
+  const moveBlock = (index: number, direction: "up" | "down") => {
+    const newBlocks = [...blocks];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= blocks.length) return;
+    [newBlocks[index], newBlocks[targetIndex]] = [newBlocks[targetIndex], newBlocks[index]];
+    setBlocks(newBlocks);
+  };
+
+  const handleImageUpload = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const url = await onUploadImage(file);
+      updateBlock(id, url);
+    } catch (err) {
+      console.error("Image upload failed:", err);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2 mb-2">
+        <button
+          type="button"
+          onClick={() => addBlock("h1")}
+          className="p-2 bg-white border border-gray-200 rounded-lg hover:border-brand-green text-xs flex items-center gap-1"
+        >
+          <Heading size={14} /> Título 1
+        </button>
+        <button
+          type="button"
+          onClick={() => addBlock("h2")}
+          className="p-2 bg-white border border-gray-200 rounded-lg hover:border-brand-green text-xs flex items-center gap-1"
+        >
+          <Heading size={12} /> Título 2
+        </button>
+        <button
+          type="button"
+          onClick={() => addBlock("p")}
+          className="p-2 bg-white border border-gray-200 rounded-lg hover:border-brand-green text-xs flex items-center gap-1"
+        >
+          <Plus size={14} /> Parágrafo
+        </button>
+        <button
+          type="button"
+          onClick={() => addBlock("image")}
+          className="p-2 bg-white border border-gray-200 rounded-lg hover:border-brand-green text-xs flex items-center gap-1"
+        >
+          <ImageIcon size={14} /> Imagem
+        </button>
+        <button
+          type="button"
+          onClick={() => addBlock("quote")}
+          className="p-2 bg-white border border-gray-200 rounded-lg hover:border-brand-green text-xs flex items-center gap-1"
+        >
+          <Quote size={14} /> Citação
+        </button>
+        <button
+          type="button"
+          onClick={() => addBlock("list")}
+          className="p-2 bg-white border border-gray-200 rounded-lg hover:border-brand-green text-xs flex items-center gap-1"
+        >
+          <ListOrdered size={14} /> Lista
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        {blocks.map((block, index) => (
+          <div key={block.id} className="group relative bg-white border border-gray-100 rounded-xl p-3 shadow-sm hover:border-brand-green/30 transition-all">
+            <div className="absolute -left-10 top-1/2 -translate-y-1/2 flex flex-col items-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <button disabled={index === 0} onClick={() => moveBlock(index, "up")} className="p-1 text-gray-400 hover:text-brand-green disabled:opacity-30">
+                <ChevronDown size={14} className="rotate-180" />
+              </button>
+              <GripVertical size={14} className="text-gray-300" />
+              <button disabled={index === blocks.length - 1} onClick={() => moveBlock(index, "down")} className="p-1 text-gray-400 hover:text-brand-green disabled:opacity-30">
+                <ChevronDown size={14} />
+              </button>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="flex-1">
+                {block.type === "h1" && (
+                  <input
+                    type="text"
+                    value={block.value}
+                    onChange={(e) => updateBlock(block.id, e.target.value)}
+                    placeholder="Título Principal..."
+                    className="w-full text-xl font-bold border-none outline-none focus:ring-0 placeholder:text-gray-300"
+                  />
+                )}
+                {block.type === "h2" && (
+                  <input
+                    type="text"
+                    value={block.value}
+                    onChange={(e) => updateBlock(block.id, e.target.value)}
+                    placeholder="Subtítulo..."
+                    className="w-full text-lg font-bold border-none outline-none focus:ring-0 placeholder:text-gray-300 text-gray-700"
+                  />
+                )}
+                {block.type === "p" && (
+                  <textarea
+                    value={block.value}
+                    onChange={(e) => updateBlock(block.id, e.target.value)}
+                    placeholder="Escreva seu parágrafo..."
+                    className="w-full text-sm border-none outline-none focus:ring-0 placeholder:text-gray-300 resize-none overflow-hidden min-h-[1.5rem]"
+                    rows={1}
+                    onInput={(e) => {
+                      const target = e.target as HTMLTextAreaElement;
+                      target.style.height = "auto";
+                      target.style.height = target.scrollHeight + "px";
+                    }}
+                  />
+                )}
+                {block.type === "quote" && (
+                  <div className="border-l-4 border-brand-green pl-4 italic text-gray-600">
+                    <textarea
+                      value={block.value}
+                      onChange={(e) => updateBlock(block.id, e.target.value)}
+                      placeholder="Citação importante..."
+                      className="w-full text-sm border-none outline-none focus:ring-0 bg-transparent placeholder:text-gray-300 resize-none overflow-hidden"
+                      rows={1}
+                    />
+                  </div>
+                )}
+                {block.type === "list" && (
+                  <div className="flex items-start gap-2">
+                    <span className="text-brand-green font-bold text-lg leading-none mt-1">·</span>
+                    <textarea
+                      value={block.value}
+                      onChange={(e) => updateBlock(block.id, e.target.value)}
+                      placeholder="Item da lista..."
+                      className="w-full text-sm border-none outline-none focus:ring-0 placeholder:text-gray-300 resize-none overflow-hidden"
+                      rows={1}
+                    />
+                  </div>
+                )}
+                {block.type === "image" && (
+                  <div className="space-y-2">
+                    {block.value ? (
+                      <div className="relative rounded-lg overflow-hidden border border-gray-100">
+                        <img src={block.value} alt="Block image" className="max-w-full h-auto" />
+                        <button
+                          onClick={() => updateBlock(block.id, "")}
+                          className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-md"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed border-gray-100 rounded-lg hover:border-brand-green/50 cursor-pointer transition-all" onClick={() => document.getElementById(`block-img-${block.id}`)?.click()}>
+                        <ImageIcon size={24} className="text-gray-300 mb-2" />
+                        <span className="text-xs text-gray-400">Clique para selecionar imagem</span>
+                        <input
+                          id={`block-img-${block.id}`}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleImageUpload(block.id, e)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => removeBlock(block.id)}
+                className="p-1 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const CourseEditorPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -1862,19 +2093,40 @@ const CourseEditorPage: React.FC = () => {
                           )}
 
                           {lesson.type === "text" && (
-                            <textarea
-                              placeholder="Digite ou cole aqui o conteúdo em texto..."
-                              value={lesson.content}
-                              onChange={(e) =>
-                                updateLesson(
-                                  module.id,
-                                  lesson.id,
-                                  "content",
-                                  e.target.value,
-                                )
-                              }
-                              className="w-full p-4 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-brand-green transition-all min-h-[120px] resize-none"
-                            ></textarea>
+                            <div className="space-y-4">
+                              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                Conteúdo da Aula (Leitura Nativa)
+                              </label>
+                              <LessonBlockEditor
+                                blocksJson={lesson.content}
+                                onChange={(json) =>
+                                  updateLesson(
+                                    module.id,
+                                    lesson.id,
+                                    "content",
+                                    json,
+                                  )
+                                }
+                                onUploadImage={async (file) => {
+                                  const sanitizedFileName = file.name
+                                    .normalize("NFD")
+                                    .replace(/[\u0300-\u036f]/g, "")
+                                    .replace(/[^a-zA-Z0-9._-]/g, "_");
+                                  const filePath = `courses/${id || "temp"}/blocks/${Date.now()}_${sanitizedFileName}`;
+                                  
+                                  if (isSupabaseConfigured) {
+                                    await supabase.storage
+                                      .from(SUPABASE_BUCKET)
+                                      .upload(filePath, file);
+                                    const { data: signed } = await supabase.storage
+                                      .from(SUPABASE_BUCKET)
+                                      .createSignedUrl(filePath, SUPABASE_SIGNED_TTL);
+                                    return signed?.signedUrl || "";
+                                  }
+                                  return "";
+                                }}
+                              />
+                            </div>
                           )}
 
                           {lesson.type === "document" && (
