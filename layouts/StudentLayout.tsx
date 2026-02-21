@@ -87,7 +87,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
     },
     {
       icon: <MessageSquare className="w-5 h-5" />,
-      label: "Fórum",
+      label: "Comunidade de Inscritos",
       href: "/aluno/forum",
     },
     {

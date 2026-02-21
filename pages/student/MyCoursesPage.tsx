@@ -20,9 +20,12 @@ const MyCoursesPage: React.FC = () => {
 
   useEffect(() => {
     if (!user?.uid) {
+      console.log("❌ [MyCoursesPage] Usuário não autenticado");
       setItems([]);
       return;
     }
+
+    console.log("✅ [MyCoursesPage] Usuário autenticado:", user.uid);
 
     let courseUnsubs: Array<() => void> = [];
     let subsUnsubs: Array<() => void> = [];
@@ -39,6 +42,14 @@ const MyCoursesPage: React.FC = () => {
         ...Array.from(enrollsMap.keys()),
         ...Array.from(coursesMap.keys()),
       ]);
+      console.log(
+        "🔄 [MyCoursesPage] Recompute chamado. IDs:",
+        Array.from(ids),
+        "EnrollsMap size:",
+        enrollsMap.size,
+        "CoursesMap size:",
+        coursesMap.size,
+      );
       const list: CourseCard[] = [];
       ids.forEach((cid) => {
         const course =
@@ -93,15 +104,25 @@ const MyCoursesPage: React.FC = () => {
         ).getTime();
         return bTs - aTs;
       });
+      console.log(
+        "📋 [MyCoursesPage] Lista final de cursos:",
+        list.length,
+        list,
+      );
       setItems(list);
     };
 
     const subscribeByCourse = (courseIds: string[]) => {
+      console.log(
+        "🎯 [MyCoursesPage] subscribeByCourse chamado com IDs:",
+        courseIds,
+      );
       courseUnsubs.forEach((u) => u());
       courseUnsubs = [];
       subsUnsubs.forEach((u) => u());
       subsUnsubs = [];
       if (courseIds.length === 0) {
+        console.log("⚠️ [MyCoursesPage] Nenhum course_id fornecido!");
         setItems([]);
         return;
       }
@@ -111,14 +132,24 @@ const MyCoursesPage: React.FC = () => {
           arr.slice(i * size, i * size + size),
         );
       const chunks = chunk(courseIds, 10);
+      console.log("📦 [MyCoursesPage] Chunks criados:", chunks);
 
       chunks.forEach((ids) => {
         const qC = query(
           collection(db, "courses"),
           where("__name__", "in", ids),
         );
+        console.log("🔍 [MyCoursesPage] Buscando cursos com IDs:", ids);
         const uc = onSnapshot(qC, (snap) => {
-          snap.docs.forEach((d) => coursesMap.set(d.id, d.data()));
+          console.log(
+            "📚 [MyCoursesPage] Snapshot de cursos recebido:",
+            snap.size,
+            "documentos",
+          );
+          snap.docs.forEach((d) => {
+            console.log("  - Curso encontrado:", d.id, d.data());
+            coursesMap.set(d.id, d.data());
+          });
           recompute();
         });
         courseUnsubs.push(uc);
@@ -129,13 +160,24 @@ const MyCoursesPage: React.FC = () => {
           where("user_uid", "==", user.uid),
           where("course_id", "in", ids),
         );
+        console.log(
+          "📤 [MyCoursesPage] Buscando submissões para courses:",
+          ids,
+        );
         const us = onSnapshot(qS, (snap) => {
+          console.log("📨 [MyCoursesPage] Submissões encontradas:", snap.size);
           const byCourse = new Map<string, Set<string>>();
           const lastByCourse = new Map<string, Date>();
           snap.docs.forEach((d) => {
             const data: any = d.data();
             const cid = data?.course_id || data?.courseId;
             const lid = data?.lesson_id || data?.lessonId || d.id;
+            console.log(
+              "    📝 Submissão - course_id:",
+              cid,
+              "lesson_id:",
+              lid,
+            );
             if (!cid) return;
             if (!byCourse.has(cid)) byCourse.set(cid, new Set());
             byCourse.get(cid)!.add(String(lid));
@@ -161,6 +203,9 @@ const MyCoursesPage: React.FC = () => {
                     0,
                   )
               : coursesMap.get(cid)?.totalLessons || 0;
+            console.log(
+              `    📊 Course ${cid}: ${completed}/${total} (submissões)`,
+            );
             progressMap.set(cid, {
               completed,
               total,
@@ -177,13 +222,22 @@ const MyCoursesPage: React.FC = () => {
           where("user_uid", "==", user.uid),
           where("course_id", "in", ids),
         );
+        console.log(
+          "✅ [MyCoursesPage] Buscando aulas concluídas para courses:",
+          ids,
+        );
         const ulc = onSnapshot(qLC, (snap) => {
+          console.log(
+            "✔️ [MyCoursesPage] Aulas concluídas encontradas:",
+            snap.size,
+          );
           const byCourse = new Map<string, Set<string>>();
           const lastByCourse = new Map<string, Date>();
           snap.docs.forEach((d) => {
             const data: any = d.data();
             const cid = data?.course_id;
             const lid = data?.lesson_id;
+            console.log("    ✓ Conclusão - course_id:", cid, "lesson_id:", lid);
             if (!cid || !lid) return;
             if (!byCourse.has(cid)) byCourse.set(cid, new Set());
             byCourse.get(cid)!.add(String(lid));
@@ -210,6 +264,9 @@ const MyCoursesPage: React.FC = () => {
               : coursesMap.get(cid)?.totalLessons || 0;
             // Usar o máximo entre submissions e lesson-completions
             const maxCompleted = Math.max(prevProg?.completed || 0, completed);
+            console.log(
+              `    📊 Course ${cid}: ${maxCompleted}/${total} (completions)`,
+            );
             progressMap.set(cid, {
               completed: maxCompleted,
               total,
@@ -223,16 +280,26 @@ const MyCoursesPage: React.FC = () => {
     };
 
     const handleEnrollSnap = (snap: any) => {
+      console.log(
+        "👤 [MyCoursesPage] handleEnrollSnap chamado:",
+        snap.size,
+        "inscrições encontradas",
+      );
       const ids = new Set<string>();
       snap.docs.forEach((d: any) => {
         const data: any = d.data();
+        console.log("  📝 Inscrição encontrada:", d.id, data);
         const cid = data?.course_id || data?.courseId;
+        console.log("    - course_id/courseId:", cid);
         const ts: Date | null = data?.enrolledAt?.toDate
           ? data.enrolledAt.toDate()
           : data?.createdAt?.toDate
             ? data.createdAt.toDate()
             : null;
-        if (!cid) return;
+        if (!cid) {
+          console.log("    ❌ Sem course_id! Pulando este documento");
+          return;
+        }
         ids.add(cid);
         enrollsMap.set(cid, {
           ts: ts || undefined,
@@ -245,19 +312,29 @@ const MyCoursesPage: React.FC = () => {
           },
         });
       });
+      console.log(
+        "🎓 [MyCoursesPage] Total de IDs extraídos:",
+        Array.from(ids),
+      );
       recompute();
       subscribeByCourse(Array.from(ids));
     };
 
+    console.log("🔗 [MyCoursesPage] Configurando listeners...");
     const u1 = onSnapshot(
       query(collection(db, "enrollments"), where("user_uid", "==", user.uid)),
       handleEnrollSnap,
+      (error) =>
+        console.error("❌ [MyCoursesPage] Erro no listener u1:", error),
     );
     const u2 = onSnapshot(
       query(collection(db, "enrollments"), where("userId", "==", user.uid)),
       handleEnrollSnap,
+      (error) =>
+        console.error("❌ [MyCoursesPage] Erro no listener u2:", error),
     );
     return () => {
+      console.log("🧹 [MyCoursesPage] Limpando listeners...");
       u1();
       u2();
       courseUnsubs.forEach((u) => u());

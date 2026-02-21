@@ -1,19 +1,19 @@
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { toPng } from "html-to-image";
 import {
-    Award,
-    BookOpen,
-    Calendar,
-    CheckCircle,
-    Clock,
-    Download,
-    FileText,
-    History,
-    Loader2,
-    Play,
-    Printer,
-    TrendingUp,
-    X,
+  Award,
+  BookOpen,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Download,
+  FileText,
+  History,
+  Loader2,
+  Play,
+  Printer,
+  TrendingUp,
+  X,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -401,28 +401,28 @@ const HistoryPage: React.FC = () => {
 
   return (
     <StudentLayout>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="mb-8 sm:mb-10 flex flex-col gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <History className="w-8 h-8 text-brand-green" />
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3 flex-wrap">
+              <History className="w-6 sm:w-8 h-6 sm:h-8 text-brand-green flex-shrink-0" />
               Meu Histórico de Aprendizado
             </h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-sm sm:text-base text-gray-500 mt-1">
               Acompanhe cada passo da sua jornada de conhecimento.
             </p>
           </div>
           <button
             onClick={() => setIsReportOpen(true)}
-            className="flex items-center gap-2 text-sm font-bold text-brand-green bg-brand-green/5 px-4 py-2 rounded-lg hover:bg-brand-green/10 transition-colors"
+            className="self-start sm:self-auto flex items-center gap-2 text-sm font-bold text-brand-green bg-brand-green/5 px-4 py-2 rounded-lg hover:bg-brand-green/10 transition-colors"
           >
-            <Calendar className="w-4 h-4" /> Relatório Completo
+            <Calendar className="w-4 h-4 flex-shrink-0" /> Relatório Completo
           </button>
         </div>
 
         {/* Overview Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
           <StatMiniCard
             label="Horas de Estudo"
             value={hoursStr}
@@ -444,9 +444,9 @@ const HistoryPage: React.FC = () => {
         </div>
 
         {/* Timeline */}
-        <div className="relative">
-          <div className="absolute left-[21px] top-2 bottom-0 w-0.5 bg-gray-200"></div>
-          <div className="space-y-10">
+        <div className="relative px-2 sm:px-0">
+          <div className="absolute left-[13px] sm:left-[21px] top-2 bottom-0 w-0.5 bg-gray-200"></div>
+          <div className="space-y-6 sm:space-y-10">
             {events.map((event, index) => (
               <TimelineItem
                 key={event.id}
@@ -457,8 +457,8 @@ const HistoryPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-12 text-center">
-          <button className="text-sm font-bold text-gray-500 hover:text-brand-dark transition-colors flex items-center gap-2 mx-auto">
+        <div className="mt-8 sm:mt-12 text-center">
+          <button className="text-xs sm:text-sm font-bold text-gray-500 hover:text-brand-dark transition-colors flex items-center gap-2 mx-auto">
             Carregar atividades anteriores...
           </button>
         </div>
@@ -468,65 +468,68 @@ const HistoryPage: React.FC = () => {
       {isReportOpen && (
         <div className="fixed inset-0 z-[100] flex flex-col bg-gray-900/90 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto print:bg-white print:block print:p-0">
           {/* Action Bar (Hidden in print) */}
-          <div className="w-full bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-[110] print:hidden">
-            <div className="flex items-center gap-3">
+          <div className="w-full bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sticky top-0 z-[110] print:hidden">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
               <button
                 onClick={() => setIsReportOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
               >
                 <X className="w-6 h-6 text-gray-500" />
               </button>
-              <h3 className="font-bold text-gray-900">
+              <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">
                 Relatório de Aprendizagem
               </h3>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3 w-full sm:w-auto flex-wrap sm:flex-nowrap">
               <button
                 onClick={handlePrint}
-                className="flex items-center gap-2 bg-white text-gray-700 px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 font-bold transition-all text-sm"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white text-gray-700 px-3 sm:px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 font-bold transition-all text-xs sm:text-sm"
               >
-                <Printer className="w-4 h-4" /> Imprimir / PDF
+                <Printer className="w-4 h-4 flex-shrink-0" />{" "}
+                <span className="hidden sm:inline">Imprimir / PDF</span>
+                <span className="sm:hidden">Imprimir</span>
               </button>
               <button
                 disabled={isDownloading}
                 onClick={handleDownloadReport}
-                className="flex items-center gap-2 bg-brand-green text-white px-5 py-2 rounded-lg hover:bg-brand-dark font-bold transition-all text-sm shadow-lg shadow-green-900/10"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-brand-green text-white px-3 sm:px-5 py-2 rounded-lg hover:bg-brand-dark font-bold transition-all text-xs sm:text-sm shadow-lg shadow-green-900/10"
               >
                 {isDownloading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
                 ) : (
-                  <Download className="w-4 h-4" />
+                  <Download className="w-4 h-4 flex-shrink-0" />
                 )}
-                Baixar Imagem
+                <span className="hidden sm:inline">Baixar Imagem</span>
+                <span className="sm:hidden">Baixar</span>
               </button>
             </div>
           </div>
 
           {/* Report Content Wrapper */}
-          <div className="flex-1 flex justify-center py-10 px-4 print:p-0">
+          <div className="flex-1 flex justify-center py-4 sm:py-10 px-2 sm:px-4 print:p-0">
             <div
               ref={reportRef}
-              className="bg-white w-full max-w-[800px] shadow-2xl p-12 md:p-16 relative flex flex-col min-h-[1100px] print:shadow-none print:max-w-none print:w-full print:m-0"
+              className="bg-white w-full max-w-[800px] shadow-2xl p-6 sm:p-8 md:p-12 lg:p-16 relative flex flex-col min-h-[1100px] print:shadow-none print:max-w-none print:w-full print:m-0 print:p-0"
             >
               {/* Report Header */}
-              <div className="flex justify-between items-start mb-12 border-b-2 border-brand-green pb-8">
-                <div>
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-8 mb-8 sm:mb-12 border-b-2 border-blue-700 pb-6 sm:pb-8">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-brand-green p-2 rounded-lg">
-                      <BookOpen className="text-white w-6 h-6" />
-                    </div>
-                    <span className="text-2xl font-black text-brand-dark">
-                      Edu<span className="text-brand-accent">Prime</span>
-                    </span>
+                    <img
+                      src="/logo-plataforma.png"
+                      alt="Logo Plataforma"
+                      className="h-8 sm:h-10 w-auto"
+                    />
                   </div>
-                  <h2 className="text-3xl font-serif font-bold text-gray-900">
-                    Histórico de Atividades
+                  <h2 className="text-2xl sm:text-3xl font-serif font-bold text-gray-900">
+                    Relatório de Aprendizagem
                   </h2>
-                  <p className="text-gray-500">
-                    Documento oficial de acompanhamento acadêmico
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">
+                    Universidade Eduardo Mondlane - Documento oficial de
+                    acompanhamento acadêmico
                   </p>
                 </div>
-                <div className="text-right text-sm">
+                <div className="text-right text-xs sm:text-sm flex-shrink-0">
                   <p className="font-bold text-gray-400 uppercase tracking-widest mb-1">
                     Data de Emissão
                   </p>
@@ -537,40 +540,41 @@ const HistoryPage: React.FC = () => {
               </div>
 
               {/* Student Info Info */}
-              <div className="grid grid-cols-2 gap-8 mb-12 p-6 bg-gray-50 rounded-xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 mb-8 sm:mb-12 p-4 sm:p-6 bg-gray-50 rounded-xl">
                 <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                  <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
                     Estudante
                   </p>
-                  <p className="text-lg font-bold text-gray-900">
+                  <p className="text-base sm:text-lg font-bold text-gray-900 break-words">
                     {profile?.full_name ||
                       user?.displayName ||
                       user?.email?.split("@")[0] ||
                       "Utilizador"}
                   </p>
-                  <p className="text-sm text-gray-500">
-                    ID: EP-{(user?.uid || "USER").substring(0, 8).toUpperCase()}
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                    ID: UEM-
+                    {(user?.uid || "USER").substring(0, 8).toUpperCase()}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                  <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
                     Plano Atual
                   </p>
-                  <p className="text-lg font-bold text-brand-green">
+                  <p className="text-base sm:text-lg font-bold text-brand-green break-words">
                     {planLabel}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
                     {memberSinceText ? `Membro desde ${memberSinceText}` : ""}
                   </p>
                 </div>
               </div>
 
               {/* Performance Summary */}
-              <div className="mb-12">
-                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-6 border-l-4 border-brand-accent pl-4">
+              <div className="mb-8 sm:mb-12">
+                <h4 className="text-xs sm:text-sm font-bold text-gray-900 uppercase tracking-widest mb-4 sm:mb-6 border-l-4 border-brand-accent pl-4">
                   Resumo de Performance
                 </h4>
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
                   <ReportStat label="Horas Totais" value={hoursStr} />
                   <ReportStat
                     label="Cursos Ativos"
@@ -591,28 +595,28 @@ const HistoryPage: React.FC = () => {
               </div>
 
               {/* Detailed Activity Table */}
-              <div className="flex-1">
-                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-6 border-l-4 border-brand-accent pl-4">
-                  Log Detalhado de Atividades
+              <div className="flex-1 overflow-x-auto">
+                <h4 className="text-xs sm:text-sm font-bold text-gray-900 uppercase tracking-widest mb-4 sm:mb-6 border-l-4 border-brand-accent pl-4">
+                  Detalhes do seu avanço
                 </h4>
-                <table className="w-full text-left text-sm border-collapse">
+                <table className="w-full text-left text-xs sm:text-sm border-collapse">
                   <thead>
                     <tr className="border-b-2 border-gray-100">
-                      <th className="py-3 font-bold text-gray-400 uppercase tracking-tighter w-24">
+                      <th className="py-2 sm:py-3 font-bold text-gray-400 uppercase tracking-tighter text-[9px] sm:text-[10px] w-16 sm:w-24">
                         Data
                       </th>
-                      <th className="py-3 font-bold text-gray-400 uppercase tracking-tighter">
+                      <th className="py-2 sm:py-3 font-bold text-gray-400 uppercase tracking-tighter text-[9px] sm:text-[10px] px-2 sm:px-0">
                         Evento / Atividade
                       </th>
-                      <th className="py-3 font-bold text-gray-400 uppercase tracking-tighter">
-                        Curso Relacionado
+                      <th className="py-2 sm:py-3 font-bold text-gray-400 uppercase tracking-tighter text-[9px] sm:text-[10px]">
+                        Curso
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {events.map((event) => (
                       <tr key={event.id}>
-                        <td className="py-4 text-gray-500 font-mono">
+                        <td className="py-3 sm:py-4 text-gray-500 font-mono text-[10px] sm:text-xs whitespace-nowrap">
                           {event.date === "Hoje"
                             ? new Date().toLocaleDateString("pt-BR", {
                                 day: "2-digit",
@@ -620,15 +624,15 @@ const HistoryPage: React.FC = () => {
                               })
                             : event.date}
                         </td>
-                        <td className="py-4">
-                          <p className="font-bold text-gray-900">
+                        <td className="py-3 sm:py-4 px-2 sm:px-0">
+                          <p className="font-bold text-gray-900 text-xs sm:text-sm break-words">
                             {event.title}
                           </p>
-                          <p className="text-[10px] text-brand-green font-bold uppercase">
+                          <p className="text-[8px] sm:text-[10px] text-brand-green font-bold uppercase">
                             {event.type.replace("_", " ")}
                           </p>
                         </td>
-                        <td className="py-4 text-gray-500 italic">
+                        <td className="py-3 sm:py-4 text-gray-500 italic text-xs sm:text-sm break-words">
                           {event.courseName}
                         </td>
                       </tr>
@@ -638,21 +642,21 @@ const HistoryPage: React.FC = () => {
               </div>
 
               {/* Footer / Authentication */}
-              <div className="mt-16 pt-8 border-t border-gray-100 flex justify-between items-end">
-                <div className="flex flex-col items-center">
-                  <div className="w-48 border-b border-gray-300 pb-2 mb-2 text-center font-serif text-gray-400 italic">
-                    UEM Cursos online Learning
+              <div className="mt-8 sm:mt-16 pt-6 sm:pt-8 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-8">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-32 sm:w-48 border-b border-gray-300 pb-2 mb-2 text-center font-serif text-gray-400 italic text-xs sm:text-sm">
+                    Universidade Eduardo Mondlane
                   </div>
-                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">
-                    Selo Digital de Veracidade
+                  <p className="text-[8px] sm:text-[9px] text-gray-400 font-bold uppercase tracking-widest">
+                    Certificado de Aprendizagem
                   </p>
                 </div>
-                <div className="text-right">
-                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 inline-block mb-2">
-                    <FileText className="w-10 h-10 text-gray-200 mx-auto" />
+                <div className="text-center">
+                  <div className="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-100 inline-block mb-2">
+                    <FileText className="w-8 sm:w-10 h-8 sm:h-10 text-gray-200 mx-auto" />
                   </div>
-                  <p className="text-[9px] text-gray-300 font-mono">
-                    AUTHCODE: EP-
+                  <p className="text-[8px] sm:text-[9px] text-gray-300 font-mono">
+                    AUTHCODE: UEM-
                     {Math.random().toString(36).substr(2, 12).toUpperCase()}
                   </p>
                 </div>
@@ -691,26 +695,28 @@ const HistoryPage: React.FC = () => {
 };
 
 const ReportStat = ({ label, value }: { label: string; value: string }) => (
-  <div className="border border-gray-100 p-4 rounded-xl text-center">
-    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+  <div className="border border-gray-100 p-3 sm:p-4 rounded-xl text-center">
+    <p className="text-[8px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
       {label}
     </p>
-    <p className="text-xl font-bold text-gray-900">{value}</p>
+    <p className="text-lg sm:text-xl font-bold text-gray-900">{value}</p>
   </div>
 );
 
 const StatMiniCard = ({ label, value, icon, color }: any) => (
-  <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3 sm:gap-4">
     <div
-      className={`w-12 h-12 ${color} rounded-xl flex items-center justify-center`}
+      className={`w-10 sm:w-12 h-10 sm:h-12 ${color} rounded-xl flex items-center justify-center flex-shrink-0`}
     >
-      {React.cloneElement(icon, { size: 24 })}
+      {React.cloneElement(icon, { size: 20 })}
     </div>
-    <div>
+    <div className="min-w-0 flex-1">
       <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
         {label}
       </p>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <p className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+        {value}
+      </p>
     </div>
   </div>
 );
@@ -750,32 +756,36 @@ const TimelineItem: React.FC<{ event: HistoryEvent; isFirst: boolean }> = ({
   };
 
   return (
-    <div className="relative pl-14 animate-in fade-in slide-in-from-left-4 duration-500">
+    <div className="relative pl-10 sm:pl-14 animate-in fade-in slide-in-from-left-4 duration-500">
       <div
-        className={`absolute left-0 top-1.5 w-11 h-11 rounded-full border-4 border-white shadow-sm flex items-center justify-center z-10 ${getColor()}`}
+        className={`absolute left-0 top-1.5 w-10 sm:w-11 h-10 sm:h-11 rounded-full border-4 border-white shadow-sm flex items-center justify-center z-10 ${getColor()}`}
       >
         {getIcon()}
       </div>
-      <div className="absolute left-[-100px] top-3 w-20 text-right hidden lg:block">
-        <p className="text-sm font-bold text-gray-900">{event.date}</p>
+      <div className="absolute left-[-80px] sm:left-[-100px] top-2 w-16 sm:w-20 text-right hidden lg:block">
+        <p className="text-xs sm:text-sm font-bold text-gray-900">
+          {event.date}
+        </p>
         <p className="text-xs text-gray-400">{event.time}</p>
       </div>
-      <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
-        <div className="flex justify-between items-start mb-1">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow group">
+        <div className="flex justify-between items-start gap-2 mb-1 flex-wrap">
+          <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest">
             {event.type.replace("_", " ")}
           </span>
-          <span className="lg:hidden text-xs text-gray-400 font-medium">
+          <span className="lg:hidden text-xs text-gray-400 font-medium whitespace-nowrap flex-shrink-0">
             {event.date} • {event.time}
           </span>
         </div>
-        <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-brand-green transition-colors">
+        <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1 group-hover:text-brand-green transition-colors break-words">
           {event.title}
         </h3>
-        <p className="text-sm text-gray-500 flex items-center gap-2">
-          <BookOpen size={14} className="text-gray-300" />
-          Curso:{" "}
-          <span className="font-medium text-gray-700">{event.courseName}</span>
+        <p className="text-xs sm:text-sm text-gray-500 flex items-center gap-2 flex-wrap">
+          <BookOpen size={14} className="text-gray-300 flex-shrink-0" />
+          <span>Curso:</span>
+          <span className="font-medium text-gray-700 break-words">
+            {event.courseName}
+          </span>
         </p>
       </div>
     </div>
