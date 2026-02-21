@@ -1,7 +1,6 @@
 import {
     addDoc,
     collection,
-    deleteDoc,
     doc,
     getDocs,
     limit,
@@ -9,7 +8,7 @@ import {
     query,
     serverTimestamp,
     updateDoc,
-    where,
+    where
 } from "firebase/firestore";
 import {
     AlertTriangle,
@@ -720,9 +719,10 @@ const InstructorCoursesPage: React.FC = () => {
                   Solicitação Enviada
                 </h2>
                 <p className="text-slate-600 mb-6">
-                  Seu pedido de exclusão para <strong>{courseToDelete.title}</strong> foi
-                  enviado com sucesso. O curso foi desativado e um administrador
-                  revisará em breve.
+                  Seu pedido de exclusão para{" "}
+                  <strong>{courseToDelete.title}</strong> foi enviado com
+                  sucesso. O curso foi desativado e um administrador revisará em
+                  breve.
                 </p>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                   <p className="text-sm text-blue-800">

@@ -1,33 +1,31 @@
 import {
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  where,
+    collection,
+    deleteDoc,
+    doc,
+    onSnapshot,
+    serverTimestamp,
+    setDoc,
+    updateDoc
 } from "firebase/firestore";
 import {
-  AlertCircle,
-  CheckCircle,
-  ChevronRight,
-  Clock,
-  Edit2,
-  Eye,
-  EyeOff,
-  Filter,
-  FolderPlus,
-  Hash,
-  Layers,
-  Plus,
-  Power,
-  Search,
-  Trash2,
-  TrendingUp,
-  User,
-  X,
+    AlertCircle,
+    CheckCircle,
+    ChevronRight,
+    Clock,
+    Edit2,
+    Eye,
+    EyeOff,
+    Filter,
+    FolderPlus,
+    Hash,
+    Layers,
+    Plus,
+    Power,
+    Search,
+    Trash2,
+    TrendingUp,
+    User,
+    X,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -83,12 +81,28 @@ const ContentManagementPage: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [deletionRequests, setDeletionRequests] = useState<CourseDeletionRequest[]>([]);
-  const [expandedDeleteRequest, setExpandedDeleteRequest] = useState<string | null>(null);
-  const [deletionRequestsTab, setDeletionRequestsTab] = useState<"pending" | "approved" | "rejected">("pending");
-  const [allDeletionRequests, setAllDeletionRequests] = useState<CourseDeletionRequest[]>([]);
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
-  const [confirmationModal, setConfirmationModal] = useState<{ action: "approve" | "reject"; requestId: string; courseId: string; courseTitle: string } | null>(null);
+  const [deletionRequests, setDeletionRequests] = useState<
+    CourseDeletionRequest[]
+  >([]);
+  const [expandedDeleteRequest, setExpandedDeleteRequest] = useState<
+    string | null
+  >(null);
+  const [deletionRequestsTab, setDeletionRequestsTab] = useState<
+    "pending" | "approved" | "rejected"
+  >("pending");
+  const [allDeletionRequests, setAllDeletionRequests] = useState<
+    CourseDeletionRequest[]
+  >([]);
+  const [toast, setToast] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+  const [confirmationModal, setConfirmationModal] = useState<{
+    action: "approve" | "reject";
+    requestId: string;
+    courseId: string;
+    courseTitle: string;
+  } | null>(null);
 
   // Modals
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -123,7 +137,10 @@ const ContentManagementPage: React.FC = () => {
   };
 
   // Helper para mostrar toast
-  const showToast = (message: string, type: "success" | "error" = "success") => {
+  const showToast = (
+    message: string,
+    type: "success" | "error" = "success",
+  ) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 3000);
   };
@@ -231,7 +248,7 @@ const ContentManagementPage: React.FC = () => {
         });
         setAllDeletionRequests(requests);
         // Filtrar apenas pendentes para o estado anterior (compatibilidade)
-        setDeletionRequests(requests.filter(r => r.status === "pending"));
+        setDeletionRequests(requests.filter((r) => r.status === "pending"));
       },
       (error) => {
         console.error("Erro ao carregar solicitações de exclusão:", error);
@@ -245,19 +262,26 @@ const ContentManagementPage: React.FC = () => {
     setCourses(updatedList);
   };
 
-  const handleApproveDeletionRequest = async (requestId: string, courseId: string, courseTitle: string) => {
+  const handleApproveDeletionRequest = async (
+    requestId: string,
+    courseId: string,
+    courseTitle: string,
+  ) => {
     try {
       // Deletar o curso
       await deleteDoc(doc(db, "courses", courseId));
-      
+
       // Atualizar status da solicitação
       await updateDoc(doc(db, "courseDeletionRequests", requestId), {
         status: "approved",
         approvedAt: serverTimestamp(),
         approvedBy: "admin",
       });
-      
-      showToast(`✅ Curso "${courseTitle}" foi excluído permanentemente!`, "success");
+
+      showToast(
+        `✅ Curso "${courseTitle}" foi excluído permanentemente!`,
+        "success",
+      );
       setExpandedDeleteRequest(null);
       setConfirmationModal(null);
     } catch (error) {
@@ -267,9 +291,14 @@ const ContentManagementPage: React.FC = () => {
     }
   };
 
-  const handleRejectDeletionRequest = async (requestId: string, courseTitle: string) => {
+  const handleRejectDeletionRequest = async (
+    requestId: string,
+    courseTitle: string,
+  ) => {
     try {
-      const courseId = allDeletionRequests.find(r => r.id === requestId)?.courseId;
+      const courseId = allDeletionRequests.find(
+        (r) => r.id === requestId,
+      )?.courseId;
       if (courseId) {
         // Reativar o curso
         await updateDoc(doc(db, "courses", courseId), {
@@ -278,14 +307,17 @@ const ContentManagementPage: React.FC = () => {
           updatedAt: serverTimestamp(),
         });
       }
-      
+
       // Atualizar status da solicitação
       await updateDoc(doc(db, "courseDeletionRequests", requestId), {
         status: "rejected",
         rejectionReason: "Rejeitado pelo administrador",
       });
-      
-      showToast(`✗ Solicitação de "${courseTitle}" foi rejeitada. Curso reativado!`, "success");
+
+      showToast(
+        `✗ Solicitação de "${courseTitle}" foi rejeitada. Curso reativado!`,
+        "success",
+      );
       setExpandedDeleteRequest(null);
       setConfirmationModal(null);
     } catch (error) {
@@ -314,7 +346,9 @@ const ContentManagementPage: React.FC = () => {
   }, [courses, searchQuery, selectedCategory]);
 
   const filteredDeletionRequests = useMemo(() => {
-    return allDeletionRequests.filter((request) => request.status === deletionRequestsTab);
+    return allDeletionRequests.filter(
+      (request) => request.status === deletionRequestsTab,
+    );
   }, [allDeletionRequests, deletionRequestsTab]);
 
   const handleAddCategory = async (e: React.FormEvent) => {
@@ -451,12 +485,12 @@ const ContentManagementPage: React.FC = () => {
   const toggleCourseStatus = async (id: string) => {
     // Verificar se tem uma solicitação de exclusão pendente
     const hasPendingDeletion = deletionRequests.some(
-      (r) => r.courseId === id && r.status === "pending"
+      (r) => r.courseId === id && r.status === "pending",
     );
 
     if (hasPendingDeletion) {
       alert(
-        "Este curso tem uma solicitação de exclusão pendente. Rejeite a solicitação primeiro para reativá-lo."
+        "Este curso tem uma solicitação de exclusão pendente. Rejeite a solicitação primeiro para reativá-lo.",
       );
       return;
     }
@@ -1034,7 +1068,8 @@ const ContentManagementPage: React.FC = () => {
                   Solicitações de Exclusão de Cursos
                 </h2>
                 <p className="text-xs text-slate-400 mt-2">
-                  Gerencie as solicitações de exclusão de cursos feitas pelos instrutores
+                  Gerencie as solicitações de exclusão de cursos feitas pelos
+                  instrutores
                 </p>
               </div>
             </div>
@@ -1051,7 +1086,11 @@ const ContentManagementPage: React.FC = () => {
                       : "text-slate-400 hover:text-slate-600"
                   }`}
                 >
-                  {tab === "pending" ? "Pendentes" : tab === "approved" ? "Aprovadas" : "Rejeitadas"}
+                  {tab === "pending"
+                    ? "Pendentes"
+                    : tab === "approved"
+                      ? "Aprovadas"
+                      : "Rejeitadas"}
                   {deletionRequestsTab === tab && (
                     <div className="absolute bottom-0 left-0 right-0 h-1 bg-brand-green rounded-full" />
                   )}
@@ -1067,8 +1106,8 @@ const ContentManagementPage: React.FC = () => {
                   {deletionRequestsTab === "pending"
                     ? "Nenhuma solicitação pendente"
                     : deletionRequestsTab === "approved"
-                    ? "Nenhuma solicitação aprovada"
-                    : "Nenhuma solicitação rejeitada"}
+                      ? "Nenhuma solicitação aprovada"
+                      : "Nenhuma solicitação rejeitada"}
                 </p>
               </div>
             ) : (
@@ -1084,12 +1123,17 @@ const ContentManagementPage: React.FC = () => {
                           {request.courseTitle}
                         </h3>
                         <p className="text-xs text-slate-500">
-                          Instrutor: <span className="font-bold text-slate-700">{request.instructorName}</span>
+                          Instrutor:{" "}
+                          <span className="font-bold text-slate-700">
+                            {request.instructorName}
+                          </span>
                         </p>
                         <p className="text-xs text-slate-500 mt-1">
                           Solicitado em:{" "}
                           <span className="font-bold text-slate-700">
-                            {new Date(request.requestedAt).toLocaleDateString("pt-BR")}
+                            {new Date(request.requestedAt).toLocaleDateString(
+                              "pt-BR",
+                            )}
                           </span>
                         </p>
                       </div>
@@ -1189,12 +1233,12 @@ const ContentManagementPage: React.FC = () => {
                       handleApproveDeletionRequest(
                         confirmationModal.requestId,
                         confirmationModal.courseId,
-                        confirmationModal.courseTitle
+                        confirmationModal.courseTitle,
                       );
                     } else {
                       handleRejectDeletionRequest(
                         confirmationModal.requestId,
-                        confirmationModal.courseTitle
+                        confirmationModal.courseTitle,
                       );
                     }
                   }}
@@ -1204,7 +1248,9 @@ const ContentManagementPage: React.FC = () => {
                       : "bg-red-600 hover:bg-red-700 shadow-lg shadow-red-900/20"
                   } text-white font-black uppercase text-[10px] tracking-widest rounded-xl transition-all active:scale-95`}
                 >
-                  {confirmationModal.action === "approve" ? "Sim, Deletar" : "Sim, Rejeitar"}
+                  {confirmationModal.action === "approve"
+                    ? "Sim, Deletar"
+                    : "Sim, Rejeitar"}
                 </button>
               </div>
             </div>
@@ -1213,11 +1259,13 @@ const ContentManagementPage: React.FC = () => {
 
         {/* Toast Notification */}
         {toast && (
-          <div className={`fixed bottom-6 right-6 z-[200] px-6 py-3 rounded-xl font-bold text-sm shadow-lg animate-in fade-in slide-in-from-bottom-5 duration-300 flex items-center gap-3 ${
-            toast.type === "success"
-              ? "bg-emerald-600 text-white"
-              : "bg-red-600 text-white"
-          }`}>
+          <div
+            className={`fixed bottom-6 right-6 z-[200] px-6 py-3 rounded-xl font-bold text-sm shadow-lg animate-in fade-in slide-in-from-bottom-5 duration-300 flex items-center gap-3 ${
+              toast.type === "success"
+                ? "bg-emerald-600 text-white"
+                : "bg-red-600 text-white"
+            }`}
+          >
             {toast.type === "success" ? (
               <CheckCircle size={20} />
             ) : (

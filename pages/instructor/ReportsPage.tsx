@@ -9,12 +9,12 @@ import {
 import {
     ArrowDownRight,
     ArrowUpRight,
-    Calendar,
-    TrendingUp,
-    Users,
     BookOpen,
+    Calendar,
     CheckCircle,
     MessageSquare,
+    TrendingUp,
+    Users,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -132,10 +132,10 @@ const ReportsPage: React.FC = () => {
 
           // Taxa de conclusão
           const completed = Array.from(enrolls.values()).filter(
-            (e: any) => e.completed
+            (e: any) => e.completed,
           ).length;
           const rate = Math.round(
-            (completed / Math.max(1, enrolls.size)) * 100
+            (completed / Math.max(1, enrolls.size)) * 100,
           );
           setCompletionRate(rate);
 
