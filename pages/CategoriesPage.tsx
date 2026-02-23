@@ -8,6 +8,7 @@ import { Course } from "../types";
 interface CategoryData {
   id: string;
   name: string;
+  description?: string;
   courseCount: number;
   bg: string;
   textColor: string;
@@ -26,7 +27,10 @@ const CategoriesPage: React.FC = () => {
 
   useEffect(() => {
     // Load all active courses to count by category
-    const qCourses = query(collection(db, "courses"), where("isActive", "==", true));
+    const qCourses = query(
+      collection(db, "courses"),
+      where("isActive", "==", true),
+    );
     const qCategories = collection(db, "categories");
 
     const unsubscribeCourses = onSnapshot(
@@ -91,6 +95,7 @@ const CategoriesPage: React.FC = () => {
               categoriesList.push({
                 id: doc.id,
                 name: categoryName,
+                description: data.description || undefined,
                 courseCount: courseCount,
                 bg: categoryColors[index % categoryColors.length],
                 textColor: textColors[index % textColors.length],
@@ -105,13 +110,13 @@ const CategoriesPage: React.FC = () => {
           (error) => {
             console.error("Erro ao carregar categorias:", error);
             setLoading(false);
-          }
+          },
         );
       },
       (error) => {
         console.error("Erro ao carregar cursos:", error);
         setLoading(false);
-      }
+      },
     );
 
     return () => unsubscribeCourses();
@@ -149,11 +154,16 @@ const CategoriesPage: React.FC = () => {
           </div>
 
           <h1 className="text-4xl md:text-5xl font-extrabold mb-6">
-            O que você quer <span style={{ color: branding.appearance.accentColor }}>aprender</span> hoje?
+            O que você quer{" "}
+            <span style={{ color: branding.appearance.accentColor }}>
+              aprender
+            </span>{" "}
+            hoje?
           </h1>
 
           <p className="text-white/80 text-lg md:text-xl max-w-2xl mx-auto">
-            Navegue por nossa seleção de categorias e encontre a trilha perfeita para o seu momento profissional.
+            Navegue por nossa seleção de categorias e encontre a trilha perfeita
+            para o seu momento profissional.
           </p>
         </div>
       </section>
@@ -164,12 +174,16 @@ const CategoriesPage: React.FC = () => {
           <div className="flex justify-center items-center py-20">
             <div className="text-center">
               <Loader className="w-10 h-10 text-brand-green animate-spin mx-auto mb-4" />
-              <p className="text-gray-600 font-medium">Carregando categorias...</p>
+              <p className="text-gray-600 font-medium">
+                Carregando categorias...
+              </p>
             </div>
           </div>
         ) : categories.length === 0 ? (
           <div className="text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-            <p className="text-gray-400 font-bold uppercase text-sm">Nenhuma categoria disponível</p>
+            <p className="text-gray-400 font-bold uppercase text-sm">
+              Nenhuma categoria disponível
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -197,8 +211,10 @@ const CategoriesPage: React.FC = () => {
                 </h3>
 
                 <p className="text-gray-500 text-sm mb-6 flex-grow leading-relaxed">
-                  Descubra {cat.courseCount} curso
-                  {cat.courseCount !== 1 ? "s" : ""} de qualidade nesta categoria e desenvolva suas habilidades.
+                  {cat.description ||
+                    `Descubra ${cat.courseCount} curso${
+                      cat.courseCount !== 1 ? "s" : ""
+                    } de qualidade nesta categoria e desenvolva suas habilidades.`}
                 </p>
 
                 <div className="border-t border-gray-50 pt-4 mb-4">
@@ -213,7 +229,9 @@ const CategoriesPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between mt-auto">
-                  <span className="text-xs font-medium text-gray-400">Explorar</span>
+                  <span className="text-xs font-medium text-gray-400">
+                    Explorar
+                  </span>
                   <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-brand-green group-hover:text-white transition-all">
                     <ArrowRight className="w-4 h-4" />
                   </div>

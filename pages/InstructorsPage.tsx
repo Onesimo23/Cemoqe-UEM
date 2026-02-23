@@ -214,18 +214,12 @@ const InstructorsPage: React.FC = () => {
               Começar a Ensinar Hoje
             </button>
           </div>
-          <div className="md:w-2/5 bg-gray-200 relative min-h-[300px]">
+          <div className="md:w-2/5 bg-black relative min-h-[300px]">
             <img
-              src="https://images.unsplash.com/photo-1544717305-2782549b5136?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-              alt="Instructor teaching"
+              src="https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+              alt="Dark background"
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div
-              style={{
-                backgroundColor: `${branding.appearance.primaryColor}33`,
-              }}
-              className="absolute inset-0 mix-blend-multiply"
-            ></div>
           </div>
         </div>
       </section>

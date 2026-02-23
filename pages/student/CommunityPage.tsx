@@ -1,24 +1,24 @@
 import {
-    addDoc,
-    collection,
-    doc,
-    getDocs,
-    onSnapshot,
-    query,
-    serverTimestamp,
-    updateDoc,
-    where,
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where
 } from "firebase/firestore";
 import {
-    Filter,
-    Heart,
-    MessageCircle,
-    MessageSquare,
-    Plus,
-    Search,
-    Send,
-    TrendingUp,
-    X,
+  Filter,
+  Heart,
+  MessageCircle,
+  MessageSquare,
+  Plus,
+  Search,
+  Send,
+  TrendingUp,
+  X,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -80,6 +80,22 @@ const CommunityPage: React.FC = () => {
   const [isCreatingTopic, setIsCreatingTopic] = useState(false);
   const [isAddingReply, setIsAddingReply] = useState(false);
 
+  // Função para buscar nome real do usuário a partir do uid
+  const fetchUserName = async (uid: string): Promise<string> => {
+    if (!uid) return "Utilizador";
+    try {
+      const userRef = doc(db, "profiles", uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        return userSnap.data().full_name || "Utilizador";
+      }
+      return "Utilizador";
+    } catch (error) {
+      console.error("Erro ao buscar nome do usuário:", error);
+      return "Utilizador";
+    }
+  };
+
   // Carregar tópicos da comunidade
   useEffect(() => {
     if (!user?.uid) {
@@ -89,7 +105,7 @@ const CommunityPage: React.FC = () => {
 
     try {
       const q = query(collection(db, "community-topics"));
-      const unsub = onSnapshot(q, (snap) => {
+      const unsub = onSnapshot(q, async (snap) => {
         const rtf = new Intl.RelativeTimeFormat("pt-PT", { numeric: "auto" });
         const toFromNow = (d?: Date | null) => {
           if (!d) return "agora";
@@ -97,15 +113,21 @@ const CommunityPage: React.FC = () => {
           return rtf.format(diffH, "hour");
         };
 
-        const topicsList: Topic[] = snap.docs.map((doc) => {
+        const topicsDataPromises = snap.docs.map(async (doc) => {
           const data = doc.data();
           const createdAt = data?.createdAt?.toDate?.() || new Date();
+          // Buscar nome real do autor a partir do uid
+          const uid = data?.user_uid || data?.authorUid || "";
+          const authorName = await fetchUserName(uid);
           return {
             id: doc.id,
             title: data?.title || "Tópico",
-            author: data?.user_name || profile?.full_name || "Utilizador",
-            authorUid: data?.user_uid || "",
-            avatar: data?.avatar || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
+            author:
+              data?.user_name || data?.author || authorName || "Utilizador",
+            authorUid: uid,
+            avatar:
+              data?.avatar ||
+              `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
             category: data?.category || "Geral",
             content: data?.content || "",
             replies: data?.replies_count || 0,
@@ -116,7 +138,10 @@ const CommunityPage: React.FC = () => {
           };
         });
 
-        topicsList.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        const topicsList = await Promise.all(topicsDataPromises);
+        topicsList.sort(
+          (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+        );
         setTopics(topicsList);
       });
 
@@ -137,9 +162,9 @@ const CommunityPage: React.FC = () => {
     try {
       const q = query(
         collection(db, "community-replies"),
-        where("topic_id", "==", selectedTopic.id)
+        where("topic_id", "==", selectedTopic.id),
       );
-      const unsub = onSnapshot(q, (snap) => {
+      const unsub = onSnapshot(q, async (snap) => {
         const rtf = new Intl.RelativeTimeFormat("pt-PT", { numeric: "auto" });
         const toFromNow = (d?: Date | null) => {
           if (!d) return "agora";
@@ -147,14 +172,20 @@ const CommunityPage: React.FC = () => {
           return rtf.format(diffH, "hour");
         };
 
-        const repliesList: Reply[] = snap.docs.map((doc) => {
+        const repliesDataPromises = snap.docs.map(async (doc) => {
           const data = doc.data();
           const createdAt = data?.createdAt?.toDate?.() || new Date();
+          // Buscar nome real do autor a partir do uid
+          const uid = data?.user_uid || data?.authorUid || "";
+          const authorName = await fetchUserName(uid);
           return {
             id: doc.id,
-            author: data?.user_name || "Utilizador",
-            authorUid: data?.user_uid || "",
-            avatar: data?.avatar || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
+            author:
+              data?.user_name || data?.author || authorName || "Utilizador",
+            authorUid: uid,
+            avatar:
+              data?.avatar ||
+              `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
             content: data?.content || "",
             date: toFromNow(createdAt),
             likes: data?.likes || 0,
@@ -163,7 +194,10 @@ const CommunityPage: React.FC = () => {
           };
         });
 
-        repliesList.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+        const repliesList = await Promise.all(repliesDataPromises);
+        repliesList.sort(
+          (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+        );
         setReplies(repliesList);
         setLoadingReplies(false);
       });
@@ -195,7 +229,7 @@ const CommunityPage: React.FC = () => {
           selectedCategory === "Todas" || t.category === selectedCategory;
         return matchesSearch && matchesCategory;
       }),
-    [topics, searchQuery, selectedCategory]
+    [topics, searchQuery, selectedCategory],
   );
 
   const handleCreateTopic = async (e: React.FormEvent) => {
@@ -207,12 +241,15 @@ const CommunityPage: React.FC = () => {
 
     setIsCreatingTopic(true);
     try {
+      const authorName = profile?.full_name || user.displayName || "Utilizador";
       await addDoc(collection(db, "community-topics"), {
         title: newTopic.title.trim(),
         content: newTopic.content.trim(),
         category: newTopic.category,
         user_uid: user.uid,
-        user_name: profile?.full_name || user.displayName || "Utilizador",
+        authorUid: user.uid,
+        user_name: authorName,
+        author: authorName,
         avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
         createdAt: serverTimestamp(),
         replies_count: 0,
@@ -240,11 +277,14 @@ const CommunityPage: React.FC = () => {
 
     setIsAddingReply(true);
     try {
+      const authorName = profile?.full_name || user.displayName || "Utilizador";
       await addDoc(collection(db, "community-replies"), {
         topic_id: selectedTopic.id,
         content: newReply.trim(),
         user_uid: user.uid,
-        user_name: profile?.full_name || user.displayName || "Utilizador",
+        authorUid: user.uid,
+        user_name: authorName,
+        author: authorName,
         avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
         createdAt: serverTimestamp(),
         likes: 0,
@@ -271,10 +311,13 @@ const CommunityPage: React.FC = () => {
     try {
       const topicRef = doc(db, "community-topics", topic.id);
       const newLiked = !topic.liked;
-      const newLikes = newLiked ? (topic.likes || 0) + 1 : Math.max(0, (topic.likes || 0) - 1);
+      const newLikes = newLiked
+        ? (topic.likes || 0) + 1
+        : Math.max(0, (topic.likes || 0) - 1);
       const likedBy = newLiked
-        ? [...(topic as any).likedBy || [], user.uid]
-        : (topic as any).likedBy?.filter((uid: string) => uid !== user.uid) || [];
+        ? [...((topic as any).likedBy || []), user.uid]
+        : (topic as any).likedBy?.filter((uid: string) => uid !== user.uid) ||
+          [];
 
       await updateDoc(topicRef, {
         likes: newLikes,
@@ -292,10 +335,13 @@ const CommunityPage: React.FC = () => {
     try {
       const replyRef = doc(db, "community-replies", reply.id);
       const newLiked = !reply.liked;
-      const newLikes = newLiked ? (reply.likes || 0) + 1 : Math.max(0, (reply.likes || 0) - 1);
+      const newLikes = newLiked
+        ? (reply.likes || 0) + 1
+        : Math.max(0, (reply.likes || 0) - 1);
       const likedBy = newLiked
-        ? [...(reply as any).likedBy || [], user.uid]
-        : (reply as any).likedBy?.filter((uid: string) => uid !== user.uid) || [];
+        ? [...((reply as any).likedBy || []), user.uid]
+        : (reply as any).likedBy?.filter((uid: string) => uid !== user.uid) ||
+          [];
 
       await updateDoc(replyRef, {
         likes: newLikes,
@@ -319,7 +365,8 @@ const CommunityPage: React.FC = () => {
               Comunidade dos Inscritos
             </h1>
             <p className="text-gray-500 mt-2">
-              Compartilhe conhecimento, tire dúvidas e discuta com colegas sobre os cursos.
+              Compartilhe conhecimento, tire dúvidas e discuta com colegas sobre
+              os cursos.
             </p>
           </div>
           <button
@@ -476,8 +523,12 @@ const CommunityPage: React.FC = () => {
             ) : (
               <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                 <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-600 font-medium">Nenhuma discussão encontrada</p>
-                <p className="text-gray-500 text-sm">Seja o primeiro a iniciar uma discussão!</p>
+                <p className="text-gray-600 font-medium">
+                  Nenhuma discussão encontrada
+                </p>
+                <p className="text-gray-500 text-sm">
+                  Seja o primeiro a iniciar uma discussão!
+                </p>
               </div>
             )}
           </div>
@@ -488,7 +539,9 @@ const CommunityPage: React.FC = () => {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
             <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
-                <h3 className="font-bold text-lg text-gray-900">Novo Tópico de Discussão</h3>
+                <h3 className="font-bold text-lg text-gray-900">
+                  Novo Tópico de Discussão
+                </h3>
                 <button
                   onClick={() => setIsCreateModalOpen(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -520,7 +573,10 @@ const CommunityPage: React.FC = () => {
                   <select
                     value={newTopic.category}
                     onChange={(e) =>
-                      setNewTopic({ ...newTopic, category: e.target.value as any })
+                      setNewTopic({
+                        ...newTopic,
+                        category: e.target.value as any,
+                      })
                     }
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green outline-none"
                   >
@@ -623,7 +679,9 @@ const CommunityPage: React.FC = () => {
                     <p className="font-bold text-gray-900 text-sm">
                       {selectedTopic.author}
                     </p>
-                    <p className="text-xs text-gray-500">{selectedTopic.date}</p>
+                    <p className="text-xs text-gray-500">
+                      {selectedTopic.date}
+                    </p>
                   </div>
                   <button
                     onClick={() => handleLikeTopic(selectedTopic)}
@@ -636,7 +694,9 @@ const CommunityPage: React.FC = () => {
                     <Heart
                       className={`w-4 h-4 ${selectedTopic.liked ? "fill-current" : ""}`}
                     />
-                    <span className="text-xs font-bold">{selectedTopic.likes}</span>
+                    <span className="text-xs font-bold">
+                      {selectedTopic.likes}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -725,9 +785,7 @@ const CommunityPage: React.FC = () => {
             <div
               key={toast.id}
               className={`px-6 py-4 rounded-xl shadow-lg font-medium text-white text-sm transition-all duration-300 transform ${
-                toast.type === "success"
-                  ? "bg-green-500"
-                  : "bg-red-500"
+                toast.type === "success" ? "bg-green-500" : "bg-red-500"
               } animate-pulse`}
             >
               {toast.message}

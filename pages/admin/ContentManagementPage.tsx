@@ -1,31 +1,31 @@
 import {
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
+    collection,
+    deleteDoc,
+    doc,
+    onSnapshot,
+    serverTimestamp,
+    setDoc,
+    updateDoc,
 } from "firebase/firestore";
 import {
-  AlertCircle,
-  CheckCircle,
-  ChevronRight,
-  Clock,
-  Edit2,
-  Eye,
-  EyeOff,
-  Filter,
-  FolderPlus,
-  Hash,
-  Layers,
-  Plus,
-  Power,
-  Search,
-  Trash2,
-  TrendingUp,
-  User,
-  X,
+    AlertCircle,
+    CheckCircle,
+    ChevronRight,
+    Clock,
+    Edit2,
+    Eye,
+    EyeOff,
+    Filter,
+    FolderPlus,
+    Hash,
+    Layers,
+    Plus,
+    Power,
+    Search,
+    Trash2,
+    TrendingUp,
+    User,
+    X,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -36,6 +36,7 @@ import { Course } from "../../types";
 interface Category {
   id: string;
   name: string;
+  description?: string;
   count: number;
   color: string;
 }
@@ -53,27 +54,7 @@ interface CourseDeletionRequest {
   rejectionReason?: string | null;
 }
 
-const INITIAL_CATEGORIES: Category[] = [
-  { id: "1", name: "Design", count: 0, color: "bg-purple-100 text-purple-700" },
-  {
-    id: "2",
-    name: "Liderança",
-    count: 0,
-    color: "bg-green-100 text-green-700",
-  },
-  {
-    id: "3",
-    name: "Desenvolvimento",
-    count: 0,
-    color: "bg-emerald-100 text-emerald-700",
-  },
-  {
-    id: "4",
-    name: "Marketing",
-    count: 0,
-    color: "bg-orange-100 text-orange-700",
-  },
-];
+const INITIAL_CATEGORIES: Category[] = [];
 
 const ContentManagementPage: React.FC = () => {
   const location = useLocation();
@@ -117,6 +98,7 @@ const ContentManagementPage: React.FC = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
   const [newCatName, setNewCatName] = useState("");
+  const [newCatDescription, setNewCatDescription] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
     null,
@@ -124,12 +106,17 @@ const ContentManagementPage: React.FC = () => {
   const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(
     null,
   );
+  const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
+  const [editingCourseData, setEditingCourseData] = useState({
+    category: "",
+    relevanceScore: 0,
+  });
 
   // New Course Form State
   const [newCourse, setNewCourse] = useState({
     title: "",
     instructor: "",
-    category: "Design",
+    category: "",
     relevanceScore: 90,
   });
 
@@ -374,6 +361,7 @@ const ContentManagementPage: React.FC = () => {
         // Editar categoria existente
         await updateDoc(doc(db, "categories", editingCategoryId), {
           name: newCatName,
+          description: newCatDescription,
           updatedAt: serverTimestamp(),
         });
         console.log(`✓ Categoria "${newCatName}" foi atualizada com sucesso!`);
@@ -384,6 +372,7 @@ const ContentManagementPage: React.FC = () => {
         const newDocRef = doc(collection(db, "categories"));
         await setDoc(newDocRef, {
           name: newCatName,
+          description: newCatDescription,
           color: "bg-slate-100 text-slate-700",
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
@@ -393,6 +382,7 @@ const ContentManagementPage: React.FC = () => {
       }
 
       setNewCatName("");
+      setNewCatDescription("");
       setIsCategoryModalOpen(false);
     } catch (error) {
       console.error("Erro ao salvar categoria:", error);
@@ -420,6 +410,7 @@ const ContentManagementPage: React.FC = () => {
   const openEditCategory = (category: Category) => {
     setEditingCategoryId(category.id);
     setNewCatName(category.name);
+    setNewCatDescription(category.description || "");
     setIsCategoryModalOpen(true);
   };
 
@@ -479,7 +470,7 @@ const ContentManagementPage: React.FC = () => {
       setNewCourse({
         title: "",
         instructor: "",
-        category: "Design",
+        category: "",
         relevanceScore: 90,
       });
     } catch (error) {
@@ -552,6 +543,33 @@ const ContentManagementPage: React.FC = () => {
       }
     } catch (error) {
       console.error("Erro ao atualizar status:", error);
+    }
+  };
+
+  const openEditCourseModal = (course: Course) => {
+    setEditingCourseId(course.id);
+    setEditingCourseData({
+      category: course.category || "",
+      relevanceScore: course.relevanceScore || 0,
+    });
+  };
+
+  const handleEditCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCourseId) return;
+
+    try {
+      await updateDoc(doc(db, "courses", editingCourseId), {
+        category: editingCourseData.category,
+        relevanceScore: Number(editingCourseData.relevanceScore),
+        updatedAt: serverTimestamp(),
+      });
+
+      showToast("✅ Curso atualizado com sucesso!", "success");
+      setEditingCourseId(null);
+    } catch (error) {
+      console.error("Erro ao atualizar curso:", error);
+      showToast("Erro ao atualizar curso.", "error");
     }
   };
 
@@ -792,6 +810,13 @@ const ContentManagementPage: React.FC = () => {
                           <td className="px-8 py-6 text-right">
                             <div className="flex items-center justify-end gap-2 transition-opacity">
                               <button
+                                onClick={() => openEditCourseModal(course)}
+                                className="p-2.5 bg-white text-slate-400 hover:text-blue-600 border border-slate-100 rounded-xl transition-all shadow-sm"
+                                title="Editar Score e Categoria"
+                              >
+                                <Edit2 size={18} />
+                              </button>
+                              <button
                                 onClick={() => toggleCourseStatus(course.id)}
                                 className={`p-2.5 rounded-xl border transition-all shadow-sm active:scale-95 ${
                                   course.isActive
@@ -903,6 +928,22 @@ const ContentManagementPage: React.FC = () => {
                     className="w-full px-5 h-14 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:bg-white focus:border-brand-green focus:ring-4 focus:ring-brand-green/5 outline-none transition-all"
                   />
                 </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                    Descrição (opcional)
+                  </label>
+                  <textarea
+                    value={newCatDescription}
+                    onChange={(e) => setNewCatDescription(e.target.value)}
+                    placeholder="Ex: Aprenda os fundamentos e aplicações de IA no mercado atual"
+                    maxLength={200}
+                    rows={3}
+                    className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:bg-white focus:border-brand-green focus:ring-4 focus:ring-brand-green/5 outline-none transition-all resize-none"
+                  />
+                  <p className="text-[10px] text-slate-400 ml-1">
+                    {newCatDescription.length}/200 caracteres
+                  </p>
+                </div>
                 <div className="flex gap-4 pt-2">
                   <button
                     type="button"
@@ -910,6 +951,7 @@ const ContentManagementPage: React.FC = () => {
                       setIsCategoryModalOpen(false);
                       setEditingCategoryId(null);
                       setNewCatName("");
+                      setNewCatDescription("");
                     }}
                     className="flex-1 h-14 text-xs font-black uppercase text-slate-400 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all"
                   >
@@ -1300,6 +1342,88 @@ const ContentManagementPage: React.FC = () => {
                     : "Sim, Rejeitar"}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Editar Curso */}
+        {editingCourseId && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-white w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <h3 className="font-black text-slate-900 text-lg uppercase tracking-tight">
+                  Editar Curso
+                </h3>
+                <button
+                  onClick={() => setEditingCourseId(null)}
+                  className="p-1 hover:bg-slate-100 rounded-lg transition-all"
+                >
+                  <X size={20} className="text-slate-400" />
+                </button>
+              </div>
+              <form onSubmit={handleEditCourse} className="p-8 space-y-6">
+                <div>
+                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">
+                    Categoria
+                  </label>
+                  <select
+                    value={editingCourseData.category}
+                    onChange={(e) =>
+                      setEditingCourseData({
+                        ...editingCourseData,
+                        category: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-brand-green/5 focus:border-brand-green transition-all"
+                  >
+                    <option value="">Selecionar categoria</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">
+                    Score de Relevância: {editingCourseData.relevanceScore}%
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={editingCourseData.relevanceScore}
+                    onChange={(e) =>
+                      setEditingCourseData({
+                        ...editingCourseData,
+                        relevanceScore: Number(e.target.value),
+                      })
+                    }
+                    className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-brand-green"
+                  />
+                  <div className="flex justify-between text-xs text-slate-500 font-bold mt-2">
+                    <span>0%</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setEditingCourseId(null)}
+                    className="flex-1 h-11 bg-slate-50 text-slate-500 font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-slate-100 transition-all active:scale-95"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 h-11 bg-brand-green text-white font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-brand-dark shadow-lg shadow-brand-green/20 transition-all active:scale-95"
+                  >
+                    Salvar Alterações
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
