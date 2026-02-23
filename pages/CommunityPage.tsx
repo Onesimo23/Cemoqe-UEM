@@ -1,10 +1,34 @@
-import React, { useEffect, useState } from 'react';
-import { Award, MessageSquare, Share2, Trophy, ArrowRight, Heart, Loader, Users, BookOpen, X, Plus, Send } from 'lucide-react';
-import { collection, getDocs, query, orderBy, limit, doc, getDoc, updateDoc, addDoc, serverTimestamp, where, onSnapshot } from 'firebase/firestore';
-import { db } from '../services/firebase';
-import { useBranding } from '../contexts/BrandingContext';
-import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import {
+    addDoc,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    limit,
+    onSnapshot,
+    orderBy,
+    query,
+    serverTimestamp,
+    updateDoc,
+    where,
+} from "firebase/firestore";
+import {
+    ArrowRight,
+    Award,
+    Heart,
+    Loader,
+    MessageSquare,
+    Plus,
+    Send,
+    Share2,
+    Trophy,
+    X
+} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { useBranding } from "../contexts/BrandingContext";
+import { db } from "../services/firebase";
 
 interface CommunityTopic {
   id: string;
@@ -57,28 +81,30 @@ const CommunityPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [selectedTopic, setSelectedTopic] = useState<CommunityTopic | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<CommunityTopic | null>(
+    null,
+  );
   const [replies, setReplies] = useState<Reply[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [newTopic, setNewTopic] = useState({
-    title: '',
-    category: 'Geral',
-    content: '',
+    title: "",
+    category: "Geral",
+    content: "",
   });
-  const [newReply, setNewReply] = useState('');
+  const [newReply, setNewReply] = useState("");
   const [isCreatingTopic, setIsCreatingTopic] = useState(false);
   const [isAddingReply, setIsAddingReply] = useState(false);
 
   const fetchUserName = async (uid: string): Promise<string> => {
     try {
-      const userRef = doc(db, 'users', uid);
+      const userRef = doc(db, "users", uid);
       const userSnap = await getDoc(userRef);
       if (userSnap.exists()) {
-        return userSnap.data().full_name || userSnap.data().name || 'Usuário';
+        return userSnap.data().full_name || userSnap.data().name || "Usuário";
       }
-      return 'Usuário';
+      return "Usuário";
     } catch (error) {
-      return 'Usuário';
+      return "Usuário";
     }
   };
 
@@ -87,25 +113,29 @@ const CommunityPage: React.FC = () => {
       try {
         // Buscar tópicos recentes da comunidade
         const topicsQuery = query(
-          collection(db, 'community-topics'),
-          orderBy('createdAt', 'desc'),
-          limit(6)
+          collection(db, "community-topics"),
+          orderBy("createdAt", "desc"),
+          limit(6),
         );
         const topicsSnap = await getDocs(topicsQuery);
         const topicsDataPromises = topicsSnap.docs.map(async (doc) => {
           const data = doc.data();
-          const authorName = await fetchUserName(data.authorUid || '');
+          const authorName = await fetchUserName(data.authorUid || "");
           return {
             id: doc.id,
-            title: data.title || 'Sem título',
-            author: data.author || authorName || 'Usuário',
-            authorUid: data.authorUid || '',
+            title: data.title || "Sem título",
+            author: data.author || authorName || "Usuário",
+            authorUid: data.authorUid || "",
             authorName: authorName,
-            category: data.category || 'Geral',
+            category: data.category || "Geral",
             replies: data.replies || 0,
             likes: data.likes || 0,
-            date: data.createdAt?.toDate?.()?.toLocaleDateString('pt-PT') || new Date().toLocaleDateString('pt-PT'),
-            userLiked: user?.uid ? (data.likedBy || []).includes(user.uid) : false,
+            date:
+              data.createdAt?.toDate?.()?.toLocaleDateString("pt-PT") ||
+              new Date().toLocaleDateString("pt-PT"),
+            userLiked: user?.uid
+              ? (data.likedBy || []).includes(user.uid)
+              : false,
           };
         });
         const topicsData = await Promise.all(topicsDataPromises);
@@ -113,26 +143,28 @@ const CommunityPage: React.FC = () => {
 
         // Buscar contribuidores por likes (top 4)
         const topicsAllQuery = query(
-          collection(db, 'community-topics'),
-          orderBy('likes', 'desc'),
-          limit(4)
+          collection(db, "community-topics"),
+          orderBy("likes", "desc"),
+          limit(4),
         );
         const contributorsSnap = await getDocs(topicsAllQuery);
-        const contributorsDataPromises = contributorsSnap.docs.map(async (doc, index) => {
-          const data = doc.data();
-          const authorName = await fetchUserName(data.authorUid || '');
-          return {
-            id: doc.id,
-            name: authorName,
-            avatar: `https://i.pravatar.cc/150?img=${10 + index}`,
-            authorUid: data.authorUid || '',
-            likes: data.likes || 0,
-          };
-        });
+        const contributorsDataPromises = contributorsSnap.docs.map(
+          async (doc, index) => {
+            const data = doc.data();
+            const authorName = await fetchUserName(data.authorUid || "");
+            return {
+              id: doc.id,
+              name: authorName,
+              avatar: `https://i.pravatar.cc/150?img=${10 + index}`,
+              authorUid: data.authorUid || "",
+              likes: data.likes || 0,
+            };
+          },
+        );
         const contributorsData = await Promise.all(contributorsDataPromises);
         setContributors(contributorsData);
       } catch (error) {
-        console.log('Erro ao carregar dados:', error);
+        console.log("Erro ao carregar dados:", error);
       } finally {
         setLoading(false);
       }
@@ -151,23 +183,27 @@ const CommunityPage: React.FC = () => {
     setLoadingReplies(true);
     try {
       const q = query(
-        collection(db, 'community-replies'),
-        where('topic_id', '==', selectedTopic.id),
-        orderBy('createdAt', 'asc')
+        collection(db, "community-replies"),
+        where("topic_id", "==", selectedTopic.id),
+        orderBy("createdAt", "asc"),
       );
       const unsubscribe = onSnapshot(q, async (snap) => {
         const repliesDataPromises = snap.docs.map(async (doc) => {
           const data = doc.data();
-          const authorName = await fetchUserName(data.authorUid || '');
+          const authorName = await fetchUserName(data.authorUid || "");
           return {
             id: doc.id,
-            author: data.author || authorName || 'Usuário',
-            authorUid: data.authorUid || '',
+            author: data.author || authorName || "Usuário",
+            authorUid: data.authorUid || "",
             authorName: authorName,
-            content: data.content || '',
-            date: data.createdAt?.toDate?.()?.toLocaleDateString('pt-PT') || new Date().toLocaleDateString('pt-PT'),
+            content: data.content || "",
+            date:
+              data.createdAt?.toDate?.()?.toLocaleDateString("pt-PT") ||
+              new Date().toLocaleDateString("pt-PT"),
             likes: data.likes || 0,
-            userLiked: user?.uid ? (data.likedBy || []).includes(user.uid) : false,
+            userLiked: user?.uid
+              ? (data.likedBy || []).includes(user.uid)
+              : false,
             createdAt: data.createdAt?.toDate?.() || new Date(),
           };
         });
@@ -178,22 +214,26 @@ const CommunityPage: React.FC = () => {
 
       return () => unsubscribe();
     } catch (error) {
-      console.log('Erro ao carregar respostas:', error);
+      console.log("Erro ao carregar respostas:", error);
       setLoadingReplies(false);
     }
   }, [selectedTopic, user?.uid]);
 
-  const handleLike = async (topicId: string, currentLikes: number, userLiked: boolean) => {
+  const handleLike = async (
+    topicId: string,
+    currentLikes: number,
+    userLiked: boolean,
+  ) => {
     if (!user) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
 
     try {
-      const topicRef = doc(db, 'community-topics', topicId);
+      const topicRef = doc(db, "community-topics", topicId);
       const topicSnap = await getDoc(topicRef);
       const likedBy = topicSnap.data()?.likedBy || [];
-      
+
       let newLikedBy;
       if (userLiked) {
         newLikedBy = likedBy.filter((uid: string) => uid !== user.uid);
@@ -207,24 +247,26 @@ const CommunityPage: React.FC = () => {
       });
 
       // Atualizar estado local
-      setTopics(topics.map(topic => 
-        topic.id === topicId 
-          ? { ...topic, likes: newLikedBy.length, userLiked: !userLiked }
-          : topic
-      ));
+      setTopics(
+        topics.map((topic) =>
+          topic.id === topicId
+            ? { ...topic, likes: newLikedBy.length, userLiked: !userLiked }
+            : topic,
+        ),
+      );
     } catch (error) {
-      console.log('Erro ao dar like:', error);
+      console.log("Erro ao dar like:", error);
     }
   };
 
   const handleCreateTopic = async () => {
     if (!user) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
 
     if (!newTopic.title.trim() || !newTopic.content.trim()) {
-      alert('Por favor, preencha título e conteúdo');
+      alert("Por favor, preencha título e conteúdo");
       return;
     }
 
@@ -234,48 +276,52 @@ const CommunityPage: React.FC = () => {
         title: newTopic.title,
         category: newTopic.category,
         content: newTopic.content,
-        author: profile?.full_name || profile?.name || 'Usuário',
+        author: profile?.full_name || profile?.name || "Usuário",
         authorUid: user.uid,
-        authorName: profile?.full_name || profile?.name || 'Usuário',
+        authorName: profile?.full_name || profile?.name || "Usuário",
         replies: 0,
         likes: 0,
         likedBy: [],
         createdAt: serverTimestamp(),
       };
 
-      await addDoc(collection(db, 'community-topics'), topicData);
-      
-      setNewTopic({ title: '', category: 'Geral', content: '' });
+      await addDoc(collection(db, "community-topics"), topicData);
+
+      setNewTopic({ title: "", category: "Geral", content: "" });
       setIsCreateModalOpen(false);
-      
+
       // Recarregar tópicos
       const topicsQuery = query(
-        collection(db, 'community-topics'),
-        orderBy('createdAt', 'desc'),
-        limit(6)
+        collection(db, "community-topics"),
+        orderBy("createdAt", "desc"),
+        limit(6),
       );
       const topicsSnap = await getDocs(topicsQuery);
       const topicsDataPromises = topicsSnap.docs.map(async (doc) => {
         const data = doc.data();
-        const authorName = await fetchUserName(data.authorUid || '');
+        const authorName = await fetchUserName(data.authorUid || "");
         return {
           id: doc.id,
-          title: data.title || 'Sem título',
-          author: data.author || authorName || 'Usuário',
-          authorUid: data.authorUid || '',
+          title: data.title || "Sem título",
+          author: data.author || authorName || "Usuário",
+          authorUid: data.authorUid || "",
           authorName: authorName,
-          category: data.category || 'Geral',
+          category: data.category || "Geral",
           replies: data.replies || 0,
           likes: data.likes || 0,
-          date: data.createdAt?.toDate?.()?.toLocaleDateString('pt-PT') || new Date().toLocaleDateString('pt-PT'),
-          userLiked: user?.uid ? (data.likedBy || []).includes(user.uid) : false,
+          date:
+            data.createdAt?.toDate?.()?.toLocaleDateString("pt-PT") ||
+            new Date().toLocaleDateString("pt-PT"),
+          userLiked: user?.uid
+            ? (data.likedBy || []).includes(user.uid)
+            : false,
         };
       });
       const topicsData = await Promise.all(topicsDataPromises);
       setTopics(topicsData);
     } catch (error) {
-      console.log('Erro ao criar tópico:', error);
-      alert('Erro ao criar tópico');
+      console.log("Erro ao criar tópico:", error);
+      alert("Erro ao criar tópico");
     } finally {
       setIsCreatingTopic(false);
     }
@@ -283,12 +329,12 @@ const CommunityPage: React.FC = () => {
 
   const handleAddReply = async () => {
     if (!user) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
 
     if (!newReply.trim()) {
-      alert('Por favor, escreva um comentário');
+      alert("Por favor, escreva um comentário");
       return;
     }
 
@@ -298,40 +344,44 @@ const CommunityPage: React.FC = () => {
       setIsAddingReply(true);
       const replyData = {
         topic_id: selectedTopic.id,
-        author: profile?.full_name || profile?.name || 'Usuário',
+        author: profile?.full_name || profile?.name || "Usuário",
         authorUid: user.uid,
-        authorName: profile?.full_name || profile?.name || 'Usuário',
+        authorName: profile?.full_name || profile?.name || "Usuário",
         content: newReply,
         likes: 0,
         likedBy: [],
         createdAt: serverTimestamp(),
       };
 
-      await addDoc(collection(db, 'community-replies'), replyData);
+      await addDoc(collection(db, "community-replies"), replyData);
 
       // Atualizar replies count do tópico
-      const topicRef = doc(db, 'community-topics', selectedTopic.id);
+      const topicRef = doc(db, "community-topics", selectedTopic.id);
       await updateDoc(topicRef, {
         replies: (selectedTopic.replies || 0) + 1,
       });
 
-      setNewReply('');
+      setNewReply("");
     } catch (error) {
-      console.log('Erro ao adicionar reply:', error);
-      alert('Erro ao adicionar comentário');
+      console.log("Erro ao adicionar reply:", error);
+      alert("Erro ao adicionar comentário");
     } finally {
       setIsAddingReply(false);
     }
   };
 
-  const handleLikeReply = async (replyId: string, currentLikes: number, userLiked: boolean) => {
+  const handleLikeReply = async (
+    replyId: string,
+    currentLikes: number,
+    userLiked: boolean,
+  ) => {
     if (!user) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
 
     try {
-      const replyRef = doc(db, 'community-replies', replyId);
+      const replyRef = doc(db, "community-replies", replyId);
       const replySnap = await getDoc(replyRef);
       const likedBy = replySnap.data()?.likedBy || [];
 
@@ -347,7 +397,7 @@ const CommunityPage: React.FC = () => {
         likedBy: newLikedBy,
       });
     } catch (error) {
-      console.log('Erro ao dar like em reply:', error);
+      console.log("Erro ao dar like em reply:", error);
     }
   };
 
@@ -360,22 +410,31 @@ const CommunityPage: React.FC = () => {
       >
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1 mb-6">
-            <Award style={{ color: branding.appearance.accentColor }} className="w-4 h-4" />
-            <span className="text-sm tracking-wide font-medium">Comunidade Global</span>
+            <Award
+              style={{ color: branding.appearance.accentColor }}
+              className="w-4 h-4"
+            />
+            <span className="text-sm tracking-wide font-medium">
+              Comunidade Global
+            </span>
           </div>
 
           <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
             Aprender é melhor{" "}
-            <span style={{ color: branding.appearance.accentColor }}>juntos</span>
+            <span style={{ color: branding.appearance.accentColor }}>
+              juntos
+            </span>
           </h1>
 
           <p className="text-white/80 text-lg md:text-xl max-w-2xl mx-auto mb-10">
-            Conecte-se com milhares de estudantes, compartilhe projetos, tire dúvidas e
-            cresça profissionalmente em nossa comunidade exclusiva.
+            Conecte-se com milhares de estudantes, compartilhe projetos, tire
+            dúvidas e cresça profissionalmente em nossa comunidade exclusiva.
           </p>
 
           <button
-            onClick={() => user ? setIsCreateModalOpen(true) : navigate('/login')}
+            onClick={() =>
+              user ? setIsCreateModalOpen(true) : navigate("/login")
+            }
             style={{ backgroundColor: branding.appearance.accentColor }}
             className="text-black font-bold py-3.5 px-8 rounded-xl shadow-lg hover:scale-105 transition-all duration-300 flex items-center gap-2"
           >
@@ -389,16 +448,37 @@ const CommunityPage: React.FC = () => {
       <div className="bg-white border-b border-gray-200 py-8">
         <div className="max-w-7xl mx-auto px-6 flex flex-wrap justify-center gap-12 md:gap-24">
           <div className="text-center">
-            <p className="text-3xl font-bold" style={{ color: branding.appearance.primaryColor }}>+1k</p>
-            <p className="text-gray-500 text-sm font-medium uppercase tracking-wider">Membros Ativos</p>
+            <p
+              className="text-3xl font-bold"
+              style={{ color: branding.appearance.primaryColor }}
+            >
+              +1k
+            </p>
+            <p className="text-gray-500 text-sm font-medium uppercase tracking-wider">
+              Membros Ativos
+            </p>
           </div>
           <div className="text-center">
-            <p className="text-3xl font-bold" style={{ color: branding.appearance.primaryColor }}>{topics.length}</p>
-            <p className="text-gray-500 text-sm font-medium uppercase tracking-wider">Tópicos Recentes</p>
+            <p
+              className="text-3xl font-bold"
+              style={{ color: branding.appearance.primaryColor }}
+            >
+              {topics.length}
+            </p>
+            <p className="text-gray-500 text-sm font-medium uppercase tracking-wider">
+              Tópicos Recentes
+            </p>
           </div>
           <div className="text-center">
-            <p className="text-3xl font-bold" style={{ color: branding.appearance.primaryColor }}>100+</p>
-            <p className="text-gray-500 text-sm font-medium uppercase tracking-wider">Discussões Ativas</p>
+            <p
+              className="text-3xl font-bold"
+              style={{ color: branding.appearance.primaryColor }}
+            >
+              100+
+            </p>
+            <p className="text-gray-500 text-sm font-medium uppercase tracking-wider">
+              Discussões Ativas
+            </p>
           </div>
         </div>
       </div>
@@ -406,14 +486,20 @@ const CommunityPage: React.FC = () => {
       {/* Forum Categories */}
       <div className="max-w-7xl mx-auto px-6 mt-16 mb-16">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-bold text-gray-900">Fóruns de Discussão</h2>
-          <a href="#" style={{ color: branding.appearance.primaryColor }} className="font-semibold flex items-center gap-1 hover:gap-2 transition-all">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Fóruns de Discussão
+          </h2>
+          <a
+            href="#"
+            style={{ color: branding.appearance.primaryColor }}
+            className="font-semibold flex items-center gap-1 hover:gap-2 transition-all"
+          >
             Ver todos <ArrowRight className="w-4 h-4" />
           </a>
         </div>
-          
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <ForumCard 
+          <ForumCard
             branding={branding}
             icon={<MessageSquare className="w-6 h-6 text-blue-600" />}
             title="Dúvidas Técnicas"
@@ -421,7 +507,7 @@ const CommunityPage: React.FC = () => {
             activeCount="Discussões ativas"
             color="bg-blue-50"
           />
-          <ForumCard 
+          <ForumCard
             branding={branding}
             icon={<Share2 className="w-6 h-6 text-purple-600" />}
             title="Showcase de Projetos"
@@ -429,7 +515,7 @@ const CommunityPage: React.FC = () => {
             activeCount="Portfólios compartilhados"
             color="bg-purple-50"
           />
-          <ForumCard 
+          <ForumCard
             branding={branding}
             icon={<Trophy className="w-6 h-6 text-orange-600" />}
             title="Carreira e Vagas"
@@ -444,25 +530,41 @@ const CommunityPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 mb-16">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <div className="inline-flex items-center gap-2" style={{ color: branding.appearance.primaryColor }} className="font-bold mb-4">
+            <div
+              className="inline-flex items-center gap-2"
+              style={{ color: branding.appearance.primaryColor }}
+              className="font-bold mb-4"
+            >
               <MessageSquare className="w-5 h-5" />
               <span>Tópicos da Comunidade</span>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">Discussões Recentes</h2>
+            <h2 className="text-3xl font-bold text-gray-900">
+              Discussões Recentes
+            </h2>
           </div>
-          <a href="#" style={{ color: branding.appearance.primaryColor }} className="font-semibold flex items-center gap-1 hover:gap-2 transition-all">
+          <a
+            href="#"
+            style={{ color: branding.appearance.primaryColor }}
+            className="font-semibold flex items-center gap-1 hover:gap-2 transition-all"
+          >
             Ver todos <ArrowRight className="w-4 h-4" />
           </a>
         </div>
-        
+
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader className="w-8 h-8 animate-spin" style={{ color: branding.appearance.primaryColor }} />
+            <Loader
+              className="w-8 h-8 animate-spin"
+              style={{ color: branding.appearance.primaryColor }}
+            />
           </div>
         ) : topics.length === 0 ? (
           <div className="bg-gray-50 rounded-xl p-8 text-center">
             <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg">Nenhum tópico na comunidade ainda. Seja o primeiro a iniciar uma discussão!</p>
+            <p className="text-gray-500 text-lg">
+              Nenhum tópico na comunidade ainda. Seja o primeiro a iniciar uma
+              discussão!
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -473,7 +575,7 @@ const CommunityPage: React.FC = () => {
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
-                    <h3 
+                    <h3
                       onClick={() => {
                         setSelectedTopic(topic);
                         setIsDetailModalOpen(true);
@@ -486,14 +588,17 @@ const CommunityPage: React.FC = () => {
                       por {topic.authorName || topic.author}
                     </p>
                   </div>
-                  <span 
-                    style={{ backgroundColor: `${branding.appearance.primaryColor}10`, color: branding.appearance.primaryColor }}
+                  <span
+                    style={{
+                      backgroundColor: `${branding.appearance.primaryColor}10`,
+                      color: branding.appearance.primaryColor,
+                    }}
                     className="text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ml-2"
                   >
                     {topic.category}
                   </span>
                 </div>
-                
+
                 <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-4">
                   <div className="flex items-center gap-3">
                     <button
@@ -507,17 +612,31 @@ const CommunityPage: React.FC = () => {
                       <span className="font-medium">{topic.replies}</span>
                     </button>
                     <button
-                      onClick={() => handleLike(topic.id, topic.likes, topic.userLiked || false)}
+                      onClick={() =>
+                        handleLike(
+                          topic.id,
+                          topic.likes,
+                          topic.userLiked || false,
+                        )
+                      }
                       className="flex items-center gap-1.5 text-xs transition-colors"
                       style={{
-                        color: topic.userLiked ? branding.appearance.primaryColor : '#gray',
+                        color: topic.userLiked
+                          ? branding.appearance.primaryColor
+                          : "#gray",
                       }}
                     >
-                      <Heart 
-                        className="w-4 h-4" 
-                        fill={topic.userLiked ? branding.appearance.primaryColor : 'none'}
+                      <Heart
+                        className="w-4 h-4"
+                        fill={
+                          topic.userLiked
+                            ? branding.appearance.primaryColor
+                            : "none"
+                        }
                         style={{
-                          color: topic.userLiked ? branding.appearance.primaryColor : '#d1d5db',
+                          color: topic.userLiked
+                            ? branding.appearance.primaryColor
+                            : "#d1d5db",
                         }}
                       />
                       <span className="font-medium">{topic.likes}</span>
@@ -533,7 +652,9 @@ const CommunityPage: React.FC = () => {
 
       {/* Top Contributors */}
       <div className="max-w-7xl mx-auto px-6 mb-20">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Top Contribuidores do Mês</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          Top Contribuidores do Mês
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           {contributors.length === 0 ? (
             <div className="col-span-full text-center py-8">
@@ -541,16 +662,25 @@ const CommunityPage: React.FC = () => {
             </div>
           ) : (
             contributors.map((contributor) => (
-              <div key={contributor.id} className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
-                <img 
-                  src={contributor.avatar} 
-                  alt={contributor.name} 
+              <div
+                key={contributor.id}
+                className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
+              >
+                <img
+                  src={contributor.avatar}
+                  alt={contributor.name}
                   className="w-12 h-12 rounded-full border-2 border-white shadow-sm"
                 />
                 <div>
-                  <p className="font-bold text-gray-900 text-sm">{contributor.name}</p>
-                  <p className="text-xs font-medium flex items-center gap-1" style={{ color: branding.appearance.primaryColor }}>
-                    <Heart className="w-3 h-3 fill-current" /> {contributor.likes} Likes
+                  <p className="font-bold text-gray-900 text-sm">
+                    {contributor.name}
+                  </p>
+                  <p
+                    className="text-xs font-medium flex items-center gap-1"
+                    style={{ color: branding.appearance.primaryColor }}
+                  >
+                    <Heart className="w-3 h-3 fill-current" />{" "}
+                    {contributor.likes} Likes
                   </p>
                 </div>
               </div>
@@ -566,12 +696,16 @@ const CommunityPage: React.FC = () => {
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <div className="flex-1">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{selectedTopic.title}</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  {selectedTopic.title}
+                </h2>
                 <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <span>{selectedTopic.authorName || selectedTopic.author}</span>
+                  <span>
+                    {selectedTopic.authorName || selectedTopic.author}
+                  </span>
                   <span>•</span>
                   <span>{selectedTopic.date}</span>
-                  <span 
+                  <span
                     style={{ color: branding.appearance.primaryColor }}
                     className="font-medium"
                   >
@@ -595,11 +729,16 @@ const CommunityPage: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {/* Replies */}
               <div>
-                <h3 className="font-bold text-gray-900 mb-4">Comentários ({replies.length})</h3>
-                
+                <h3 className="font-bold text-gray-900 mb-4">
+                  Comentários ({replies.length})
+                </h3>
+
                 {loadingReplies ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader className="w-6 h-6 animate-spin" style={{ color: branding.appearance.primaryColor }} />
+                    <Loader
+                      className="w-6 h-6 animate-spin"
+                      style={{ color: branding.appearance.primaryColor }}
+                    />
                   </div>
                 ) : replies.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
@@ -612,23 +751,43 @@ const CommunityPage: React.FC = () => {
                       <div key={reply.id} className="bg-gray-50 rounded-lg p-4">
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <p className="font-semibold text-gray-900">{reply.authorName || reply.author}</p>
-                            <p className="text-xs text-gray-500">{reply.date}</p>
+                            <p className="font-semibold text-gray-900">
+                              {reply.authorName || reply.author}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {reply.date}
+                            </p>
                           </div>
                         </div>
-                        <p className="text-gray-700 text-sm mb-3">{reply.content}</p>
+                        <p className="text-gray-700 text-sm mb-3">
+                          {reply.content}
+                        </p>
                         <button
-                          onClick={() => handleLikeReply(reply.id, reply.likes, reply.userLiked || false)}
+                          onClick={() =>
+                            handleLikeReply(
+                              reply.id,
+                              reply.likes,
+                              reply.userLiked || false,
+                            )
+                          }
                           className="flex items-center gap-1.5 text-xs transition-colors"
                           style={{
-                            color: reply.userLiked ? branding.appearance.primaryColor : '#9ca3af',
+                            color: reply.userLiked
+                              ? branding.appearance.primaryColor
+                              : "#9ca3af",
                           }}
                         >
-                          <Heart 
-                            className="w-3 h-3" 
-                            fill={reply.userLiked ? branding.appearance.primaryColor : 'none'}
+                          <Heart
+                            className="w-3 h-3"
+                            fill={
+                              reply.userLiked
+                                ? branding.appearance.primaryColor
+                                : "none"
+                            }
                             style={{
-                              color: reply.userLiked ? branding.appearance.primaryColor : '#d1d5db',
+                              color: reply.userLiked
+                                ? branding.appearance.primaryColor
+                                : "#d1d5db",
                             }}
                           />
                           <span className="font-medium">{reply.likes}</span>
@@ -648,11 +807,15 @@ const CommunityPage: React.FC = () => {
                   value={newReply}
                   onChange={(e) => setNewReply(e.target.value)}
                   onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !isAddingReply) {
+                    if (e.key === "Enter" && !isAddingReply) {
                       handleAddReply();
                     }
                   }}
-                  placeholder={user ? "Escreva um comentário..." : "Faça login para comentar"}
+                  placeholder={
+                    user
+                      ? "Escreva um comentário..."
+                      : "Faça login para comentar"
+                  }
                   disabled={!user || isAddingReply}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-brand-green disabled:bg-gray-100"
                 />
@@ -675,7 +838,9 @@ const CommunityPage: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900">Criar Novo Tópico</h2>
+              <h2 className="text-2xl font-bold text-gray-900">
+                Criar Novo Tópico
+              </h2>
               <button
                 onClick={() => setIsCreateModalOpen(false)}
                 className="text-gray-400 hover:text-gray-600"
@@ -686,21 +851,29 @@ const CommunityPage: React.FC = () => {
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Título</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Título
+                </label>
                 <input
                   type="text"
                   value={newTopic.title}
-                  onChange={(e) => setNewTopic({ ...newTopic, title: e.target.value })}
+                  onChange={(e) =>
+                    setNewTopic({ ...newTopic, title: e.target.value })
+                  }
                   placeholder="Qual é sua pergunta ou tópico?"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-brand-green"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Categoria</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Categoria
+                </label>
                 <select
                   value={newTopic.category}
-                  onChange={(e) => setNewTopic({ ...newTopic, category: e.target.value })}
+                  onChange={(e) =>
+                    setNewTopic({ ...newTopic, category: e.target.value })
+                  }
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-brand-green"
                 >
                   <option>Técnico</option>
@@ -711,10 +884,14 @@ const CommunityPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Conteúdo</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Conteúdo
+                </label>
                 <textarea
                   value={newTopic.content}
-                  onChange={(e) => setNewTopic({ ...newTopic, content: e.target.value })}
+                  onChange={(e) =>
+                    setNewTopic({ ...newTopic, content: e.target.value })
+                  }
                   placeholder="Conte mais detalhes sobre seu tópico..."
                   rows={5}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-brand-green resize-none"
@@ -735,7 +912,7 @@ const CommunityPage: React.FC = () => {
                 style={{ backgroundColor: branding.appearance.primaryColor }}
                 className="flex-1 px-4 py-2 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
               >
-                {isCreatingTopic ? 'Criando...' : 'Criar Tópico'}
+                {isCreatingTopic ? "Criando..." : "Criar Tópico"}
               </button>
             </div>
           </div>
@@ -746,9 +923,18 @@ const CommunityPage: React.FC = () => {
 };
 
 // Sub-components
-const ForumCard = ({ icon, title, description, activeCount, color, branding }: any) => (
+const ForumCard = ({
+  icon,
+  title,
+  description,
+  activeCount,
+  color,
+  branding,
+}: any) => (
   <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer group">
-    <div className={`w-12 h-12 rounded-lg ${color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+    <div
+      className={`w-12 h-12 rounded-lg ${color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
+    >
       {icon}
     </div>
     <h3 className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
