@@ -1,25 +1,24 @@
 import {
-  collection,
-  onSnapshot,
-  serverTimestamp,
-  updateDoc,
-  doc,
-  getDoc,
+    collection,
+    doc,
+    getDoc,
+    onSnapshot,
+    serverTimestamp,
+    updateDoc,
 } from "firebase/firestore";
 import {
-  CheckCircle,
-  Clock,
-  AlertCircle,
-  X,
-  Eye,
-  BookOpen,
-  User,
-  FileText,
-  Play,
-  Award,
-  ChevronDown,
-  ArrowLeft,
-  File,
+    AlertCircle,
+    ArrowLeft,
+    Award,
+    BookOpen,
+    CheckCircle,
+    ChevronDown,
+    Eye,
+    File,
+    FileText,
+    Play,
+    User,
+    X
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import AdminLayout from "../../layouts/AdminLayout";
@@ -58,13 +57,17 @@ interface CourseWithDetails extends Course {
 
 const CourseModerationPage: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [tab, setTab] = useState<"pending" | "approved" | "rejected">("pending");
+  const [tab, setTab] = useState<"pending" | "approved" | "rejected">(
+    "pending",
+  );
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
-  const [previewCourse, setPreviewCourse] = useState<CourseWithDetails | null>(null);
+  const [previewCourse, setPreviewCourse] = useState<CourseWithDetails | null>(
+    null,
+  );
   const [previewLoading, setPreviewLoading] = useState(false);
   const [approvalModal, setApprovalModal] = useState<{
     action: "approve" | "reject";
@@ -73,12 +76,11 @@ const CourseModerationPage: React.FC = () => {
     instructor: string;
   } | null>(null);
 
-
   // Listener em tempo real para cursos
   useEffect(() => {
     setLoading(true);
     const coursesRef = collection(db, "courses");
-    
+
     const unsubscribe = onSnapshot(
       coursesRef,
       (snapshot) => {
@@ -100,14 +102,14 @@ const CourseModerationPage: React.FC = () => {
             approvalStatus: data.approvalStatus || "pending",
           } as Course);
         });
-        
+
         setCourses(coursesList);
         setLoading(false);
       },
       (error) => {
         console.error("Erro ao carregar cursos:", error);
         setLoading(false);
-      }
+      },
     );
 
     return () => unsubscribe();
@@ -146,15 +148,15 @@ const CourseModerationPage: React.FC = () => {
     }
   };
 
-  const showToast = (message: string, type: "success" | "error" = "success") => {
+  const showToast = (
+    message: string,
+    type: "success" | "error" = "success",
+  ) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleApproveCourse = async (
-    courseId: string,
-    courseTitle: string
-  ) => {
+  const handleApproveCourse = async (courseId: string, courseTitle: string) => {
     try {
       await updateDoc(doc(db, "courses", courseId), {
         approvalStatus: "approved",
@@ -169,10 +171,7 @@ const CourseModerationPage: React.FC = () => {
     }
   };
 
-  const handleRejectCourse = async (
-    courseId: string,
-    courseTitle: string
-  ) => {
+  const handleRejectCourse = async (courseId: string, courseTitle: string) => {
     try {
       await updateDoc(doc(db, "courses", courseId), {
         approvalStatus: "rejected",
@@ -188,7 +187,7 @@ const CourseModerationPage: React.FC = () => {
   };
 
   const filteredCourses = courses.filter(
-    (course) => course.approvalStatus === tab
+    (course) => course.approvalStatus === tab,
   );
 
   if (previewCourse) {
@@ -208,7 +207,9 @@ const CourseModerationPage: React.FC = () => {
           {previewLoading ? (
             <div className="text-center py-12">
               <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
-              <p className="text-slate-400 mt-4 text-xs sm:text-sm">Carregando curso...</p>
+              <p className="text-slate-400 mt-4 text-xs sm:text-sm">
+                Carregando curso...
+              </p>
             </div>
           ) : (
             <div className="space-y-4 sm:space-y-6">
@@ -224,15 +225,27 @@ const CourseModerationPage: React.FC = () => {
                         {previewCourse.duration}
                       </span>
                     </div>
-                    <h1 className="text-2xl lg:text-4xl font-black text-white mb-2 leading-tight">{previewCourse.title}</h1>
+                    <h1 className="text-2xl lg:text-4xl font-black text-white mb-2 leading-tight">
+                      {previewCourse.title}
+                    </h1>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 lg:gap-4 mt-4 lg:mt-6">
                       <div className="flex items-center gap-2">
-                        <User size={18} className="text-slate-300 flex-shrink-0" />
-                        <span className="text-slate-200 font-medium text-sm lg:text-base">{previewCourse.instructor}</span>
+                        <User
+                          size={18}
+                          className="text-slate-300 flex-shrink-0"
+                        />
+                        <span className="text-slate-200 font-medium text-sm lg:text-base">
+                          {previewCourse.instructor}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <BookOpen size={18} className="text-slate-300 flex-shrink-0" />
-                        <span className="text-slate-200 font-medium text-sm lg:text-base">{previewCourse.language}</span>
+                        <BookOpen
+                          size={18}
+                          className="text-slate-300 flex-shrink-0"
+                        />
+                        <span className="text-slate-200 font-medium text-sm lg:text-base">
+                          {previewCourse.language}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -252,38 +265,59 @@ const CourseModerationPage: React.FC = () => {
                   <FileText size={20} className="text-blue-600 flex-shrink-0" />
                   Descrição do Curso
                 </h2>
-                <p className="text-slate-600 leading-relaxed text-sm lg:text-base">{previewCourse.cardDescription}</p>
-                {previewCourse.fullDescription && previewCourse.fullDescription !== previewCourse.cardDescription && (
-                  <div className="mt-4 pt-4 border-t border-slate-200">
-                    <p className="text-slate-600 leading-relaxed text-sm lg:text-base">{previewCourse.fullDescription}</p>
-                  </div>
-                )}
+                <p className="text-slate-600 leading-relaxed text-sm lg:text-base">
+                  {previewCourse.cardDescription}
+                </p>
+                {previewCourse.fullDescription &&
+                  previewCourse.fullDescription !==
+                    previewCourse.cardDescription && (
+                    <div className="mt-4 pt-4 border-t border-slate-200">
+                      <p className="text-slate-600 leading-relaxed text-sm lg:text-base">
+                        {previewCourse.fullDescription}
+                      </p>
+                    </div>
+                  )}
               </div>
 
               {/* Objetivos de Aprendizado */}
-              {previewCourse.learningOutcomes && previewCourse.learningOutcomes.length > 0 && (
-                <div className="bg-blue-50 rounded-2xl border border-blue-200 p-6 lg:p-8">
-                  <h2 className="text-lg lg:text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <Award size={20} className="text-blue-600 flex-shrink-0" />
-                    Objetivos de Aprendizado
-                  </h2>
-                  <ul className="space-y-2">
-                    {previewCourse.learningOutcomes.map((outcome, idx) => (
-                      <li key={idx} className="flex items-start gap-3">
-                        <CheckCircle size={20} className="text-blue-600 mt-0.5 flex-shrink-0 hidden sm:block" />
-                        <CheckCircle size={16} className="text-blue-600 mt-0.5 flex-shrink-0 sm:hidden" />
-                        <span className="text-slate-700 text-sm lg:text-base">{outcome}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {previewCourse.learningOutcomes &&
+                previewCourse.learningOutcomes.length > 0 && (
+                  <div className="bg-blue-50 rounded-2xl border border-blue-200 p-6 lg:p-8">
+                    <h2 className="text-lg lg:text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                      <Award
+                        size={20}
+                        className="text-blue-600 flex-shrink-0"
+                      />
+                      Objetivos de Aprendizado
+                    </h2>
+                    <ul className="space-y-2">
+                      {previewCourse.learningOutcomes.map((outcome, idx) => (
+                        <li key={idx} className="flex items-start gap-3">
+                          <CheckCircle
+                            size={20}
+                            className="text-blue-600 mt-0.5 flex-shrink-0 hidden sm:block"
+                          />
+                          <CheckCircle
+                            size={16}
+                            className="text-blue-600 mt-0.5 flex-shrink-0 sm:hidden"
+                          />
+                          <span className="text-slate-700 text-sm lg:text-base">
+                            {outcome}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
               {/* Módulos e Aulas */}
               {previewCourse.modules && previewCourse.modules.length > 0 && (
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 lg:p-8 space-y-4 lg:space-y-6">
                   <h2 className="text-lg lg:text-xl font-bold text-slate-900 flex items-center gap-2">
-                    <BookOpen size={20} className="text-green-600 flex-shrink-0" />
+                    <BookOpen
+                      size={20}
+                      className="text-green-600 flex-shrink-0"
+                    />
                     <span>Estrutura do Curso</span>
                     <span className="text-xs lg:text-sm bg-slate-100 text-slate-700 px-2 py-1 rounded-full ml-auto font-black">
                       {previewCourse.modules.length} módulos
@@ -293,9 +327,15 @@ const CourseModerationPage: React.FC = () => {
                     {previewCourse.modules.map((module, modIdx) => (
                       <details key={module.id} className="group">
                         <summary className="flex items-center gap-2 lg:gap-3 p-3 lg:p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl cursor-pointer hover:from-green-100 hover:to-emerald-100 transition-colors font-bold text-slate-900 text-sm lg:text-base border border-green-200">
-                          <ChevronDown size={20} className="group-open:rotate-180 transition-transform flex-shrink-0 text-green-600" />
+                          <ChevronDown
+                            size={20}
+                            className="group-open:rotate-180 transition-transform flex-shrink-0 text-green-600"
+                          />
                           <span className="flex-1">
-                            <span className="text-green-600 font-black">Módulo {modIdx + 1}:</span> {module.title}
+                            <span className="text-green-600 font-black">
+                              Módulo {modIdx + 1}:
+                            </span>{" "}
+                            {module.title}
                           </span>
                           <span className="text-xs lg:text-sm bg-green-600 text-white px-2 py-1 rounded-full font-black flex-shrink-0">
                             {module.lessons.length}
@@ -308,26 +348,43 @@ const CourseModerationPage: React.FC = () => {
                               className="flex items-start gap-2 lg:gap-3 p-2 lg:p-3 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors group/lesson"
                             >
                               <div className="flex-shrink-0 pt-0.5">
-                                {lesson.type === "video" && <Play size={16} className="text-red-500" />}
-                                {lesson.type === "text" && <FileText size={16} className="text-blue-500" />}
-                                {lesson.type === "document" && <File size={16} className="text-amber-500" />}
+                                {lesson.type === "video" && (
+                                  <Play size={16} className="text-red-500" />
+                                )}
+                                {lesson.type === "text" && (
+                                  <FileText
+                                    size={16}
+                                    className="text-blue-500"
+                                  />
+                                )}
+                                {lesson.type === "document" && (
+                                  <File size={16} className="text-amber-500" />
+                                )}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs lg:text-sm font-medium text-slate-600">
-                                  <span className="text-slate-500">Aula {lesIdx + 1}</span>
+                                  <span className="text-slate-500">
+                                    Aula {lesIdx + 1}
+                                  </span>
                                 </p>
                                 <p className="text-sm lg:text-base font-bold text-slate-900 break-words lg:break-normal">
                                   {lesson.title}
                                 </p>
                               </div>
-                              <span className={`text-xs font-black px-2 py-1 rounded-full flex-shrink-0 whitespace-nowrap uppercase ${
-                                lesson.type === "video" ? "bg-red-100 text-red-700" :
-                                lesson.type === "text" ? "bg-blue-100 text-blue-700" :
-                                "bg-amber-100 text-amber-700"
-                              }`}>
-                                {lesson.type === "video" ? "🎥 Vídeo" :
-                                 lesson.type === "text" ? "📄 Texto" :
-                                 "📄 Doc"}
+                              <span
+                                className={`text-xs font-black px-2 py-1 rounded-full flex-shrink-0 whitespace-nowrap uppercase ${
+                                  lesson.type === "video"
+                                    ? "bg-red-100 text-red-700"
+                                    : lesson.type === "text"
+                                      ? "bg-blue-100 text-blue-700"
+                                      : "bg-amber-100 text-amber-700"
+                                }`}
+                              >
+                                {lesson.type === "video"
+                                  ? "🎥 Vídeo"
+                                  : lesson.type === "text"
+                                    ? "📄 Texto"
+                                    : "📄 Doc"}
                               </span>
                             </div>
                           ))}
@@ -339,27 +396,36 @@ const CourseModerationPage: React.FC = () => {
               )}
 
               {/* Exercícios Interativos */}
-              {previewCourse.interactiveExercises && previewCourse.interactiveExercises.length > 0 && (
-                <div className="bg-purple-50 rounded-2xl border border-purple-200 p-6 lg:p-8">
-                  <h2 className="text-lg lg:text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <Award size={20} className="text-purple-600 flex-shrink-0" />
-                    <span>Exercícios Interativos</span>
-                    <span className="text-xs lg:text-sm bg-purple-100 text-purple-700 px-2 py-1 rounded-full ml-auto font-black">
-                      {previewCourse.interactiveExercises.length}
-                    </span>
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 lg:gap-3">
-                    {previewCourse.interactiveExercises.map((exercise) => (
-                      <div key={exercise.id} className="flex items-start gap-2 p-3 bg-white rounded-lg hover:bg-slate-50 transition-colors">
-                        <span className="text-xs font-bold text-purple-600 uppercase px-2 py-1 bg-purple-100 rounded flex-shrink-0 whitespace-nowrap">
-                          {exercise.type}
-                        </span>
-                        <span className="text-slate-700 text-xs lg:text-sm">{exercise.title}</span>
-                      </div>
-                    ))}
+              {previewCourse.interactiveExercises &&
+                previewCourse.interactiveExercises.length > 0 && (
+                  <div className="bg-purple-50 rounded-2xl border border-purple-200 p-6 lg:p-8">
+                    <h2 className="text-lg lg:text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                      <Award
+                        size={20}
+                        className="text-purple-600 flex-shrink-0"
+                      />
+                      <span>Exercícios Interativos</span>
+                      <span className="text-xs lg:text-sm bg-purple-100 text-purple-700 px-2 py-1 rounded-full ml-auto font-black">
+                        {previewCourse.interactiveExercises.length}
+                      </span>
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 lg:gap-3">
+                      {previewCourse.interactiveExercises.map((exercise) => (
+                        <div
+                          key={exercise.id}
+                          className="flex items-start gap-2 p-3 bg-white rounded-lg hover:bg-slate-50 transition-colors"
+                        >
+                          <span className="text-xs font-bold text-purple-600 uppercase px-2 py-1 bg-purple-100 rounded flex-shrink-0 whitespace-nowrap">
+                            {exercise.type}
+                          </span>
+                          <span className="text-slate-700 text-xs lg:text-sm">
+                            {exercise.title}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Action Buttons - Aprovação */}
               {previewCourse.approvalStatus === "pending" && (
@@ -439,12 +505,12 @@ const CourseModerationPage: React.FC = () => {
                     if (approvalModal.action === "approve") {
                       handleApproveCourse(
                         approvalModal.courseId,
-                        approvalModal.courseTitle
+                        approvalModal.courseTitle,
                       );
                     } else {
                       handleRejectCourse(
                         approvalModal.courseId,
-                        approvalModal.courseTitle
+                        approvalModal.courseTitle,
                       );
                     }
                   }}
@@ -454,7 +520,9 @@ const CourseModerationPage: React.FC = () => {
                       : "bg-red-600 hover:bg-red-700 shadow-lg shadow-red-900/20"
                   } text-white font-black uppercase text-[10px] sm:text-xs tracking-widest rounded-xl transition-all`}
                 >
-                  {approvalModal.action === "approve" ? "Sim, Aprovar" : "Sim, Rejeitar"}
+                  {approvalModal.action === "approve"
+                    ? "Sim, Aprovar"
+                    : "Sim, Rejeitar"}
                 </button>
               </div>
             </div>
@@ -521,8 +589,8 @@ const CourseModerationPage: React.FC = () => {
                 {tab_name === "pending"
                   ? `Pend. (${courses.filter((c) => c.approvalStatus === "pending").length})`
                   : tab_name === "approved"
-                  ? `Apr. (${courses.filter((c) => c.approvalStatus === "approved").length})`
-                  : `Rej. (${courses.filter((c) => c.approvalStatus === "rejected").length})`}
+                    ? `Apr. (${courses.filter((c) => c.approvalStatus === "approved").length})`
+                    : `Rej. (${courses.filter((c) => c.approvalStatus === "rejected").length})`}
                 {tab === tab_name && (
                   <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600" />
                 )}
@@ -542,13 +610,16 @@ const CourseModerationPage: React.FC = () => {
             </div>
           ) : filteredCourses.length === 0 ? (
             <div className="p-8 sm:p-12 text-center">
-              <CheckCircle size={36} className="text-slate-200 mx-auto mb-4 sm:mb-4" />
+              <CheckCircle
+                size={36}
+                className="text-slate-200 mx-auto mb-4 sm:mb-4"
+              />
               <p className="text-slate-400 font-medium text-base sm:text-lg">
                 {tab === "pending"
                   ? "Nenhum curso pendente"
                   : tab === "approved"
-                  ? "Todos os cursos foram aprovados ✅"
-                  : "Nenhum curso foi rejeitado"}
+                    ? "Todos os cursos foram aprovados ✅"
+                    : "Nenhum curso foi rejeitado"}
               </p>
             </div>
           ) : (
@@ -572,12 +643,22 @@ const CourseModerationPage: React.FC = () => {
                       </h3>
                       <div className="space-y-0.5 sm:space-y-1 text-xs sm:text-sm">
                         <p className="text-slate-600 flex items-center gap-2 truncate sm:truncate-none">
-                          <User size={14} className="text-slate-400 flex-shrink-0" />
-                          <span className="font-bold truncate sm:truncate-none">{course.instructor}</span>
+                          <User
+                            size={14}
+                            className="text-slate-400 flex-shrink-0"
+                          />
+                          <span className="font-bold truncate sm:truncate-none">
+                            {course.instructor}
+                          </span>
                         </p>
                         <p className="text-slate-600 flex items-center gap-2">
-                          <FileText size={14} className="text-slate-400 flex-shrink-0" />
-                          <span className="truncate sm:truncate-none">{course.category} • {course.duration}</span>
+                          <FileText
+                            size={14}
+                            className="text-slate-400 flex-shrink-0"
+                          />
+                          <span className="truncate sm:truncate-none">
+                            {course.category} • {course.duration}
+                          </span>
                         </p>
                       </div>
                       {tab === "pending" && (
