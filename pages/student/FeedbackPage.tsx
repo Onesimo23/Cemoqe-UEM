@@ -1,18 +1,31 @@
-import React, { useEffect, useState } from 'react';
-import StudentLayout from '../../layouts/StudentLayout';
-import { Star, MessageCircle, Send, CheckCircle } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { db } from '../../services/firebase';
-import { collection, onSnapshot, query, where, doc, setDoc, serverTimestamp, getDocs } from 'firebase/firestore';
+import {
+    collection,
+    doc,
+    getDocs,
+    onSnapshot,
+    query,
+    serverTimestamp,
+    setDoc,
+    where,
+} from "firebase/firestore";
+import { CheckCircle, MessageCircle, Send, Star } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import StudentLayout from "../../layouts/StudentLayout";
+import { db } from "../../services/firebase";
 
 const FeedbackPage: React.FC = () => {
   const { user } = useAuth();
-  const [selectedCourse, setSelectedCourse] = useState<string>('');
-  const [myCourses, setMyCourses] = useState<Array<{ id: string; title: string }>>([]);
-  const [coursesMap, setCoursesMap] = useState<Map<string, { id: string; title: string }>>(new Map());
+  const [selectedCourse, setSelectedCourse] = useState<string>("");
+  const [myCourses, setMyCourses] = useState<
+    Array<{ id: string; title: string }>
+  >([]);
+  const [coursesMap, setCoursesMap] = useState<
+    Map<string, { id: string; title: string }>
+  >(new Map());
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState("");
   const [isSent, setIsSent] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -20,7 +33,7 @@ const FeedbackPage: React.FC = () => {
   useEffect(() => {
     if (!user?.uid) {
       setMyCourses([]);
-      setSelectedCourse('');
+      setSelectedCourse("");
       setIsLoading(false);
       return;
     }
@@ -30,7 +43,7 @@ const FeedbackPage: React.FC = () => {
 
     // Listener para enrollments com user_uid
     const unsub1 = onSnapshot(
-      query(collection(db, 'enrollments'), where('user_uid', '==', user.uid)),
+      query(collection(db, "enrollments"), where("user_uid", "==", user.uid)),
       (snap) => {
         snap.docs.forEach((d) => {
           const data = d.data();
@@ -38,21 +51,21 @@ const FeedbackPage: React.FC = () => {
           if (cid) {
             courseMap.set(cid, {
               id: cid,
-              title: data?.course_title || data?.courseTitle || 'Curso',
+              title: data?.course_title || data?.courseTitle || "Curso",
             });
           }
         });
         updateCourses(courseMap);
       },
       (err) => {
-        console.error('Erro subscription 1:', err);
+        console.error("Erro subscription 1:", err);
         updateCourses(courseMap);
-      }
+      },
     );
 
     // Listener para enrollments com userId (legacy)
     const unsub2 = onSnapshot(
-      query(collection(db, 'enrollments'), where('userId', '==', user.uid)),
+      query(collection(db, "enrollments"), where("userId", "==", user.uid)),
       (snap) => {
         snap.docs.forEach((d) => {
           const data = d.data();
@@ -60,20 +73,22 @@ const FeedbackPage: React.FC = () => {
           if (cid) {
             courseMap.set(cid, {
               id: cid,
-              title: data?.course_title || data?.courseTitle || 'Curso',
+              title: data?.course_title || data?.courseTitle || "Curso",
             });
           }
         });
         updateCourses(courseMap);
       },
       (err) => {
-        console.error('Erro subscription 2:', err);
+        console.error("Erro subscription 2:", err);
         updateCourses(courseMap);
-      }
+      },
     );
 
     function updateCourses(map: Map<string, { id: string; title: string }>) {
-      const arr = Array.from(map.values()).sort((a, b) => a.title.localeCompare(b.title));
+      const arr = Array.from(map.values()).sort((a, b) =>
+        a.title.localeCompare(b.title),
+      );
       setCoursesMap(map);
       setMyCourses(arr);
       if (!selectedCourse && arr.length > 0) {
@@ -83,7 +98,7 @@ const FeedbackPage: React.FC = () => {
     }
 
     unsubscribers.push(unsub1, unsub2);
-    return () => unsubscribers.forEach(fn => fn());
+    return () => unsubscribers.forEach((fn) => fn());
   }, [user?.uid, selectedCourse]);
 
   // Calcular média de ratings para um curso
@@ -91,17 +106,17 @@ const FeedbackPage: React.FC = () => {
     try {
       // Buscar todas as reviews deste curso
       const reviewsSnap = await getDocs(
-        query(collection(db, 'reviews'), where('course_id', '==', courseId))
+        query(collection(db, "reviews"), where("course_id", "==", courseId)),
       );
 
       if (reviewsSnap.empty) return;
 
       const ratings = reviewsSnap.docs
-        .map(doc => {
+        .map((doc) => {
           const data = doc.data();
-          return typeof data.rating === 'number' ? data.rating : 0;
+          return typeof data.rating === "number" ? data.rating : 0;
         })
-        .filter(r => r > 0);
+        .filter((r) => r > 0);
 
       if (ratings.length === 0) return;
 
@@ -110,31 +125,33 @@ const FeedbackPage: React.FC = () => {
 
       // Atualizar o documento do curso com a nova média e contagem
       await setDoc(
-        doc(db, 'courses', courseId),
+        doc(db, "courses", courseId),
         {
           rating: Math.round(average * 10) / 10,
           reviewCount: ratings.length,
         },
-        { merge: true }
+        { merge: true },
       );
 
-      console.log(`Rating atualizado para curso ${courseId}: ${average.toFixed(1)} (${ratings.length} avaliações)`);
+      console.log(
+        `Rating atualizado para curso ${courseId}: ${average.toFixed(1)} (${ratings.length} avaliações)`,
+      );
     } catch (err) {
-      console.error('Erro ao calcular rating:', err);
+      console.error("Erro ao calcular rating:", err);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (rating === 0) return alert('Por favor, selecione uma nota!');
-    if (!user?.uid || !selectedCourse) return alert('Selecione um curso.');
+    if (rating === 0) return alert("Por favor, selecione uma nota!");
+    if (!user?.uid || !selectedCourse) return alert("Selecione um curso.");
 
     const submitReview = async () => {
       try {
         // Salvar a review
         const rid = `${user.uid}_${selectedCourse}`;
         await setDoc(
-          doc(db, 'reviews', rid),
+          doc(db, "reviews", rid),
           {
             user_uid: user.uid,
             course_id: selectedCourse,
@@ -143,7 +160,7 @@ const FeedbackPage: React.FC = () => {
             updatedAt: serverTimestamp(),
             createdAt: serverTimestamp(),
           },
-          { merge: true }
+          { merge: true },
         );
 
         // Recalcular rating do curso
@@ -152,11 +169,11 @@ const FeedbackPage: React.FC = () => {
         // UI feedback
         setIsSent(true);
         setRating(0);
-        setComment('');
+        setComment("");
         setTimeout(() => setIsSent(false), 4000);
       } catch (err) {
-        console.error('Falha ao enviar avaliação', err);
-        alert('Não foi possível enviar sua avaliação.');
+        console.error("Falha ao enviar avaliação", err);
+        alert("Não foi possível enviar sua avaliação.");
       }
     };
 
@@ -166,15 +183,24 @@ const FeedbackPage: React.FC = () => {
   return (
     <StudentLayout>
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Sua Opinião é Importante</h1>
-        <p className="text-gray-500 mb-8">Avalie os cursos que você concluiu e ajude-nos a melhorar sua experiência.</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          Sua Opinião é Importante
+        </h1>
+        <p className="text-gray-500 mb-8">
+          Avalie os cursos que você concluiu e ajude-nos a melhorar sua
+          experiência.
+        </p>
 
         <div className="grid lg:grid-cols-5 gap-8">
           {/* Recent Evaluations List */}
           <div className="lg:col-span-2 space-y-4">
-            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Meus Cursos</h3>
+            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
+              Meus Cursos
+            </h3>
             {isLoading ? (
-              <div className="text-xs text-gray-500 py-4">Carregando cursos...</div>
+              <div className="text-xs text-gray-500 py-4">
+                Carregando cursos...
+              </div>
             ) : myCourses.length > 0 ? (
               myCourses.map((course) => (
                 <button
@@ -182,16 +208,20 @@ const FeedbackPage: React.FC = () => {
                   onClick={() => setSelectedCourse(course.id)}
                   className={`w-full text-left p-4 rounded-2xl border transition-all ${
                     selectedCourse === course.id
-                      ? 'bg-brand-green/5 border-brand-green shadow-sm'
-                      : 'bg-white border-gray-100 hover:border-gray-200'
+                      ? "bg-brand-green/5 border-brand-green shadow-sm"
+                      : "bg-white border-gray-100 hover:border-gray-200"
                   }`}
                 >
-                  <h4 className="font-bold text-gray-900 text-sm mb-1">{course.title}</h4>
+                  <h4 className="font-bold text-gray-900 text-sm mb-1">
+                    {course.title}
+                  </h4>
                   <p className="text-xs text-gray-500">Curso</p>
                 </button>
               ))
             ) : (
-              <div className="text-xs text-gray-500">Sem cursos disponíveis.</div>
+              <div className="text-xs text-gray-500">
+                Sem cursos disponíveis.
+              </div>
             )}
           </div>
 
@@ -203,13 +233,23 @@ const FeedbackPage: React.FC = () => {
                   <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
                     <CheckCircle size={40} />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Feedback Enviado!</h3>
-                  <p className="text-gray-500">Obrigado por nos ajudar a crescer. Sua avaliação foi registrada.</p>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                    Feedback Enviado!
+                  </h3>
+                  <p className="text-gray-500">
+                    Obrigado por nos ajudar a crescer. Sua avaliação foi
+                    registrada.
+                  </p>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in duration-300">
+                <form
+                  onSubmit={handleSubmit}
+                  className="space-y-8 animate-in fade-in duration-300"
+                >
                   <div>
-                    <h3 className="font-bold text-gray-900 text-lg mb-6 text-center">Como você avalia este curso?</h3>
+                    <h3 className="font-bold text-gray-900 text-lg mb-6 text-center">
+                      Como você avalia este curso?
+                    </h3>
                     <div className="flex justify-center gap-3">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
@@ -224,19 +264,19 @@ const FeedbackPage: React.FC = () => {
                             size={48}
                             className={`transition-colors ${
                               (hoverRating || rating) >= star
-                                ? 'text-brand-accent fill-brand-accent'
-                                : 'text-gray-200'
+                                ? "text-brand-accent fill-brand-accent"
+                                : "text-gray-200"
                             }`}
                           />
                         </button>
                       ))}
                     </div>
                     <p className="text-center mt-4 text-sm font-bold text-brand-dark">
-                      {rating === 1 && 'Muito Insatisfeito'}
-                      {rating === 2 && 'Insatisfeito'}
-                      {rating === 3 && 'Regular'}
-                      {rating === 4 && 'Muito Bom'}
-                      {rating === 5 && 'Excelente!'}
+                      {rating === 1 && "Muito Insatisfeito"}
+                      {rating === 2 && "Insatisfeito"}
+                      {rating === 3 && "Regular"}
+                      {rating === 4 && "Muito Bom"}
+                      {rating === 5 && "Excelente!"}
                     </p>
                   </div>
 

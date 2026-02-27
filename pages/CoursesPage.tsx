@@ -1,6 +1,6 @@
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { BookOpen, Filter, Loader, Search, X } from "lucide-react";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import CourseCard from "../components/CourseCard";
 import { cacheService } from "../services/cacheService";
 import { db } from "../services/firebase";
