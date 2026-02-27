@@ -27,6 +27,7 @@ type CertificateStatus = "pending" | "confirmed" | "rejected";
 
 export interface Certificate {
   id?: string;
+  certificate_id?: string;
   student_uid: string;
   student_name: string;
   course_id: string;
@@ -143,8 +144,11 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
 
     try {
       const certificatesRef = collection(db, "certificates");
+      // Gerar ID com 5 dígitos aleatórios (00000-99999)
+      const certificateId = String(Math.floor(Math.random() * 100000)).padStart(5, '0');
 
       const newCertificate: Certificate = {
+        certificate_id: certificateId,
         student_uid: user.uid,
         student_name:
           profile.full_name ||
@@ -319,9 +323,21 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
       );
       y += 70;
 
+      // ID do Certificado - No Meio (Visível)
+      ctx.fillStyle = "#0E7038";
+      ctx.font = "12px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("Código de Autenticação:", 500, y);
+      y += 18;
+      ctx.font = "bold 18px monospace";
+      ctx.fillStyle = "#EAB308";
+      ctx.fillText(existingCertificate?.certificate_id || "00000", 500, y);
+      y += 35;
+
       // Assinaturas - 4 colunas (Instrutor, Diretor, Selo, Data)
       ctx.font = "12px Arial";
       ctx.textAlign = "center";
+      ctx.fillStyle = "#0E7038";
 
       const col1 = 150;
       const col2 = 380;
@@ -381,16 +397,6 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
       ctx.fillText(new Date().toLocaleDateString("pt-PT"), col4, y);
       ctx.font = "9px Arial";
       ctx.fillText("Data de Emissão", col4, y + 16);
-
-      // ID Autenticação
-      y += 60;
-      ctx.font = "9px monospace";
-      ctx.textAlign = "center";
-      ctx.fillText(
-        `ID: UEM-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-        500,
-        y,
-      );
 
       // Converter canvas para blob e fazer download
       canvas.toBlob((blob) => {

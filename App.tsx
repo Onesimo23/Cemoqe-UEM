@@ -74,6 +74,7 @@ import InstructorProgressPage from "./pages/instructor/StudentsProgressPage";
 
 // Admin Pages
 import AdminAnalyticsPage from "./pages/admin/AnalyticsPage";
+import AdminCertificateApprovalPage from "./pages/admin/CertificateApprovalPage";
 import AdminContentsPage from "./pages/admin/ContentManagementPage";
 import AdminModerationPage from "./pages/admin/CourseModerationPage";
 import AdminDashboardPage from "./pages/admin/DashboardPage";
@@ -423,6 +424,14 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute allowedRole="admin">
                   <AdminModerationPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/certificados"
+              element={
+                <ProtectedRoute allowedRole="admin">
+                  <AdminCertificateApprovalPage />
                 </ProtectedRoute>
               }
             />

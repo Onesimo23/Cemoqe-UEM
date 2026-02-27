@@ -1,5 +1,4 @@
 import {
-    Award,
     Bell,
     BookOpen,
     LayoutDashboard,
@@ -72,11 +71,6 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
       icon: <Users className="w-5 h-5" />,
       label: "Meus Formandos",
       href: "/instrutor/alunos",
-    },
-    {
-      icon: <Award className="w-5 h-5" />,
-      label: "Certificados",
-      href: "/instrutor/certificados",
     },
     {
       icon: <MessageSquare className="w-5 h-5" />,
