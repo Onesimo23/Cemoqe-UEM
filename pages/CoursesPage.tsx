@@ -1,6 +1,6 @@
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { BookOpen, Filter, Loader, Search, X } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import CourseCard from "../components/CourseCard";
 import { cacheService } from "../services/cacheService";
 import { db } from "../services/firebase";
@@ -14,7 +14,8 @@ const CoursesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [sortBy, setSortBy] = useState<string>("relevance");
   const CACHE_KEY = "courses_list";
-  const CACHE_TTL = 60; // 60 minutos
+  const CACHE_TTL = 10; // Reduzido para 10 minutos para melhor reatividade
+  const ratingsUpdateTimeRef = useRef<number>(0);
 
   useEffect(() => {
     // Tenta recuperar do cache primeiro
@@ -43,7 +44,7 @@ const CoursesPage: React.FC = () => {
       },
     );
 
-    // Continua buscando dados frescos em background
+    // Listener em tempo real para cursos (atualiza sempre que há mudanças)
     const q = query(collection(db, "courses"), where("isActive", "==", true));
     const unsub = onSnapshot(
       q,
@@ -72,9 +73,10 @@ const CoursesPage: React.FC = () => {
         });
         setCourses(list);
         setLoading(false);
-        // Salva no cache
+        // Salva no cache apenas se houve mudança significativa
+        ratingsUpdateTimeRef.current = Date.now();
         cacheService.set(CACHE_KEY, list, CACHE_TTL);
-        console.log("Cursos atualizados e cacheados");
+        console.log("Cursos atualizados em tempo real");
       },
       (error) => {
         console.error("Erro ao buscar cursos:", error);

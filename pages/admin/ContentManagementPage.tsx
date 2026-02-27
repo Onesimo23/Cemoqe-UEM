@@ -109,7 +109,7 @@ const ContentManagementPage: React.FC = () => {
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
   const [editingCourseData, setEditingCourseData] = useState({
     category: "",
-    relevanceScore: 0,
+    relevanceScore: 80,
   });
 
   // New Course Form State
@@ -117,7 +117,7 @@ const ContentManagementPage: React.FC = () => {
     title: "",
     instructor: "",
     category: "",
-    relevanceScore: 90,
+    relevanceScore: 80,
   });
 
   // Função auxiliar para recalcular contagens
@@ -161,7 +161,7 @@ const ContentManagementPage: React.FC = () => {
             rating: data.rating || 0,
             reviewCount: data.reviewCount || 0,
             duration: data.duration || "0h",
-            relevanceScore: data.relevanceScore || 0,
+            relevanceScore: data.relevanceScore || 80,
             imageUrl: data.imageUrl || "",
             isActive: data.isActive !== false,
             badgeColor: data.badgeColor || "bg-stone-100 text-stone-800",
@@ -471,7 +471,7 @@ const ContentManagementPage: React.FC = () => {
         title: "",
         instructor: "",
         category: "",
-        relevanceScore: 90,
+        relevanceScore: 80,
       });
     } catch (error) {
       console.error("Erro ao criar curso:", error);
@@ -550,7 +550,7 @@ const ContentManagementPage: React.FC = () => {
     setEditingCourseId(course.id);
     setEditingCourseData({
       category: course.category || "",
-      relevanceScore: course.relevanceScore || 0,
+      relevanceScore: course.relevanceScore || 80,
     });
   };
 
