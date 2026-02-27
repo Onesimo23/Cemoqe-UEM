@@ -1,25 +1,25 @@
 import {
-    addDoc,
-    collection,
-    doc,
-    getDoc,
-    onSnapshot,
-    query,
-    serverTimestamp,
-    updateDoc,
-    where,
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
 } from "firebase/firestore";
 import {
-    Filter,
-    Heart,
-    MessageCircle,
-    MessageSquare,
-    Plus,
-    Search,
-    Send,
-    TrendingUp,
-    Users,
-    X,
+  Filter,
+  Heart,
+  MessageCircle,
+  MessageSquare,
+  Plus,
+  Search,
+  Send,
+  TrendingUp,
+  Users,
+  X,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -83,17 +83,17 @@ const CommunityPage: React.FC = () => {
 
   // Função para buscar nome real do usuário a partir do uid
   const fetchUserName = async (uid: string): Promise<string> => {
-    if (!uid) return "Instrutor";
+    if (!uid) return "Tutor";
     try {
       const userRef = doc(db, "profiles", uid);
       const userSnap = await getDoc(userRef);
       if (userSnap.exists()) {
-        return userSnap.data().full_name || "Instrutor";
+        return userSnap.data().full_name || "Tutor";
       }
-      return "Instrutor";
+      return "Tutor";
     } catch (error) {
       console.error("Erro ao buscar nome do usuário:", error);
-      return "Instrutor";
+      return "Tutor";
     }
   };
 
@@ -123,8 +123,7 @@ const CommunityPage: React.FC = () => {
           return {
             id: doc.id,
             title: data?.title || "Tópico",
-            author:
-              data?.user_name || data?.author || authorName || "Instrutor",
+            author: data?.user_name || data?.author || authorName || "Tutor",
             authorUid: uid,
             avatar:
               data?.avatar ||
@@ -359,11 +358,11 @@ const CommunityPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
               <Users className="w-8 h-8 text-brand-green" />
-              Comunidade de Instrutores
+              Comunidade de Tutores
             </h1>
             <p className="text-slate-500 mt-2">
               Espaço exclusivo para trocar experiências didáticas, discutir a
-              plataforma e colaborar com outros docentes.
+              plataforma e colaborar com outros Tutores.
             </p>
           </div>
           <button
@@ -419,11 +418,11 @@ const CommunityPage: React.FC = () => {
               <div className="absolute -top-6 -right-6 w-20 h-20 bg-brand-green/20 rounded-full blur-2xl"></div>
               <TrendingUp className="w-8 h-8 text-brand-green mb-3 relative z-10" />
               <h3 className="font-bold text-lg mb-2 relative z-10">
-                Dica Docente
+                Dica Tutor
               </h3>
               <p className="text-sm text-slate-400 mb-4 relative z-10">
-                Instrutores que colaboram na comunidade tendem a ter cursos com
-                40% mais satisfação.
+                Tutores que colaboram na comunidade tendem a ter cursos com 40%
+                mais satisfação.
               </p>
               <button
                 onClick={() => setIsCreateModalOpen(true)}
@@ -548,7 +547,7 @@ const CommunityPage: React.FC = () => {
               <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-white">
                 <div>
                   <h3 className="font-bold text-xl text-slate-900">
-                    Nova Discussão Docente
+                    Nova Discussão Tutor
                   </h3>
                   <p className="text-xs text-slate-500 mt-1">
                     Compartilhe sua visão com outros instrutores
@@ -766,7 +765,7 @@ const CommunityPage: React.FC = () => {
                       Nenhuma resposta ainda
                     </p>
                     <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-1">
-                      Seja o primeiro instrutor a comentar
+                      Seja o primeiro tutor a comentar
                     </p>
                   </div>
                 )}

@@ -145,7 +145,10 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
     try {
       const certificatesRef = collection(db, "certificates");
       // Gerar ID com 5 dígitos aleatórios (00000-99999)
-      const certificateId = String(Math.floor(Math.random() * 100000)).padStart(5, '0');
+      const certificateId = String(Math.floor(Math.random() * 100000)).padStart(
+        5,
+        "0",
+      );
 
       const newCertificate: Certificate = {
         certificate_id: certificateId,

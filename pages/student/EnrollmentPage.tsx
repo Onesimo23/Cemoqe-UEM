@@ -235,9 +235,9 @@ const EnrollmentPage: React.FC = () => {
                   {course.title}
                 </h3>
                 <p className="text-sm text-gray-500 mb-4">
-                  Instrutor:{" "}
+                  Tutor:{" "}
                   <span className="font-medium text-gray-700">
-                    {course.instructor || "Instrutor"}
+                    {course.instructor || "Tutor"}
                   </span>
                 </p>
                 <div className="text-xs text-gray-500">

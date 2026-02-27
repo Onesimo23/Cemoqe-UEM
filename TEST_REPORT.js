@@ -1,7 +1,7 @@
 /**
  * DOCUMENTO DE TESTE - PAINEL DE CERTIFICADOS DO ADMIN
  * Data: 27/02/2026
- * 
+ *
  * RESUMO DAS ALTERAÇÕES E TESTES REALIZADOS
  */
 
@@ -62,7 +62,7 @@ console.log(`
    Teste: Procurar "45821"
    Resultado: ✅ PASSOU
    Detalhes: Encontrado corretamente 1 certificado com ID 45821
-   
+
 ✅ BUSCA POR NOME
    Teste: Procurar "Maria"
    Resultado: ✅ PASSOU
@@ -172,29 +172,29 @@ ESTADO: "Rejeitado"
 ╰─────────────────────────────────────────────────────────────────────────────╯
 
 1. Ir para: http://localhost:3001/#/admin/certificados
-   
+
 2. Teste de Filtro por Estado:
    ├─ Clique em "À Espera"
    ├─ Deve mostrar apenas certificados com status pending
-   
+
 3. Teste de Busca por ID:
    ├─ Escreva um número de 5 dígitos (ex: 45821)
    ├─ Deve filtrar certificados com esse ID automaticamente
-   
+
 4. Teste de Busca por Nome:
    ├─ Escreva um nome (ex: "João")
    ├─ Deve mostrar apenas certificados com esse nome
-   
+
 5. Teste Combinado:
    ├─ Selecione "Confirmados"
    ├─ Escreva um nome do formando
    ├─ Deve filtrar por ambos critérios simultaneamente
-   
+
 6. Teste de Aprovação:
    ├─ Filtrar para "À Espera"
    ├─ Clicar em "Aprovar Certificado"
    ├─ Status deve mudar para "Confirmado"
-   
+
 7. Teste de Rejeição:
    ├─ Filtrar para "À Espera"
    ├─ Clicar em "Rejeitar"

@@ -62,9 +62,9 @@ import StudentSettingsPage from "./pages/student/SettingsPage";
 
 // Instructor Pages
 import InstructorCertificatesPage from "./pages/instructor/CertificatesManagementPage";
+import InstructorCommunityPage from "./pages/instructor/CommunityPage";
 import InstructorCourseEditorPage from "./pages/instructor/CourseEditorPage";
 import InstructorDashboardPage from "./pages/instructor/DashboardPage";
-import InstructorCommunityPage from "./pages/instructor/CommunityPage";
 import InstructorCoursesPage from "./pages/instructor/MyCoursesPage";
 import InstructorStudentsPage from "./pages/instructor/MyStudentsPage";
 import InstructorQuestionsPage from "./pages/instructor/QuestionsPage";

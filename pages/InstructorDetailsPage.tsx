@@ -30,7 +30,7 @@ const InstructorDetailsPage: React.FC = () => {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-brand-green border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-600">Carregando detalhes do instrutor...</p>
+          <p className="text-gray-600">Carregando detalhes do tutor...</p>
         </div>
       </div>
     );
@@ -41,10 +41,10 @@ const InstructorDetailsPage: React.FC = () => {
       <div className="min-h-screen bg-white flex items-center justify-center px-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center max-w-md">
           <p className="text-red-800 font-semibold mb-2">
-            Erro ao carregar instrutor
+            Erro ao carregar tutor
           </p>
           <p className="text-red-600 text-sm mb-6">
-            {error || "Instrutor não encontrado"}
+            {error || "Tutor não encontrado"}
           </p>
           <button
             onClick={() => navigate("/tutores")}
@@ -92,7 +92,7 @@ const InstructorDetailsPage: React.FC = () => {
                 {tutor.full_name}
               </h1>
               <p className="text-brand-light text-lg mb-4">
-                Instrutor Certificado • {tutor.status}
+                Tutor Certificado • {tutor.status}
               </p>
 
               {/* Quick Stats */}
@@ -178,21 +178,21 @@ const InstructorDetailsPage: React.FC = () => {
               </div>
             </section>
 
-            {/* Sobre o Instrutor */}
+            {/* Sobre o Tutor */}
             <section className="mb-12">
               <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
                 <Award className="w-6 h-6 text-brand-green" />
-                Sobre o Instrutor
+                Sobre o Tutor
               </h2>
               <div className="bg-gray-50 rounded-lg p-8">
                 <p className="text-gray-700 leading-relaxed text-lg">
                   {tutor.bio ||
-                    "Instrutor certificado e experiente na plataforma UEM Cursos online com um excelente histórico de ensino e satisfação dos formandos."}
+                    "Tutor certificado e experiente na plataforma UEM Cursos online com um excelente histórico de ensino e satisfação dos formandos."}
                 </p>
               </div>
             </section>
 
-            {/* Cursos do Instrutor */}
+            {/* Cursos do Tutor */}
             <section>
               <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
                 <PlayCircle className="w-6 h-6 text-brand-green" />
@@ -203,7 +203,7 @@ const InstructorDetailsPage: React.FC = () => {
                 <div className="bg-gray-50 rounded-lg p-12 text-center">
                   <PlayCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-600">
-                    Este instrutor ainda não possui cursos publicados
+                    Este tutor ainda não possui cursos publicados
                   </p>
                 </div>
               ) : (

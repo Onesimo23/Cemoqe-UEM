@@ -1,9 +1,9 @@
 import {
-  collection,
-  limit,
-  onSnapshot,
-  query,
-  where,
+    collection,
+    limit,
+    onSnapshot,
+    query,
+    where,
 } from "firebase/firestore";
 import { ArrowRight, Clock, Flame, PlayCircle, Trophy } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -87,7 +87,7 @@ const DashboardPage: React.FC = () => {
             course?.imageUrl ||
             course?.image ||
             "https://via.placeholder.com/320x180.png?text=Curso",
-          instructor: course?.instructor || "Instrutor",
+          instructor: course?.instructor || "Tutor",
           progress,
           totalLessons,
           completedLessons: prog.completed,
@@ -110,7 +110,7 @@ const DashboardPage: React.FC = () => {
             imageUrl:
               e.imageUrl ||
               "https://via.placeholder.com/320x180.png?text=Curso",
-            instructor: e.instructor || "Instrutor",
+            instructor: e.instructor || "Tutor",
             progress: 0,
             totalLessons: 0,
             completedLessons: 0,
@@ -548,7 +548,7 @@ const DashboardPage: React.FC = () => {
                       {course.title}
                     </h4>
                     <p className="text-xs text-gray-500">
-                      {course.instructor || "Instrutor"}
+                      {course.instructor || "Tutor"}
                     </p>
                   </Link>
                 ))}

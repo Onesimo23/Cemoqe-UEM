@@ -1,13 +1,13 @@
 import {
-  collection,
-  doc,
-  getDocs,
-  limit,
-  onSnapshot,
-  query,
-  Timestamp,
-  updateDoc,
-  where,
+    collection,
+    doc,
+    getDocs,
+    limit,
+    onSnapshot,
+    query,
+    Timestamp,
+    updateDoc,
+    where,
 } from "firebase/firestore";
 import { AlertCircle, Check, Clock, Search, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -367,11 +367,15 @@ const CertificatesManagementPage: React.FC = () => {
                           <h3 className="text-lg font-semibold text-gray-900">
                             {cert.student_name}
                           </h3>
-                          <p className="text-gray-600 mt-1">{cert.course_title}</p>
+                          <p className="text-gray-600 mt-1">
+                            {cert.course_title}
+                          </p>
                         </div>
                         {cert.certificate_id && (
                           <div className="text-right ml-4">
-                            <p className="text-xs text-gray-500">ID do Certificado</p>
+                            <p className="text-xs text-gray-500">
+                              ID do Certificado
+                            </p>
                             <p className="text-sm font-mono font-semibold text-gray-900 bg-gray-100 px-2 py-1 rounded">
                               {cert.certificate_id}
                             </p>

@@ -38,11 +38,10 @@ import { db } from "../../services/firebase";
 import { isSupabaseConfigured, supabase } from "../../services/supabase";
 
 // PDF Viewer Imports
-import { Worker, Viewer } from '@react-pdf-viewer/core';
-import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
-import '@react-pdf-viewer/core/lib/styles/index.css';
-import '@react-pdf-viewer/default-layout/lib/styles/index.css';
-
+import { Viewer, Worker } from "@react-pdf-viewer/core";
+import "@react-pdf-viewer/core/lib/styles/index.css";
+import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout";
+import "@react-pdf-viewer/default-layout/lib/styles/index.css";
 
 const CoursePlayerPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -357,7 +356,7 @@ const CoursePlayerPage: React.FC = () => {
       });
       await updateDoc(doc(db, "questions", q.id), {
         repliesCount: increment(1),
-        lastActivity: serverTimestamp()
+        lastActivity: serverTimestamp(),
       });
       setReplyDraft((prev) => ({ ...prev, [q.id]: "" }));
       setOpenReplies((prev) => ({ ...prev, [q.id]: true }));
@@ -497,15 +496,20 @@ const CoursePlayerPage: React.FC = () => {
   // Carregar dúvidas (questions) em tempo real para o curso atual
   useEffect(() => {
     if (!id) return;
-    
+
     let unsub: (() => void) | null = null;
 
     const startQuery = (useOrderBy: boolean) => {
-      const q = useOrderBy 
-        ? query(collection(db, "questions"), where("course_id", "==", id), orderBy("createdAt", "desc"))
+      const q = useOrderBy
+        ? query(
+            collection(db, "questions"),
+            where("course_id", "==", id),
+            orderBy("createdAt", "desc"),
+          )
         : query(collection(db, "questions"), where("course_id", "==", id));
-      
-      return onSnapshot(q, 
+
+      return onSnapshot(
+        q,
         (snap) => {
           const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
           setQuestions(list);
@@ -513,16 +517,20 @@ const CoursePlayerPage: React.FC = () => {
         (err) => {
           console.error("Erro na consulta de questões:", err);
           if (useOrderBy) {
-            console.log("Tentando consulta sem orderBy (provável falta de índice)...");
+            console.log(
+              "Tentando consulta sem orderBy (provável falta de índice)...",
+            );
             if (unsub) unsub();
             unsub = startQuery(false);
           }
-        }
+        },
       );
     };
 
     unsub = startQuery(true);
-    return () => { if (unsub) unsub(); };
+    return () => {
+      if (unsub) unsub();
+    };
   }, [id]);
 
   // Carregar submissões do aluno para este curso
@@ -1036,10 +1044,7 @@ const CoursePlayerPage: React.FC = () => {
 
         // PDFs: Usar <embed> nativo - funciona em todos os navegadores
         if (isPdf) {
-          console.log(
-            "[resolveDocumentViewer] PDF from Supabase:",
-            src,
-          );
+          console.log("[resolveDocumentViewer] PDF from Supabase:", src);
           return {
             type: "pdf",
             src: src, // Mantém URL com token intacta
@@ -1313,7 +1318,7 @@ const CoursePlayerPage: React.FC = () => {
                 <article className="prose prose-green max-w-none">
                   {(() => {
                     const c = String(current?.lesson?.content || "");
-                    
+
                     // Tentar visualizar como blocos nativos
                     try {
                       const blocks = JSON.parse(c);
@@ -1321,58 +1326,103 @@ const CoursePlayerPage: React.FC = () => {
                         return (
                           <div className="space-y-6">
                             {blocks.map((block: any) => {
-                              const blockEmoji = (block.emoji || block.iconUrl) ? (
-                                <div className="w-10 h-10 bg-white rounded-full border-2 border-brand-green/10 shadow-lg flex items-center justify-center overflow-hidden shrink-0 ml-4">
-                                  {block.emoji ? (
-                                    <span className="text-xl">{block.emoji}</span>
-                                  ) : (
-                                    <img src={block.iconUrl} className="w-full h-full object-cover" alt="icon" />
-                                  )}
-                                </div>
-                              ) : null;
+                              const blockEmoji =
+                                block.emoji || block.iconUrl ? (
+                                  <div className="w-10 h-10 bg-white rounded-full border-2 border-brand-green/10 shadow-lg flex items-center justify-center overflow-hidden shrink-0 ml-4">
+                                    {block.emoji ? (
+                                      <span className="text-xl">
+                                        {block.emoji}
+                                      </span>
+                                    ) : (
+                                      <img
+                                        src={block.iconUrl}
+                                        className="w-full h-full object-cover"
+                                        alt="icon"
+                                      />
+                                    )}
+                                  </div>
+                                ) : null;
 
                               switch (block.type) {
                                 case "h1":
                                   return (
-                                    <h1 key={block.id} className="text-3xl font-extrabold text-gray-900 border-b pb-4 mb-4 flex items-center justify-between">
-                                      <span className="flex-1">{block.value}</span> {blockEmoji}
+                                    <h1
+                                      key={block.id}
+                                      className="text-3xl font-extrabold text-gray-900 border-b pb-4 mb-4 flex items-center justify-between"
+                                    >
+                                      <span className="flex-1">
+                                        {block.value}
+                                      </span>{" "}
+                                      {blockEmoji}
                                     </h1>
                                   );
                                 case "h2":
                                   return (
-                                    <h2 key={block.id} className="text-2xl font-bold text-gray-800 mt-8 mb-3 flex items-center justify-between">
-                                      <span className="flex-1">{block.value}</span> {blockEmoji}
+                                    <h2
+                                      key={block.id}
+                                      className="text-2xl font-bold text-gray-800 mt-8 mb-3 flex items-center justify-between"
+                                    >
+                                      <span className="flex-1">
+                                        {block.value}
+                                      </span>{" "}
+                                      {blockEmoji}
                                     </h2>
                                   );
                                 case "p":
                                   return (
-                                    <p key={block.id} className="text-gray-700 leading-relaxed text-lg mb-4 flex items-center justify-between">
-                                      <span className="flex-1">{block.value}</span> {blockEmoji}
+                                    <p
+                                      key={block.id}
+                                      className="text-gray-700 leading-relaxed text-lg mb-4 flex items-center justify-between"
+                                    >
+                                      <span className="flex-1">
+                                        {block.value}
+                                      </span>{" "}
+                                      {blockEmoji}
                                     </p>
                                   );
                                 case "quote":
                                   return (
-                                    <blockquote key={block.id} className="border-l-4 border-brand-green bg-green-50/50 p-6 rounded-r-xl my-6 italic text-gray-700 text-lg shadow-sm flex items-center justify-between">
-                                      <span className="flex-1">{block.value}</span> {blockEmoji}
+                                    <blockquote
+                                      key={block.id}
+                                      className="border-l-4 border-brand-green bg-green-50/50 p-6 rounded-r-xl my-6 italic text-gray-700 text-lg shadow-sm flex items-center justify-between"
+                                    >
+                                      <span className="flex-1">
+                                        {block.value}
+                                      </span>{" "}
+                                      {blockEmoji}
                                     </blockquote>
                                   );
                                 case "list":
                                   return (
-                                    <div key={block.id} className="flex gap-4 items-center mb-4 justify-between">
-                                      <p className="text-gray-700 text-lg flex-1">{block.value}</p>
-                                      {blockEmoji || <div className="w-2 h-2 rounded-full bg-brand-green shrink-0 mr-2" />}
+                                    <div
+                                      key={block.id}
+                                      className="flex gap-4 items-center mb-4 justify-between"
+                                    >
+                                      <p className="text-gray-700 text-lg flex-1">
+                                        {block.value}
+                                      </p>
+                                      {blockEmoji || (
+                                        <div className="w-2 h-2 rounded-full bg-brand-green shrink-0 mr-2" />
+                                      )}
                                     </div>
                                   );
                                 case "image":
                                   return (
-                                    <div key={block.id} className="my-8 flex flex-col items-center">
+                                    <div
+                                      key={block.id}
+                                      className="my-8 flex flex-col items-center"
+                                    >
                                       <div className="max-w-xl w-full rounded-2xl overflow-hidden shadow-lg border border-gray-100 group transition-all hover:shadow-xl relative">
                                         {blockEmoji && (
                                           <div className="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-sm p-1 rounded-full shadow-md">
                                             {blockEmoji}
                                           </div>
                                         )}
-                                        <img src={block.value} alt="Conteúdo da aula" className="w-full h-auto" />
+                                        <img
+                                          src={block.value}
+                                          alt="Conteúdo da aula"
+                                          className="w-full h-auto"
+                                        />
                                       </div>
                                       {block.fileName && (
                                         <p className="mt-3 text-xs text-gray-400 italic font-medium">
@@ -1383,13 +1433,21 @@ const CoursePlayerPage: React.FC = () => {
                                   );
                                 case "file":
                                   return (
-                                    <div key={block.id} className="my-6 p-6 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 group">
+                                    <div
+                                      key={block.id}
+                                      className="my-6 p-6 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 group"
+                                    >
                                       <div className="p-4 bg-white rounded-xl shadow-sm text-brand-green group-hover:scale-110 transition-transform">
                                         <File size={32} />
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <h4 className="text-lg font-bold text-gray-900 truncate">{block.fileName || "Ficheiro para Download"}</h4>
-                                        <p className="text-sm text-gray-500">Recurso adicional da aula</p>
+                                        <h4 className="text-lg font-bold text-gray-900 truncate">
+                                          {block.fileName ||
+                                            "Ficheiro para Download"}
+                                        </h4>
+                                        <p className="text-sm text-gray-500">
+                                          Recurso adicional da aula
+                                        </p>
                                       </div>
                                       <a
                                         href={block.value}
@@ -1478,7 +1536,9 @@ const CoursePlayerPage: React.FC = () => {
                           </div>
                         ) : viewer.type === "pdf" ? (
                           <div className="w-full h-full bg-white">
-                            <Worker workerUrl={`https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js`}>
+                            <Worker
+                              workerUrl={`https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js`}
+                            >
                               <Viewer
                                 fileUrl={viewer.src}
                                 plugins={[defaultLayoutPluginInstance]}
@@ -1655,40 +1715,46 @@ const CoursePlayerPage: React.FC = () => {
                   {(() => {
                     const lesson = current?.lesson || {};
                     const courseLevel = course || {};
-                    
+
                     // 1. Extrair materiais definidos na lição ou curso
-                    let mats = [...((lesson.materials ??
-                      lesson.materiais ??
-                      lesson.attachments ??
-                      lesson.anexos ??
-                      courseLevel.materials ??
-                      courseLevel.materiais ??
-                      []) as any[])];
+                    let mats = [
+                      ...((lesson.materials ??
+                        lesson.materiais ??
+                        lesson.attachments ??
+                        lesson.anexos ??
+                        courseLevel.materials ??
+                        courseLevel.materiais ??
+                        []) as any[]),
+                    ];
 
                     // 2. Extrair materiais dos blocos de conteúdo nativo (se for texto)
                     if (lesson.type === "text" && lesson.content) {
-                        try {
-                            const blocks = JSON.parse(lesson.content);
-                            if (Array.isArray(blocks)) {
-                                const fileBlocks = blocks
-                                    .filter((b: any) => b.type === "file" && b.value)
-                                    .map((b: any) => ({
-                                        title: b.fileName || "Ficheiro da Aula",
-                                        url: b.value,
-                                        type: (b.value.split(".").pop() || "FILE").toUpperCase()
-                                    }));
-                                mats = [...mats, ...fileBlocks];
-                            }
-                        } catch (e) {}
+                      try {
+                        const blocks = JSON.parse(lesson.content);
+                        if (Array.isArray(blocks)) {
+                          const fileBlocks = blocks
+                            .filter((b: any) => b.type === "file" && b.value)
+                            .map((b: any) => ({
+                              title: b.fileName || "Ficheiro da Aula",
+                              url: b.value,
+                              type: (
+                                b.value.split(".").pop() || "FILE"
+                              ).toUpperCase(),
+                            }));
+                          mats = [...mats, ...fileBlocks];
+                        }
+                      } catch (e) {}
                     }
-                    
+
                     // 3. Adicionar o próprio conteúdo se a lição for do tipo 'document'
                     if (lesson.type === "document" && lesson.content) {
-                        mats.push({
-                            title: lesson.title || "Documento da Aula",
-                            url: lesson.content,
-                            type: (lesson.content.split(".").pop() || "PDF").toUpperCase()
-                        });
+                      mats.push({
+                        title: lesson.title || "Documento da Aula",
+                        url: lesson.content,
+                        type: (
+                          lesson.content.split(".").pop() || "PDF"
+                        ).toUpperCase(),
+                      });
                     }
 
                     if (mats.length === 0) {
@@ -1700,7 +1766,9 @@ const CoursePlayerPage: React.FC = () => {
                     }
 
                     // Remover duplicatas por URL
-                    const uniqueMats = mats.filter((v, i, a) => a.findIndex(t => t.url === v.url) === i);
+                    const uniqueMats = mats.filter(
+                      (v, i, a) => a.findIndex((t) => t.url === v.url) === i,
+                    );
 
                     return uniqueMats.map((m: any, idx: number) => {
                       const title =
@@ -1816,13 +1884,15 @@ const CoursePlayerPage: React.FC = () => {
                       <div className="relative group">
                         <textarea
                           className="w-full border border-gray-200 rounded-2xl p-4 text-sm focus:outline-none focus:ring-4 focus:ring-brand-green/10 focus:border-brand-green transition-all bg-white shadow-sm resize-none"
-                          placeholder="Tem alguma dúvida sobre esta aula? Pergunte aqui e o instrutor ou colegas irão ajudar..."
+                          placeholder="Tem alguma dúvida sobre esta aula? Pergunte aqui e o tutor ou colegas irão ajudar..."
                           rows={3}
                           value={newQuestion}
                           onChange={(e) => setNewQuestion(e.target.value)}
                         ></textarea>
                         <div className="absolute bottom-3 right-3 flex items-center gap-2 opacity-0 group-focus-within:opacity-100 transition-opacity">
-                           <span className="text-[10px] text-gray-400 font-medium">Pressione Enter ↵ para enviar</span>
+                          <span className="text-[10px] text-gray-400 font-medium">
+                            Pressione Enter ↵ para enviar
+                          </span>
                         </div>
                       </div>
                       <div className="flex justify-end mt-3">
@@ -1835,7 +1905,10 @@ const CoursePlayerPage: React.FC = () => {
                                 course_id: id,
                                 lesson_id: currentLessonId || null,
                                 user_uid: user.uid,
-                                user_name: user.displayName || profile?.full_name || "Formando",
+                                user_name:
+                                  user.displayName ||
+                                  profile?.full_name ||
+                                  "Formando",
                                 instructor_uid:
                                   course?.instructor_uid ||
                                   course?.creator_uid ||
@@ -1847,9 +1920,15 @@ const CoursePlayerPage: React.FC = () => {
                                 createdAt: serverTimestamp(),
                               });
                               setNewQuestion("");
-                              showToast("Sua dúvida foi enviada com sucesso!", "success");
+                              showToast(
+                                "Sua dúvida foi enviada com sucesso!",
+                                "success",
+                              );
                             } catch (e) {
-                              showToast("Não foi possível enviar sua dúvida.", "error");
+                              showToast(
+                                "Não foi possível enviar sua dúvida.",
+                                "error",
+                              );
                             }
                           }}
                           className="bg-brand-green text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-brand-dark transition-all shadow-lg hover:shadow-brand-green/20 active:scale-95 flex items-center gap-2"
@@ -1861,19 +1940,24 @@ const CoursePlayerPage: React.FC = () => {
                     </div>
                   </div>
 
-                   {questions.length === 0 ? (
+                  {questions.length === 0 ? (
                     <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                       <p className="text-sm text-gray-400">
-                        Nenhuma dúvida registrada ainda. Seja o primeiro a perguntar!
+                        Nenhuma dúvida registrada ainda. Seja o primeiro a
+                        perguntar!
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-6">
                       {(() => {
                         // Separar questões da lição atual e outras
-                        const lessonQuestions = questions.filter(q => q.lesson_id === currentLessonId);
-                        const otherQuestions = questions.filter(q => q.lesson_id !== currentLessonId);
-                        
+                        const lessonQuestions = questions.filter(
+                          (q) => q.lesson_id === currentLessonId,
+                        );
+                        const otherQuestions = questions.filter(
+                          (q) => q.lesson_id !== currentLessonId,
+                        );
+
                         return (
                           <>
                             {lessonQuestions.length > 0 && (
@@ -1886,36 +1970,70 @@ const CoursePlayerPage: React.FC = () => {
                                   <Comment
                                     key={q.id}
                                     author={q.user_name || "Formando"}
-                                    date={q.createdAt?.toDate ? q.createdAt.toDate().toLocaleString() : ""}
+                                    date={
+                                      q.createdAt?.toDate
+                                        ? q.createdAt.toDate().toLocaleString()
+                                        : ""
+                                    }
                                     text={q.text}
-                                    replies={q.repliesCount || answersByQ[q.id]?.length || 0}
-                                    onReplyClick={() => { if (!openReplies[q.id]) toggleReplies(q.id); }}
+                                    replies={
+                                      q.repliesCount ||
+                                      answersByQ[q.id]?.length ||
+                                      0
+                                    }
+                                    onReplyClick={() => {
+                                      if (!openReplies[q.id])
+                                        toggleReplies(q.id);
+                                    }}
                                     onRepliesClick={() => toggleReplies(q.id)}
                                     isRepliesOpen={!!openReplies[q.id]}
                                     replyValue={replyDraft[q.id] || ""}
-                                    onReplyChange={(v: string) => setReplyDraft((prev) => ({ ...prev, [q.id]: v }))}
+                                    onReplyChange={(v: string) =>
+                                      setReplyDraft((prev) => ({
+                                        ...prev,
+                                        [q.id]: v,
+                                      }))
+                                    }
                                     onReplySubmit={() => sendReply(q)}
                                     answersList={answersByQ[q.id] || []}
                                   />
                                 ))}
                               </div>
                             )}
-                            
+
                             {otherQuestions.length > 0 && (
                               <div className="space-y-4 pt-4">
-                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Outras Dúvidas do Curso</h4>
+                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                                  Outras Dúvidas do Curso
+                                </h4>
                                 {otherQuestions.map((q: any) => (
                                   <Comment
                                     key={q.id}
                                     author={q.user_name || "Formando"}
-                                    date={q.createdAt?.toDate ? q.createdAt.toDate().toLocaleString() : ""}
+                                    date={
+                                      q.createdAt?.toDate
+                                        ? q.createdAt.toDate().toLocaleString()
+                                        : ""
+                                    }
                                     text={q.text}
-                                    replies={q.repliesCount || answersByQ[q.id]?.length || 0}
-                                    onReplyClick={() => { if (!openReplies[q.id]) toggleReplies(q.id); }}
+                                    replies={
+                                      q.repliesCount ||
+                                      answersByQ[q.id]?.length ||
+                                      0
+                                    }
+                                    onReplyClick={() => {
+                                      if (!openReplies[q.id])
+                                        toggleReplies(q.id);
+                                    }}
                                     onRepliesClick={() => toggleReplies(q.id)}
                                     isRepliesOpen={!!openReplies[q.id]}
                                     replyValue={replyDraft[q.id] || ""}
-                                    onReplyChange={(v: string) => setReplyDraft((prev) => ({ ...prev, [q.id]: v }))}
+                                    onReplyChange={(v: string) =>
+                                      setReplyDraft((prev) => ({
+                                        ...prev,
+                                        [q.id]: v,
+                                      }))
+                                    }
                                     onReplySubmit={() => sendReply(q)}
                                     answersList={answersByQ[q.id] || []}
                                     lessonTitle={q.lesson_title}
@@ -2068,7 +2186,7 @@ const CoursePlayerPage: React.FC = () => {
           onSuccess={() => {
             setShowCertificateModal(false);
             showToast(
-              "Certificado submetido! Aguarde confirmação do instrutor.",
+              "Certificado submetido! Aguarde confirmação do tutor.",
               "success",
             );
           }}
@@ -2460,7 +2578,7 @@ const Comment = ({
   onReplyChange,
   onReplySubmit,
   answersList,
-  lessonTitle
+  lessonTitle,
 }: any) => (
   <div className="flex gap-4 group">
     <div className="w-10 h-10 rounded-full bg-brand-green/10 flex items-center justify-center font-bold text-brand-green text-sm flex-shrink-0">
@@ -2481,7 +2599,7 @@ const Comment = ({
         </div>
         <p className="text-sm text-gray-600 leading-relaxed">{text}</p>
       </div>
-      
+
       <div className="flex items-center gap-4 mt-2 ml-2">
         <button
           className="text-xs font-bold text-gray-500 hover:text-brand-green transition-colors"
@@ -2494,8 +2612,10 @@ const Comment = ({
             className="text-xs font-bold text-brand-green hover:underline cursor-pointer flex items-center gap-1"
             onClick={onRepliesClick}
           >
-            {replies} {replies === 1 ? 'resposta' : 'respostas'}
-            <ChevronDown className={`w-3 h-3 transition-transform ${isRepliesOpen ? 'rotate-180' : ''}`} />
+            {replies} {replies === 1 ? "resposta" : "respostas"}
+            <ChevronDown
+              className={`w-3 h-3 transition-transform ${isRepliesOpen ? "rotate-180" : ""}`}
+            />
           </button>
         )}
       </div>
@@ -2508,15 +2628,17 @@ const Comment = ({
               <div
                 key={a.id}
                 className={`p-3 rounded-xl shadow-sm ${
-                  isInstructor 
-                    ? "bg-brand-green/5 border border-brand-green/10" 
+                  isInstructor
+                    ? "bg-brand-green/5 border border-brand-green/10"
                     : "bg-gray-50 border border-gray-100"
                 }`}
               >
                 <div className="flex justify-between items-center mb-1">
                   <div className="flex items-center gap-2">
-                    <span className={`text-[11px] font-bold ${isInstructor ? "text-brand-green" : "text-gray-700"}`}>
-                      {a.author_name || (isInstructor ? "Instrutor" : "Formando")}
+                    <span
+                      className={`text-[11px] font-bold ${isInstructor ? "text-brand-green" : "text-gray-700"}`}
+                    >
+                      {a.author_name || (isInstructor ? "Tutor" : "Formando")}
                     </span>
                     {isInstructor && (
                       <span className="text-[9px] bg-brand-green text-white px-1.5 py-0.5 rounded-full font-black uppercase">
@@ -2525,20 +2647,31 @@ const Comment = ({
                     )}
                   </div>
                   <span className="text-[10px] text-gray-400">
-                    {a.createdAt?.toDate ? a.createdAt.toDate().toLocaleString([], {hour: '2-digit', minute:'2-digit', day: '2-digit', month: '2-digit'}) : ""}
+                    {a.createdAt?.toDate
+                      ? a.createdAt
+                          .toDate()
+                          .toLocaleString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            day: "2-digit",
+                            month: "2-digit",
+                          })
+                      : ""}
                   </span>
                 </div>
-                <div className="text-sm text-gray-700 leading-snug">{a.text}</div>
+                <div className="text-sm text-gray-700 leading-snug">
+                  {a.text}
+                </div>
               </div>
             );
           })}
-          
+
           <div className="flex items-center gap-2 mt-4">
             <input
               type="text"
               value={replyValue}
               onChange={(e) => onReplyChange?.(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && onReplySubmit()}
+              onKeyDown={(e) => e.key === "Enter" && onReplySubmit()}
               placeholder="Escreva sua resposta..."
               className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green/10 transition-all shadow-inner"
             />

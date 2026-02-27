@@ -125,8 +125,8 @@ const InstructorsPage: React.FC = () => {
                 {/* Bio */}
                 <div className="p-6">
                   <p className="text-gray-500 text-sm leading-relaxed mb-6">
-                    Instrutor certificado e com experiência na plataforma UEM
-                    Cursos online.
+                    Tutor certificado e com experiência na plataforma UEM Cursos
+                    online.
                   </p>
 
                   {/* Stats */}

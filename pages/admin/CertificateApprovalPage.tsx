@@ -1,13 +1,11 @@
 import {
-  collection,
-  doc,
-  getDocs,
-  limit,
-  onSnapshot,
-  query,
-  Timestamp,
-  updateDoc,
-  where,
+    collection,
+    doc,
+    limit,
+    onSnapshot,
+    query,
+    Timestamp,
+    updateDoc
 } from "firebase/firestore";
 import { AlertCircle, Check, Clock, Filter, Search, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -265,7 +263,9 @@ const CertificateApprovalPage: React.FC = () => {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm font-medium">Confirmados</p>
+                  <p className="text-gray-600 text-sm font-medium">
+                    Confirmados
+                  </p>
                   <p className="text-4xl font-bold text-emerald-600 mt-2">
                     {confirmedCount}
                   </p>
@@ -282,7 +282,9 @@ const CertificateApprovalPage: React.FC = () => {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm font-medium">Rejeitados</p>
+                  <p className="text-gray-600 text-sm font-medium">
+                    Rejeitados
+                  </p>
                   <p className="text-4xl font-bold text-red-600 mt-2">
                     {rejectedCount}
                   </p>
@@ -320,7 +322,9 @@ const CertificateApprovalPage: React.FC = () => {
           <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <Filter className="w-5 h-5 text-gray-600" />
-              <h2 className="text-lg font-semibold text-gray-900">Filtrer e Buscar</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Filtrer e Buscar
+              </h2>
             </div>
 
             {/* Status Filter */}
@@ -389,15 +393,18 @@ const CertificateApprovalPage: React.FC = () => {
 
           {/* Results Info */}
           <div className="mb-4 text-gray-600 text-sm">
-            <span className="font-semibold">{filteredCertificates.length}</span> de{" "}
-            <span className="font-semibold">{certificates.length}</span> certificado(s)
+            <span className="font-semibold">{filteredCertificates.length}</span>{" "}
+            de <span className="font-semibold">{certificates.length}</span>{" "}
+            certificado(s)
           </div>
 
           {/* Certificates List */}
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-              <p className="text-gray-600 text-lg">Carregando certificados...</p>
+              <p className="text-gray-600 text-lg">
+                Carregando certificados...
+              </p>
             </div>
           ) : filteredCertificates.length === 0 ? (
             <div className="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-sm">
@@ -498,7 +505,8 @@ const CertificateApprovalPage: React.FC = () => {
                   {cert.rejection_reason && (
                     <div className="mb-4 p-3 bg-red-100 rounded-lg border border-red-300">
                       <p className="text-sm text-red-800">
-                        <strong>Motivo da Rejeição:</strong> {cert.rejection_reason}
+                        <strong>Motivo da Rejeição:</strong>{" "}
+                        {cert.rejection_reason}
                       </p>
                     </div>
                   )}

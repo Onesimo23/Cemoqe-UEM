@@ -121,17 +121,13 @@ function testIdFormat() {
   console.log("🔍 TESTE 4: Validação do Formato de ID");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-  const testIds = [
-    "45821",
-    "78945", 
-    "00000",
-    "99999",
-    "12345",
-  ];
+  const testIds = ["45821", "78945", "00000", "99999", "12345"];
 
   testIds.forEach((id) => {
     const isValid = /^\d{5}$/.test(id);
-    console.log(`${isValid ? "✅" : "❌"} ID "${id}" - ${isValid ? "VÁLIDO" : "INVÁLIDO"} (formato: 5 dígitos)`);
+    console.log(
+      `${isValid ? "✅" : "❌"} ID "${id}" - ${isValid ? "VÁLIDO" : "INVÁLIDO"} (formato: 5 dígitos)`,
+    );
   });
   console.log();
 }

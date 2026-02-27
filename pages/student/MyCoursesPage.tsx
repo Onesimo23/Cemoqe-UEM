@@ -85,7 +85,7 @@ const MyCoursesPage: React.FC = () => {
             course?.imageUrl ||
             course?.image ||
             "https://via.placeholder.com/320x180.png?text=Curso",
-          instructor: course?.instructor || "Instrutor",
+          instructor: course?.instructor || "Tutor",
           progress,
           totalLessons,
           completedLessons: prog.completed,

@@ -46,13 +46,12 @@ const Hero: React.FC = () => {
             <span style={{ color: branding.appearance.accentColor }}>
               Cursos
             </span>
-            <span className="relative"> Para Gestores</span>{" "}
+            <span className="relative"> Online</span>{" "}
           </h1>
 
           {/* Subtext */}
           <p className="text-gray-500 text-lg md:text-xl max-w-2xl mb-10 leading-relaxed">
-            Domine competências padrão da indústria com cursos desenhados por
-            especialistas. Aprenda no seu ritmo, de qualquer lugar.
+        Para Gestores, professores e CTA.
           </p>
 
           {/* Buttons */}

@@ -4,7 +4,7 @@ import {
     onSnapshot,
     query,
     serverTimestamp,
-    where
+    where,
 } from "firebase/firestore";
 import {
     Filter,
@@ -16,7 +16,7 @@ import {
     Search,
     ThumbsUp,
     TrendingUp,
-    X
+    X,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -235,7 +235,7 @@ const CommunityPage: React.FC = () => {
               Fórum da Comunidade
             </h1>
             <p className="text-gray-500 mt-1">
-              Troque conhecimento com outros estudantes e instrutores.
+              Troque conhecimento com outros estudantes e tutores.
             </p>
           </div>
           <button
