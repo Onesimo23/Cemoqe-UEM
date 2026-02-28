@@ -75,6 +75,11 @@ const CoursePlayerPage: React.FC = () => {
   const [isReading, setIsReading] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const [remainingTime, setRemainingTime] = useState(0);
+  const MIN_READ_TIME = 30; // 30 segundos de permanência mínima na aula
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [exerciseResults, setExerciseResults] = useState<Record<string, boolean>>({});
+  const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
 
   const toggleModule = (moduleId: string) => {
     setOpenModules((prev) =>
@@ -102,13 +107,84 @@ const CoursePlayerPage: React.FC = () => {
       return;
     }
 
-    // Remover tags HTML e extrair texto puro
-    const plainText = text
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+    let plainText = "";
+    const textToProcess = text || "";
 
-    if (!plainText) return;
+    try {
+      // Tentar como JSON (blocos nativos de editores modernos como Notion/Editor.js)
+      const parsed = JSON.parse(textToProcess);
+      const blocks = Array.isArray(parsed) ? parsed : parsed.blocks || [];
+
+      if (Array.isArray(blocks) && blocks.length > 0) {
+        plainText = blocks
+          .filter((b: any) =>
+            [
+              "h1",
+              "h2",
+              "h3",
+              "h4",
+              "h5",
+              "h6",
+              "p",
+              "quote",
+              "list",
+              "list-ordered",
+              "text",
+              "texto",
+              "paragraph",
+              "header",
+            ].includes(b.type?.toLowerCase()),
+          )
+          .map(
+            (b: any) =>
+              b.value ||
+              b.content ||
+              b.text ||
+              b.texto ||
+              (b.data && b.data.text) ||
+              "",
+          )
+          .join(". ");
+      } else {
+        plainText = String(textToProcess);
+      }
+    } catch (e) {
+      // Se falhar o parse, trata como HTML ou Texto Puro
+      plainText = textToProcess;
+    }
+
+    // Se ainda tiver HTML ou se for HTML puro, limpar adequadamente
+    if (/<[^>]+>/.test(plainText)) {
+      try {
+        const domParser = new DOMParser();
+        const doc = domParser.parseFromString(plainText, "text/html");
+        // Remover elementos que não devem ser lidos (código, scripts, estilos, metadados)
+        const elementsToRemove = doc.querySelectorAll(
+          "script, style, code, pre, svg, head, noscript, iframe, .hidden, [hidden]",
+        );
+        elementsToRemove.forEach((el) => el.remove());
+        plainText = doc.body.textContent || doc.body.innerText || "";
+      } catch (err) {
+        // Fallback para regex robusta se DOMParser falhar
+        plainText = plainText
+          .replace(
+            /<(script|style|code|pre|svg|head)[^>]*>[\s\S]*?<\/\1>/gi,
+            " ",
+          ) // Remove conteúdo de tags de código/script
+          .replace(/<[^>]+>/g, " "); // Remove tags restantes
+      }
+    }
+
+    // Limpeza final de espaços, quebras de linha e caracteres invisíveis
+    plainText = plainText.replace(/\s+/g, " ").trim();
+
+    if (!plainText || plainText.length < 2) {
+      showToast(
+        "Nenhum texto legível encontrado para leitura nesta aula.",
+        "error",
+      );
+      return;
+    }
 
     // Criar utterance
     const utterance = new SpeechSynthesisUtterance(plainText);
@@ -128,6 +204,47 @@ const CoursePlayerPage: React.FC = () => {
     window.speechSynthesis.speak(utterance);
   };
 
+  // Sincronizar timer ao mudar de aula
+  useEffect(() => {
+    // Parar timer anterior se houver
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    if (!currentLessonId) {
+      setRemainingTime(0);
+      return;
+    }
+
+    // Se já foi concluída, não precisa de timer
+    if (completedLessons.has(currentLessonId)) {
+      setRemainingTime(0);
+      return;
+    }
+
+    // Iniciar novo timer
+    setRemainingTime(MIN_READ_TIME);
+
+    timerRef.current = setInterval(() => {
+      setRemainingTime((prev) => {
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          timerRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000) as any;
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [currentLessonId, completedLessons.has(currentLessonId)]);
+
   // Cleanup de subscriptions de respostas ao desmontar
   useEffect(() => {
     return () => {
@@ -139,6 +256,8 @@ const CoursePlayerPage: React.FC = () => {
       answersSubsRef.current = {};
       // Parar leitura ao desmontar
       window.speechSynthesis.cancel();
+      // Limpar timer
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
 
@@ -374,6 +493,22 @@ const CoursePlayerPage: React.FC = () => {
       return;
     }
 
+    // Verificar se há exercícios pendentes nesta aula
+    const lessonExs = (course?.interactiveExercises || []).filter(
+      (ex: any) => String(ex.lessonId || ex.lesson_id) === String(current.lesson.id)
+    );
+    if (lessonExs.length > 0) {
+      const pendingExs = lessonExs.filter((ex: any) => !completedExercises.has(ex.id));
+      if (pendingExs.length > 0) {
+        showToast(
+          "Complete os exercícios interativos antes de concluir esta aula.",
+          "error"
+        );
+        setActiveTab("interactive");
+        return;
+      }
+    }
+
     try {
       // Adicionar registro de conclusão no Firebase
       await addDoc(collection(db, "lesson-completions"), {
@@ -442,6 +577,30 @@ const CoursePlayerPage: React.FC = () => {
     }
   };
 
+  // Marcar exercício como concluído
+  const markExerciseAsComplete = async (exId: string) => {
+    if (!id || !user?.uid) return;
+    try {
+      // Primeiro atualizar estado local para feedback imediato
+      setCompletedExercises((prev) => {
+        const next = new Set(prev);
+        next.add(exId);
+        return next;
+      });
+      setExerciseResults(prev => ({ ...prev, [exId]: true }));
+
+      // Verificar se já existe para evitar duplicatas (opcional, mas bom ter)
+      await addDoc(collection(db, "exercise-completions"), {
+        course_id: id,
+        exercise_id: exId,
+        user_uid: user.uid,
+        completedAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.error("Erro ao salvar conclusão de exercício:", err);
+    }
+  };
+
   // Verificar inscrição do aluno
   useEffect(() => {
     const checkEnrollment = async () => {
@@ -469,6 +628,7 @@ const CoursePlayerPage: React.FC = () => {
   useEffect(() => {
     if (!id || !user?.uid) {
       setCompletedLessons(new Set());
+      setCompletedExercises(new Set());
       return;
     }
     try {
@@ -487,9 +647,34 @@ const CoursePlayerPage: React.FC = () => {
         });
         setCompletedLessons(completed);
       });
-      return () => unsub();
+
+      // Carregar exercícios completados
+      const exQ = query(
+        collection(db, "exercise-completions"),
+        where("course_id", "==", id),
+        where("user_uid", "==", user.uid),
+      );
+      const exUnsub = onSnapshot(exQ, (snap) => {
+        const completed = new Set<string>();
+        const results: Record<string, boolean> = {};
+        snap.docs.forEach((doc) => {
+          const data = doc.data();
+          if (data.exercise_id) {
+            completed.add(data.exercise_id);
+            results[data.exercise_id] = true;
+          }
+        });
+        setCompletedExercises(completed);
+        setExerciseResults(prev => ({ ...prev, ...results }));
+      });
+
+      return () => {
+        unsub();
+        exUnsub();
+      };
     } catch {
       setCompletedLessons(new Set());
+      setCompletedExercises(new Set());
     }
   }, [id, user?.uid]);
 
@@ -865,9 +1050,17 @@ const CoursePlayerPage: React.FC = () => {
 
   // Calcular progresso dinâmico
   const progressPercentage = useMemo(() => {
-    if (allLessons.length === 0) return 0;
-    return Math.round((completedLessons.size / allLessons.length) * 100);
-  }, [allLessons.length, completedLessons.size]);
+    const totalLessons = allLessons.length;
+    const allExs = Array.isArray(course?.interactiveExercises) ? course.interactiveExercises : [];
+    const totalExs = allExs.length;
+    
+    if (totalLessons + totalExs === 0) return 0;
+    
+    const lessonsCount = completedLessons.size;
+    const exsCount = completedExercises.size;
+    
+    return Math.round(((lessonsCount + exsCount) / (totalLessons + totalExs)) * 100);
+  }, [allLessons.length, completedLessons.size, course?.interactiveExercises, completedExercises.size]);
 
   const progressWidth = useMemo(() => {
     return Math.max(5, progressPercentage); // mínimo de 5% para visibilidade
@@ -908,7 +1101,7 @@ const CoursePlayerPage: React.FC = () => {
         }
       })();
     }
-  }, [completedLessons.size, allLessons.length, id, user?.uid, isEnrolled]);
+  }, [completedLessons.size, completedExercises.size, allLessons.length, id, user?.uid, isEnrolled]);
 
   // Determinar se uma aula está bloqueada (não pode ser acessada)
   const isLessonLocked = (lessonId: string): boolean => {
@@ -1319,6 +1512,21 @@ const CoursePlayerPage: React.FC = () => {
                   {(() => {
                     const c = String(current?.lesson?.content || "");
 
+                    const renderText = (text: string) => {
+                      if (!text) return null;
+                      // Suporte básico para Negrito (**) e Itálico (* ou _)
+                      const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_)/g);
+                      return parts.map((part, i) => {
+                        if (part.startsWith("**") && part.endsWith("**")) {
+                          return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
+                        }
+                        if ((part.startsWith("*") && part.endsWith("*")) || (part.startsWith("_") && part.endsWith("_"))) {
+                          return <em key={i} className="italic">{part.slice(1, -1)}</em>;
+                        }
+                        return part;
+                      });
+                    };
+
                     // Tentar visualizar como blocos nativos
                     try {
                       const blocks = JSON.parse(c);
@@ -1351,7 +1559,7 @@ const CoursePlayerPage: React.FC = () => {
                                       className="text-3xl font-extrabold text-gray-900 border-b pb-4 mb-4 flex items-center justify-between"
                                     >
                                       <span className="flex-1">
-                                        {block.value}
+                                        {renderText(block.value)}
                                       </span>{" "}
                                       {blockEmoji}
                                     </h1>
@@ -1363,10 +1571,34 @@ const CoursePlayerPage: React.FC = () => {
                                       className="text-2xl font-bold text-gray-800 mt-8 mb-3 flex items-center justify-between"
                                     >
                                       <span className="flex-1">
-                                        {block.value}
+                                        {renderText(block.value)}
                                       </span>{" "}
                                       {blockEmoji}
                                     </h2>
+                                  );
+                                case "h3":
+                                  return (
+                                    <h3
+                                      key={block.id}
+                                      className="text-xl font-bold text-gray-800 mt-6 mb-2 flex items-center justify-between"
+                                    >
+                                      <span className="flex-1">
+                                        {renderText(block.value)}
+                                      </span>{" "}
+                                      {blockEmoji}
+                                    </h3>
+                                  );
+                                case "h4":
+                                  return (
+                                    <h4
+                                      key={block.id}
+                                      className="text-lg font-bold text-gray-700 mt-4 mb-2 flex items-center justify-between uppercase tracking-wider"
+                                    >
+                                      <span className="flex-1">
+                                        {renderText(block.value)}
+                                      </span>{" "}
+                                      {blockEmoji}
+                                    </h4>
                                   );
                                 case "p":
                                   return (
@@ -1375,7 +1607,7 @@ const CoursePlayerPage: React.FC = () => {
                                       className="text-gray-700 leading-relaxed text-lg mb-4 flex items-center justify-between"
                                     >
                                       <span className="flex-1">
-                                        {block.value}
+                                        {renderText(block.value)}
                                       </span>{" "}
                                       {blockEmoji}
                                     </p>
@@ -1387,7 +1619,7 @@ const CoursePlayerPage: React.FC = () => {
                                       className="border-l-4 border-brand-green bg-green-50/50 p-6 rounded-r-xl my-6 italic text-gray-700 text-lg shadow-sm flex items-center justify-between"
                                     >
                                       <span className="flex-1">
-                                        {block.value}
+                                        {renderText(block.value)}
                                       </span>{" "}
                                       {blockEmoji}
                                     </blockquote>
@@ -1396,14 +1628,32 @@ const CoursePlayerPage: React.FC = () => {
                                   return (
                                     <div
                                       key={block.id}
-                                      className="flex gap-4 items-center mb-4 justify-between"
+                                      className="flex gap-4 items-start mb-4"
                                     >
-                                      <p className="text-gray-700 text-lg flex-1">
-                                        {block.value}
-                                      </p>
                                       {blockEmoji || (
-                                        <div className="w-2 h-2 rounded-full bg-brand-green shrink-0 mr-2" />
+                                        <div className="w-2 h-2 rounded-full bg-brand-green shrink-0 mt-2.5" />
                                       )}
+                                      <p className="text-gray-700 text-lg flex-1">
+                                        {renderText(block.value)}
+                                      </p>
+                                    </div>
+                                  );
+                                case "list-ordered":
+                                  return (
+                                    <div
+                                      key={block.id}
+                                      className="flex gap-4 items-start mb-4"
+                                    >
+                                      <span className="text-brand-green font-extrabold text-lg min-w-[28px] text-right">
+                                        {(() => {
+                                          const listBlocks = blocks.filter((b: any) => b.type === "list-ordered");
+                                          const pos = listBlocks.findIndex((b: any) => b.id === block.id);
+                                          return pos >= 0 ? `${pos + 1}.` : "1.";
+                                        })()}
+                                      </span>
+                                      <p className="text-gray-700 text-lg flex-1">
+                                        {renderText(block.value)}
+                                      </p>
                                     </div>
                                   );
                                 case "image":
@@ -1609,11 +1859,50 @@ const CoursePlayerPage: React.FC = () => {
                 >
                   Anterior
                 </button>
+
+                {!completedLessons.has(currentLessonId) && (
+                  <button
+                    onClick={markLessonAsComplete}
+                    disabled={remainingTime > 0}
+                    className={`px-4 py-2 text-sm font-bold text-white rounded-lg transition-all shadow-md active:scale-95 flex items-center gap-2 ${
+                      remainingTime > 0
+                        ? "bg-amber-500 cursor-not-allowed"
+                        : "bg-brand-green hover:bg-brand-dark shadow-brand-green/20"
+                    }`}
+                  >
+                    {remainingTime > 0 ? (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        Aguarde ({remainingTime}s)
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4" />
+                        Concluir Aula
+                      </>
+                    )}
+                  </button>
+                )}
+
                 <button
                   onClick={goNext}
-                  className="px-4 py-2 text-sm font-semibold text-white bg-brand-green rounded-lg hover:bg-brand-dark transition-colors flex items-center gap-2"
+                  disabled={remainingTime > 0 && !completedLessons.has(currentLessonId)}
+                  className={`px-4 py-2 text-sm font-semibold text-white rounded-lg transition-colors flex items-center gap-2 ${
+                    remainingTime > 0 && !completedLessons.has(currentLessonId)
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-brand-green hover:bg-brand-dark shadow-sm"
+                  }`}
                 >
-                  Próxima Aula <ChevronLeft className="w-4 h-4 rotate-180" />
+                  {remainingTime > 0 && !completedLessons.has(currentLessonId) ? (
+                    <>
+                      <Lock className="w-4 h-4" />
+                      Aguarde ({remainingTime}s)
+                    </>
+                  ) : (
+                    <>
+                      Próxima <ChevronLeft className="w-4 h-4 rotate-180" />
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -1684,28 +1973,27 @@ const CoursePlayerPage: React.FC = () => {
                     })()}
                   </div>
 
-                  <div className="bg-green-50 border border-green-100 p-4 rounded-xl flex items-center justify-between">
+                  <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="bg-slate-50 p-2 rounded-full text-brand-green shadow-sm">
+                      <div className="bg-white p-2 rounded-full text-brand-green shadow-sm">
                         <CheckCircle className="w-5 h-5" />
                       </div>
-                      <span className="font-semibold text-brand-dark">
-                        Concluiu esta aula?
-                      </span>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-brand-dark">
+                          Status da Aula
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {completedLessons.has(current?.lesson?.id || "") 
+                            ? "Parabéns! Você já concluiu esta aula." 
+                            : "Você ainda não marcou esta aula como concluída."}
+                        </span>
+                      </div>
                     </div>
-                    <button
-                      onClick={markLessonAsComplete}
-                      disabled={completedLessons.has(current?.lesson?.id || "")}
-                      className={`text-sm font-bold px-4 py-2 rounded-lg transition-colors ${
-                        completedLessons.has(current?.lesson?.id || "")
-                          ? "text-white bg-gray-400 cursor-not-allowed"
-                          : "text-white bg-brand-green hover:bg-brand-dark"
-                      }`}
-                    >
-                      {completedLessons.has(current?.lesson?.id || "")
-                        ? "✓ Concluída"
-                        : "Marcar como Concluída"}
-                    </button>
+                    {completedLessons.has(current?.lesson?.id || "") && (
+                       <span className="text-xs font-black text-brand-green bg-green-100 px-3 py-1 rounded-full uppercase tracking-tighter">
+                         ✓ Aula Concluída
+                       </span>
+                    )}
                   </div>
                 </div>
               )}
@@ -2050,7 +2338,24 @@ const CoursePlayerPage: React.FC = () => {
               )}
               {activeTab === "interactive" && (
                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <InteractiveQuiz lesson={current?.lesson} course={course} />
+                  <InteractiveQuiz 
+                    lesson={current?.lesson} 
+                    course={course} 
+                    onExerciseStatusUpdate={(exId: string, ok: boolean, isFinal?: boolean) => {
+                      if (ok) {
+                        if (isFinal) {
+                          markExerciseAsComplete(exId);
+                        } else {
+                          setExerciseResults(prev => ({ ...prev, [exId]: true }));
+                        }
+                      } else {
+                        setExerciseResults(prev => ({ ...prev, [exId]: false }));
+                      }
+                    }}
+                    results={exerciseResults}
+                    showToast={showToast}
+                    completedList={completedExercises}
+                  />
                 </div>
               )}
             </div>
@@ -2151,6 +2456,23 @@ const CoursePlayerPage: React.FC = () => {
                                   {lesson.duration
                                     ? ` • ${lesson.duration}`
                                     : ""}
+                                  {(() => {
+                                    const lessonExs = (course?.interactiveExercises || []).filter(
+                                      (ex: any) => String(ex.lessonId || ex.lesson_id) === String(lesson.id)
+                                    );
+                                    if (lessonExs.length > 0) {
+                                      const allDone = lessonExs.every((ex: any) => exerciseResults[ex.id]);
+                                      if (!allDone) {
+                                        return (
+                                          <span className="flex items-center gap-1 text-[10px] text-amber-500 font-bold ml-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                            Exercício pendente
+                                          </span>
+                                        );
+                                      }
+                                    }
+                                    return null;
+                                  })()}
                                 </div>
                               </div>
                             </div>
@@ -2198,12 +2520,24 @@ const CoursePlayerPage: React.FC = () => {
 
 // --- Sub-components ---
 
-const InteractiveQuiz = ({ course }: any) => {
-  const list: any[] = Array.isArray(course?.interactiveExercises)
-    ? course.interactiveExercises
-    : [];
+const InteractiveQuiz = ({ course, lesson, onExerciseStatusUpdate, results, showToast, completedList }: any) => {
+  const list = useMemo(() => {
+    const all = Array.isArray(course?.interactiveExercises) ? course.interactiveExercises : [];
+    // Filtrar exercícios por aula
+    const currentLessonId = String(lesson?.id || "");
+    return all.filter((ex: any) => String(ex.lessonId || ex.lesson_id || "") === currentLessonId);
+  }, [course, lesson]);
+
   const [answers, setAnswers] = useState<Record<string, any>>({});
-  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [checked, setChecked] = useState<Record<string, boolean>>(results || {});
+  const [isFinishing, setIsFinishing] = useState(false);
+
+  // Sincronizar estado checked com results externos se necessário
+  useEffect(() => {
+    if (results) {
+      setChecked(prev => ({ ...prev, ...results }));
+    }
+  }, [results]);
 
   if (!list.length) {
     return (
@@ -2213,16 +2547,60 @@ const InteractiveQuiz = ({ course }: any) => {
     );
   }
 
+  const allCompletedInLesson = list.every(ex => checked[ex.id]);
+
+  const handleFinishTest = async () => {
+    setIsFinishing(true);
+    try {
+      let count = 0;
+      for (const ex of list) {
+        if (checked[ex.id] && !completedList?.has(ex.id)) {
+          if (onExerciseStatusUpdate) onExerciseStatusUpdate(ex.id, true, true);
+          count++;
+        }
+      }
+      if (count > 0 || list.every(ex => completedList?.has(ex.id))) {
+        if (showToast) showToast("Avaliação submetida com sucesso!", "success");
+      } else if (list.length > 0) {
+        if (showToast) showToast("Nenhum novo exercício para submeter.", "success");
+      }
+    } finally {
+      setIsFinishing(false);
+    }
+  };
+
   const toggleOption = (exId: string, optId: string) => {
+    const ex = list.find((e: any) => String(e.id) === String(exId));
+    const multi = !!ex?.settings?.multiSelect;
+
     setAnswers((prev) => {
-      const cur = new Set<string>(prev[exId]?.selected || []);
-      if (cur.has(optId)) cur.delete(optId);
-      else cur.add(optId);
+      const curSelected = prev[exId]?.selected || [];
+      let nextSelected: string[];
+
+      if (!multi) {
+        nextSelected = [optId];
+      } else {
+        const cur = new Set<string>(curSelected);
+        if (cur.has(optId)) cur.delete(optId);
+        else cur.add(optId);
+        nextSelected = Array.from(cur);
+      }
+
       return {
         ...prev,
-        [exId]: { ...(prev[exId] || {}), selected: Array.from(cur) },
+        [exId]: { ...(prev[exId] || {}), selected: nextSelected },
       };
     });
+
+    // Limpar o estado "checked" ao mudar a resposta
+    if (checked[exId] !== undefined) {
+      setChecked((prev) => {
+        const next = { ...prev };
+        delete next[exId];
+        return next;
+      });
+      if (onExerciseStatusUpdate) onExerciseStatusUpdate(exId, false);
+    }
   };
 
   const checkQuiz = (ex: any) => {
@@ -2232,8 +2610,9 @@ const InteractiveQuiz = ({ course }: any) => {
       .map((o: any) => o.id);
     const ok =
       selected.length === correct.length &&
-      selected.every((id) => correct.includes(id));
+      selected.every((id: any) => correct.includes(id));
     setChecked((prev) => ({ ...prev, [ex.id]: ok }));
+    if (onExerciseStatusUpdate) onExerciseStatusUpdate(ex.id, ok);
   };
 
   const setDrop = (exId: string, itemId: string, targetId?: string) => {
@@ -2242,6 +2621,15 @@ const InteractiveQuiz = ({ course }: any) => {
       map[itemId] = targetId;
       return { ...prev, [exId]: { ...(prev[exId] || {}), map } };
     });
+
+    if (checked[exId] !== undefined) {
+      setChecked((prev) => {
+        const next = { ...prev };
+        delete next[exId];
+        return next;
+      });
+      if (onExerciseStatusUpdate) onExerciseStatusUpdate(exId, false);
+    }
   };
 
   const checkDrag = (ex: any) => {
@@ -2250,6 +2638,7 @@ const InteractiveQuiz = ({ course }: any) => {
       (i: any) => (map[i.id] || "") === (i.targetId || ""),
     );
     setChecked((prev) => ({ ...prev, [ex.id]: all }));
+    if (onExerciseStatusUpdate) onExerciseStatusUpdate(ex.id, all);
   };
 
   const setTF = (exId: string, stId: string, val: boolean) => {
@@ -2258,6 +2647,15 @@ const InteractiveQuiz = ({ course }: any) => {
       tf[stId] = val;
       return { ...prev, [exId]: { ...(prev[exId] || {}), tf } };
     });
+
+    if (checked[exId] !== undefined) {
+      setChecked((prev) => {
+        const next = { ...prev };
+        delete next[exId];
+        return next;
+      });
+      if (onExerciseStatusUpdate) onExerciseStatusUpdate(exId, false);
+    }
   };
   const checkTF = (ex: any) => {
     const tf = answers[ex.id]?.tf || {};
@@ -2265,6 +2663,7 @@ const InteractiveQuiz = ({ course }: any) => {
       (s: any) => tf[s.id] === s.answer,
     );
     setChecked((prev) => ({ ...prev, [ex.id]: ok }));
+    if (onExerciseStatusUpdate) onExerciseStatusUpdate(ex.id, ok);
   };
 
   const setBlank = (exId: string, blankId: string, val: string) => {
@@ -2273,6 +2672,15 @@ const InteractiveQuiz = ({ course }: any) => {
       blanks[blankId] = val;
       return { ...prev, [exId]: { ...(prev[exId] || {}), blanks } };
     });
+
+    if (checked[exId] !== undefined) {
+      setChecked((prev) => {
+        const next = { ...prev };
+        delete next[exId];
+        return next;
+      });
+      if (onExerciseStatusUpdate) onExerciseStatusUpdate(exId, false);
+    }
   };
   const checkFill = (ex: any) => {
     const blanks = answers[ex.id]?.blanks || {};
@@ -2287,6 +2695,17 @@ const InteractiveQuiz = ({ course }: any) => {
       return options.includes(val) && val.length > 0;
     });
     setChecked((prev) => ({ ...prev, [ex.id]: ok }));
+    if (onExerciseStatusUpdate) onExerciseStatusUpdate(ex.id, ok);
+  };
+
+  const resetExercise = (exId: string) => {
+    setAnswers(prev => ({ ...prev, [exId]: {} }));
+    setChecked(prev => {
+      const next = { ...prev };
+      delete next[exId];
+      return next;
+    });
+    if (onExerciseStatusUpdate) onExerciseStatusUpdate(exId, false);
   };
 
   return (
@@ -2313,11 +2732,21 @@ const InteractiveQuiz = ({ course }: any) => {
               ) : null}
             </div>
             {checked[ex.id] !== undefined && (
-              <span
-                className={`text-xs font-bold px-2 py-1 rounded ${checked[ex.id] ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}
-              >
-                {checked[ex.id] ? "Correto" : "Tente novamente"}
-              </span>
+              <div className="flex items-center gap-3">
+                <span
+                  className={`text-xs font-bold px-2 py-1 rounded ${checked[ex.id] ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}
+                >
+                  {checked[ex.id] ? "Correto" : "Tente novamente"}
+                </span>
+                {!checked[ex.id] && (
+                  <button 
+                    onClick={() => resetExercise(ex.id)}
+                    className="text-[10px] font-bold text-gray-400 hover:text-brand-green uppercase"
+                  >
+                    Reiniciar
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
@@ -2330,27 +2759,36 @@ const InteractiveQuiz = ({ course }: any) => {
                 {(ex.quiz?.options || []).map((o: any) => {
                   const selected: string[] = answers[ex.id]?.selected || [];
                   const isSel = selected.includes(o.id);
+                  const isMulti = !!ex.settings?.multiSelect;
                   return (
                     <label
                       key={o.id}
-                      className={`flex items-center gap-2 p-2 rounded-lg border ${isSel ? "border-brand-green bg-green-50/40" : "border-gray-200 bg-gray-50"}`}
+                      className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${isSel ? "border-brand-green bg-green-50/40" : "border-gray-200 bg-gray-50 hover:bg-gray-100"}`}
                     >
                       <input
-                        type="checkbox"
+                        type={isMulti ? "checkbox" : "radio"}
+                        name={`quiz-${ex.id}`}
                         checked={isSel}
                         onChange={() => toggleOption(ex.id, o.id)}
+                        className={isMulti ? "rounded" : "rounded-full"}
                       />
                       <span className="text-sm text-gray-700">{o.text}</span>
                     </label>
                   );
                 })}
               </div>
-              <div className="pt-2">
+              <div className="pt-3 border-t border-gray-100 mt-2">
                 <button
-                  onClick={() => checkQuiz(ex)}
-                  className="bg-brand-dark text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-black/80"
+                  onClick={() => {
+                    if (ex.type === 'quiz') checkQuiz(ex);
+                    else if (ex.type === 'dragdrop' || ex.type === 'matching') checkDrag(ex);
+                    else if (ex.type === 'truefalse') checkTF(ex);
+                    else if (ex.type === 'fillblank') checkFill(ex);
+                  }}
+                  className="bg-[#0E7038] text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-black transition-all active:scale-95 shadow-md flex items-center gap-2"
                 >
-                  Verificar
+                  <CheckCircle className="w-4 h-4" />
+                  Verificar Resposta
                 </button>
               </div>
             </div>
@@ -2443,12 +2881,13 @@ const InteractiveQuiz = ({ course }: any) => {
                   </div>
                 </div>
               </div>
-              <div>
+              <div className="pt-3 border-t border-gray-100 mt-2">
                 <button
                   onClick={() => checkDrag(ex)}
-                  className="bg-brand-dark text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-black/80"
+                  className="bg-[#0E7038] text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-black transition-all active:scale-95 shadow-md flex items-center gap-2"
                 >
-                  Verificar
+                  <CheckCircle className="w-4 h-4" />
+                  Verificar Associação
                 </button>
               </div>
             </div>
@@ -2487,12 +2926,13 @@ const InteractiveQuiz = ({ course }: any) => {
                   </div>
                 );
               })}
-              <div className="pt-2">
+              <div className="pt-3 border-t border-gray-100 mt-2">
                 <button
                   onClick={() => checkTF(ex)}
-                  className="bg-brand-dark text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-black/80"
+                  className="bg-[#0E7038] text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-black transition-all active:scale-95 shadow-md flex items-center gap-2"
                 >
-                  Verificar
+                  <CheckCircle className="w-4 h-4" />
+                  Verificar Afirmações
                 </button>
               </div>
             </div>
@@ -2520,18 +2960,44 @@ const InteractiveQuiz = ({ course }: any) => {
                   </div>
                 ))}
               </div>
-              <div className="pt-2">
+              <div className="pt-3 border-t border-gray-100 mt-2">
                 <button
                   onClick={() => checkFill(ex)}
-                  className="bg-brand-dark text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-black/80"
+                  className="bg-[#0E7038] text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-black transition-all active:scale-95 shadow-md flex items-center gap-2"
                 >
-                  Verificar
+                  <CheckCircle className="w-4 h-4" />
+                  Verificar Preenchimento
                 </button>
               </div>
             </div>
           )}
         </div>
       ))}
+
+      {list.length > 0 && (
+        <div className="pt-4 border-t border-gray-200 flex justify-end">
+          <button
+            onClick={handleFinishTest}
+            disabled={!allCompletedInLesson || isFinishing}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-lg ${
+              allCompletedInLesson && !isFinishing
+                ? "bg-brand-green text-white hover:bg-brand-dark shadow-brand-green/20"
+                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            {isFinishing ? (
+              "Enviando..."
+            ) : allCompletedInLesson ? (
+              <>
+                <Send className="w-5 h-5" />
+                Submeter Teste Interativo
+              </>
+            ) : (
+              "Conclua todos os exercícios acima"
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

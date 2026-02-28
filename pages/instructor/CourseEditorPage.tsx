@@ -26,6 +26,7 @@ import {
     HelpCircle,
     Image as ImageIcon,
     Info,
+    Italic,
     Layout,
     Link as LinkIcon,
     List,
@@ -88,6 +89,7 @@ interface InteractiveExercise {
   id: string;
   type: "quiz" | "dragdrop" | "truefalse" | "fillblank" | "matching";
   title: string;
+  lessonId?: string; // ID da aula a que este exercício pertence
   description?: string;
   settings?: {
     multiSelect?: boolean;
@@ -108,7 +110,7 @@ interface InteractiveExercise {
 }
 
 // Block Content Interfaces
-export type BlockType = "h1" | "h2" | "p" | "image" | "quote" | "list" | "file";
+export type BlockType = "h1" | "h2" | "h3" | "h4" | "p" | "image" | "quote" | "list" | "list-ordered" | "file";
 
 export interface ContentBlock {
   id: string;
@@ -208,6 +210,27 @@ const LessonBlockEditor: React.FC<{
     }
   };
 
+  const toggleStyle = (blockId: string, char: string) => {
+    const el = document.getElementById(`input-block-${blockId}`) as HTMLTextAreaElement | HTMLInputElement;
+    if (!el) return;
+    const start = el.selectionStart || 0;
+    const end = el.selectionEnd || 0;
+    const text = el.value;
+    const before = text.substring(0, start);
+    const selection = text.substring(start, end);
+    const after = text.substring(end);
+    
+    const newVal = `${before}${char}${selection}${char}${after}`;
+    updateBlock(blockId, newVal);
+    
+    // Reset focus and selection
+    setTimeout(() => {
+      el.focus();
+      const offset = char.length;
+      el.setSelectionRange(start + offset, end + offset);
+    }, 10);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2 mb-2">
@@ -224,6 +247,20 @@ const LessonBlockEditor: React.FC<{
           className="p-2 bg-white border border-gray-200 rounded-lg hover:border-brand-green text-xs flex items-center gap-1"
         >
           <Heading size={12} /> Título 2
+        </button>
+        <button
+          type="button"
+          onClick={() => addBlock("h3")}
+          className="p-2 bg-white border border-gray-200 rounded-lg hover:border-brand-green text-xs flex items-center gap-1"
+        >
+          <Heading size={10} /> Título 3
+        </button>
+        <button
+          type="button"
+          onClick={() => addBlock("h4")}
+          className="p-2 bg-white border border-gray-200 rounded-lg hover:border-brand-green text-xs flex items-center gap-1"
+        >
+          <Heading size={8} /> Título 4
         </button>
         <button
           type="button"
@@ -258,7 +295,14 @@ const LessonBlockEditor: React.FC<{
           onClick={() => addBlock("list")}
           className="p-2 bg-white border border-gray-200 rounded-lg hover:border-brand-green text-xs flex items-center gap-1"
         >
-          <ListOrdered size={14} /> Lista
+          <List size={14} /> Bullets
+        </button>
+        <button
+          type="button"
+          onClick={() => addBlock("list-ordered")}
+          className="p-2 bg-white border border-gray-200 rounded-lg hover:border-brand-green text-xs flex items-center gap-1"
+        >
+          <ListOrdered size={14} /> Numerada
         </button>
       </div>
 
@@ -342,58 +386,155 @@ const LessonBlockEditor: React.FC<{
                 </div>
 
                 {block.type === "h1" && (
-                  <input
-                    type="text"
-                    value={block.value}
-                    onChange={(e) => updateBlock(block.id, e.target.value)}
-                    placeholder="Título Principal..."
-                    className="w-full text-xl font-bold border-none outline-none focus:ring-0 placeholder:text-gray-300 pr-12"
-                  />
+                  <div className="relative group/field">
+                    <input
+                      id={`input-block-${block.id}`}
+                      type="text"
+                      value={block.value}
+                      onChange={(e) => updateBlock(block.id, e.target.value)}
+                      placeholder="Título Principal..."
+                      className="w-full text-xl font-bold border-none outline-none focus:ring-0 placeholder:text-gray-300 pr-24"
+                    />
+                    <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity">
+                      <button onClick={() => toggleStyle(block.id, "**")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Negrito"><Bold size={14}/></button>
+                      <button onClick={() => toggleStyle(block.id, "*")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Itálico"><Italic size={14}/></button>
+                    </div>
+                  </div>
                 )}
                 {block.type === "h2" && (
-                  <input
-                    type="text"
-                    value={block.value}
-                    onChange={(e) => updateBlock(block.id, e.target.value)}
-                    placeholder="Subtítulo..."
-                    className="w-full text-lg font-bold border-none outline-none focus:ring-0 placeholder:text-gray-300 text-gray-700 pr-12"
-                  />
+                  <div className="relative group/field">
+                    <input
+                      id={`input-block-${block.id}`}
+                      type="text"
+                      value={block.value}
+                      onChange={(e) => updateBlock(block.id, e.target.value)}
+                      placeholder="Subtítulo..."
+                      className="w-full text-lg font-bold border-none outline-none focus:ring-0 placeholder:text-gray-300 text-gray-700 pr-24"
+                    />
+                    <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity">
+                      <button onClick={() => toggleStyle(block.id, "**")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Negrito"><Bold size={14}/></button>
+                      <button onClick={() => toggleStyle(block.id, "*")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Itálico"><Italic size={14}/></button>
+                    </div>
+                  </div>
+                )}
+                {block.type === "h3" && (
+                  <div className="relative group/field">
+                    <input
+                      id={`input-block-${block.id}`}
+                      type="text"
+                      value={block.value}
+                      onChange={(e) => updateBlock(block.id, e.target.value)}
+                      placeholder="Título nível 3..."
+                      className="w-full text-base font-bold border-none outline-none focus:ring-0 placeholder:text-gray-300 text-gray-600 pr-24"
+                    />
+                    <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity">
+                      <button onClick={() => toggleStyle(block.id, "**")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Negrito"><Bold size={14}/></button>
+                      <button onClick={() => toggleStyle(block.id, "*")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Itálico"><Italic size={14}/></button>
+                    </div>
+                  </div>
+                )}
+                {block.type === "h4" && (
+                  <div className="relative group/field">
+                    <input
+                      id={`input-block-${block.id}`}
+                      type="text"
+                      value={block.value}
+                      onChange={(e) => updateBlock(block.id, e.target.value)}
+                      placeholder="Título nível 4..."
+                      className="w-full text-sm font-bold border-none outline-none focus:ring-0 placeholder:text-gray-300 text-gray-500 pr-24 uppercase tracking-wide"
+                    />
+                    <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity">
+                      <button onClick={() => toggleStyle(block.id, "**")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Negrito"><Bold size={14}/></button>
+                      <button onClick={() => toggleStyle(block.id, "*")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Itálico"><Italic size={14}/></button>
+                    </div>
+                  </div>
                 )}
                 {block.type === "p" && (
-                  <textarea
-                    value={block.value}
-                    onChange={(e) => updateBlock(block.id, e.target.value)}
-                    placeholder="Escreva seu parágrafo..."
-                    className="w-full text-sm border-none outline-none focus:ring-0 placeholder:text-gray-300 resize-none overflow-hidden min-h-[1.5rem] pr-12"
-                    rows={1}
-                    onInput={(e) => {
-                      const target = e.target as HTMLTextAreaElement;
-                      target.style.height = "auto";
-                      target.style.height = target.scrollHeight + "px";
-                    }}
-                  />
+                  <div className="relative group/field">
+                    <textarea
+                      id={`input-block-${block.id}`}
+                      value={block.value}
+                      onChange={(e) => updateBlock(block.id, e.target.value)}
+                      placeholder="Escreva seu parágrafo..."
+                      className="w-full text-sm border-none outline-none focus:ring-0 placeholder:text-gray-300 resize-none overflow-hidden min-h-[1.5rem] pr-24"
+                      rows={1}
+                      onInput={(e) => {
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = "auto";
+                        target.style.height = target.scrollHeight + "px";
+                      }}
+                    />
+                    <div className="absolute right-12 bottom-0 flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity mb-1">
+                      <button type="button" onClick={() => toggleStyle(block.id, "**")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Negrito"><Bold size={14}/></button>
+                      <button type="button" onClick={() => toggleStyle(block.id, "*")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Itálico"><Italic size={14}/></button>
+                    </div>
+                  </div>
                 )}
                 {block.type === "quote" && (
-                  <div className="border-l-4 border-brand-green pl-4 italic text-gray-600">
+                  <div className="border-l-4 border-brand-green pl-4 italic text-gray-600 relative group/field">
                     <textarea
+                      id={`input-block-${block.id}`}
                       value={block.value}
                       onChange={(e) => updateBlock(block.id, e.target.value)}
                       placeholder="Citação importante..."
-                      className="w-full text-sm border-none outline-none focus:ring-0 bg-transparent placeholder:text-gray-300 resize-none overflow-hidden pr-12"
+                      className="w-full text-sm border-none outline-none focus:ring-0 bg-transparent placeholder:text-gray-300 resize-none overflow-hidden pr-24"
                       rows={1}
                     />
+                    <div className="absolute right-12 bottom-0 flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity mb-1">
+                      <button type="button" onClick={() => toggleStyle(block.id, "**")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Negrito"><Bold size={14}/></button>
+                      <button type="button" onClick={() => toggleStyle(block.id, "*")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Itálico"><Italic size={14}/></button>
+                    </div>
                   </div>
                 )}
                 {block.type === "list" && (
-                  <div className="flex items-start gap-2">
-                    <span className="text-brand-green font-bold text-lg leading-none mt-1">·</span>
+                  <div className="flex items-start gap-3 relative group/field">
+                    <div className="w-2 h-2 rounded-full bg-brand-green shrink-0 mt-1.5" />
                     <textarea
+                      id={`input-block-${block.id}`}
                       value={block.value}
                       onChange={(e) => updateBlock(block.id, e.target.value)}
                       placeholder="Item da lista..."
-                      className="w-full text-sm border-none outline-none focus:ring-0 placeholder:text-gray-300 resize-none overflow-hidden pr-12"
+                      className="w-full text-sm border-none outline-none focus:ring-0 placeholder:text-gray-300 resize-none overflow-hidden pr-24"
                       rows={1}
+                      onInput={(e) => {
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = "auto";
+                        target.style.height = target.scrollHeight + "px";
+                      }}
                     />
+                    <div className="absolute right-12 bottom-0 flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity mb-1">
+                      <button type="button" onClick={() => toggleStyle(block.id, "**")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Negrito"><Bold size={14}/></button>
+                      <button type="button" onClick={() => toggleStyle(block.id, "*")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Itálico"><Italic size={14}/></button>
+                    </div>
+                  </div>
+                )}
+                {block.type === "list-ordered" && (
+                  <div className="flex items-start gap-3 relative group/field">
+                    <span className="text-brand-green font-bold text-sm min-w-[20px] text-right mt-0.5">
+                      {(() => {
+                        // Tentar descobrir a posição na lista atual
+                        const listBlocks = blocks.filter(b => b.type === "list-ordered");
+                        const pos = listBlocks.findIndex(b => b.id === block.id);
+                        return pos >= 0 ? `${pos + 1}.` : "1.";
+                      })()}
+                    </span>
+                    <textarea
+                      id={`input-block-${block.id}`}
+                      value={block.value}
+                      onChange={(e) => updateBlock(block.id, e.target.value)}
+                      placeholder="Item numerado..."
+                      className="w-full text-sm border-none outline-none focus:ring-0 placeholder:text-gray-300 resize-none overflow-hidden pr-24"
+                      rows={1}
+                      onInput={(e) => {
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = "auto";
+                        target.style.height = target.scrollHeight + "px";
+                      }}
+                    />
+                    <div className="absolute right-12 bottom-0 flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity mb-1">
+                      <button type="button" onClick={() => toggleStyle(block.id, "**")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Negrito"><Bold size={14}/></button>
+                      <button type="button" onClick={() => toggleStyle(block.id, "*")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Itálico"><Italic size={14}/></button>
+                    </div>
                   </div>
                 )}
                 {block.type === "image" && (
@@ -1502,23 +1643,42 @@ const CourseEditorPage: React.FC = () => {
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <input
-                          type="text"
-                          value={ex.title}
-                          onChange={(e) =>
-                            updateExercise(ex.id, { title: e.target.value })
-                          }
-                          placeholder={
-                            ex.type === "quiz"
-                              ? "Título do Quiz"
-                              : ex.type === "dragdrop" || ex.type === "matching"
-                                ? "Título do Arrastar & Soltar/Correspondência"
-                                : ex.type === "truefalse"
-                                  ? "Título de Verdadeiro/Falso"
-                                  : "Título de Preenchimento"
-                          }
-                          className="font-bold text-slate-800 bg-transparent outline-none focus:border-b border-brand-green w-full max-w-md"
-                        />
+                        <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
+                          <input
+                            type="text"
+                            value={ex.title}
+                            onChange={(e) =>
+                              updateExercise(ex.id, { title: e.target.value })
+                            }
+                            placeholder={
+                              ex.type === "quiz"
+                                ? "Título do Quiz"
+                                : ex.type === "dragdrop" || ex.type === "matching"
+                                  ? "Título do Arrastar & Soltar/Correspondência"
+                                  : ex.type === "truefalse"
+                                    ? "Título de Verdadeiro/Falso"
+                                    : "Título de Preenchimento"
+                            }
+                            className="font-bold text-slate-800 bg-transparent outline-none focus:border-b border-brand-green flex-1"
+                          />
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">Vincular à aula:</span>
+                            <select
+                              value={ex.lessonId || ""}
+                              onChange={(e) => updateExercise(ex.id, { lessonId: e.target.value })}
+                              className="text-xs bg-gray-50 border border-gray-200 rounded px-2 py-1 outline-none focus:border-brand-green"
+                            >
+                              <option value="">(Nenhuma / Geral)</option>
+                              {formData.modules.map(m => (
+                                <optgroup key={m.id} label={m.title}>
+                                  {m.lessons.map(l => (
+                                    <option key={l.id} value={l.id}>{l.title}</option>
+                                  ))}
+                                </optgroup>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
                         <textarea
                           value={ex.description || ""}
                           onChange={(e) =>
