@@ -24,7 +24,7 @@ import {
     Trash2,
     TrendingUp,
     User,
-    X
+    X,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -1193,7 +1193,7 @@ const ContentManagementPage: React.FC = () => {
                           {request.courseTitle}
                         </h3>
                         <p className="text-xs text-slate-500">
-                          Tutor:{" "}}
+                          Tutor:{" "}
                           <span className="font-bold text-slate-700">
                             {request.instructorName}
                           </span>
