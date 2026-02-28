@@ -88,27 +88,27 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
         setInstructorUid(uid);
         setCourse(courseData);
 
-        // Buscar nome do tutor/instrutor
+        // Buscar nome do tutor
         if (uid) {
           try {
             const userRef = doc(db, "users", uid);
             const userSnap = await getDoc(userRef);
             if (userSnap.exists()) {
-              const fullName = userSnap.data()?.full_name || "Instrutor";
-              console.log("Instrutor encontrado:", fullName, "UID:", uid);
+              const fullName = userSnap.data()?.full_name || "Tutor";
+              console.log("Tutor encontrado:", fullName, "UID:", uid);
               setInstructorName(fullName);
             } else {
               console.log("Documento do usuário não encontrado para UID:", uid);
             }
           } catch (err) {
-            console.error("Erro ao buscar nome do instrutor:", err);
+            console.error("Erro ao buscar nome do tutor:", err);
           }
         } else {
-          console.log("Nenhum instrutor associado ao curso");
+          console.log("Nenhum tutor associado ao curso");
         }
       }
     } catch (err) {
-      console.error("Erro ao buscar instrutor do curso:", err);
+      console.error("Erro ao buscar tutor do curso:", err);
     }
   };
 
@@ -231,7 +231,7 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
 
     setIsDownloading(true);
     try {
-      // Garantir que temos o nome do instrutor
+      // Garantir que temos o nome do tutor
       let finalInstructorName = instructorName;
 
       if (!finalInstructorName && instructorUid) {
@@ -239,16 +239,16 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
           const userRef = doc(db, "users", instructorUid);
           const userSnap = await getDoc(userRef);
           if (userSnap.exists()) {
-            finalInstructorName = userSnap.data()?.full_name || "Instrutor";
-            console.log("Nome do instrutor carregado:", finalInstructorName);
+            finalInstructorName = userSnap.data()?.full_name || "Tutor";
+            console.log("Nome do tutor carregado:", finalInstructorName);
           }
         } catch (err) {
-          console.error("Erro ao buscar nome do instrutor:", err);
-          finalInstructorName = "Instrutor";
+          console.error("Erro ao buscar nome do tutor:", err);
+          finalInstructorName = "Tutor";
         }
       }
 
-      console.log("Baixando certificado - Instrutor:", finalInstructorName);
+      console.log("Baixando certificado - Tutor:", finalInstructorName);
 
       const totalLessons =
         course?.modules?.reduce(
@@ -366,7 +366,7 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
       ctx.fillText(existingCertificate?.certificate_id || "00000", 500, y);
       y += 35;
 
-      // Assinaturas - 4 colunas (Instrutor, Diretor, Selo, Data)
+      // Assinaturas - 4 colunas (Tutor, Diretor, Selo, Data)
       ctx.font = "12px Arial";
       ctx.textAlign = "center";
       ctx.fillStyle = "#0E7038";
@@ -380,7 +380,7 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
       ctx.strokeStyle = "#0E7038";
       ctx.lineWidth = 1;
 
-      // Coluna 1 - Instrutor
+      // Coluna 1 - Tutor
       ctx.beginPath();
       ctx.moveTo(col1 - 50, y);
       ctx.lineTo(col1 + 50, y);
@@ -406,11 +406,11 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
 
       y += 25;
 
-      // Assinatura 1 - Nome do instrutor
+      // Assinatura 1 - Nome do tutor
       ctx.font = "11px Arial";
-      ctx.fillText(finalInstructorName || "Instrutor", col1, y);
+      ctx.fillText(finalInstructorName || "Tutor", col1, y);
       ctx.font = "9px Arial";
-      ctx.fillText("Instrutor do Curso", col1, y + 16);
+      ctx.fillText("Tutor do Curso", col1, y + 16);
 
       // Assinatura 2 - Diretor
       ctx.font = "11px Arial";
@@ -471,8 +471,8 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
             Certificado Aprovado
           </h3>
           <p className="text-gray-600 text-center mb-6">
-            Seu certificado foi verificado e aprovado pelo instrutor. Clique
-            abaixo para baixar!
+            Seu certificado foi verificado e aprovado pelo tutor. Clique abaixo
+            para baixar!
           </p>
           <button
             disabled={isDownloading}
@@ -518,7 +518,7 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
                     {existingCertificate.submitted_at
                       ?.toDate?.()
                       .toLocaleDateString("pt-PT")}
-                    . O instrutor em breve confirmará.
+                    . O tutor em breve confirmará.
                   </p>
                 </div>
               </div>
@@ -533,7 +533,7 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">
                     {existingCertificate.rejection_reason ||
-                      "O instrutor rejeitou seu pedido de certificado."}
+                      "O tutor rejeitou seu pedido de certificado."}
                   </p>
                   <button
                     onClick={() => {
@@ -608,8 +608,8 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
                   Enviado com Sucesso!
                 </h4>
                 <p className="text-sm text-green-700 mt-1">
-                  Seus dados de pagamento foram recebidos. O instrutor
-                  confirmará em breve.
+                  Seus dados de pagamento foram recebidos. O tutor confirmará em
+                  breve.
                 </p>
               </div>
             </div>
@@ -659,7 +659,7 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
                     {course.certificatePrice} MZM
                   </p>
                   <p className="text-xs text-gray-500 mt-3">
-                    Preço definido pelo instrutor para emissão do certificado
+                    Preço definido pelo tutor para emissão do certificado
                   </p>
                 </div>
               )}
@@ -682,7 +682,7 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
                 )}
                 {instructorName && (
                   <div>
-                    <p className="text-xs text-gray-600">Instrutor</p>
+                    <p className="text-xs text-gray-600">Tutor</p>
                     <p className="font-semibold text-gray-900 text-sm">
                       {instructorName}
                     </p>

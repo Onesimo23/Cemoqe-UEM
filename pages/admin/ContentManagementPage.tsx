@@ -155,7 +155,7 @@ const ContentManagementPage: React.FC = () => {
           coursesList.push({
             id: doc.id,
             title: data.title || "Sem título",
-            instructor: data.instructor || "Sem instrutor",
+            instructor: data.instructor || "Sem tutor",
             category: data.category || "Geral",
             rating: data.rating || 0,
             reviewCount: data.reviewCount || 0,
@@ -711,7 +711,7 @@ const ContentManagementPage: React.FC = () => {
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                   <input
                     type="text"
-                    placeholder="Pesquisar por título do curso ou nome do instrutor..."
+                    placeholder="Pesquisar por título do curso ou nome do tutor..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-12 pr-4 h-12 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-brand-green/5 focus:border-brand-green transition-all"
@@ -773,7 +773,7 @@ const ContentManagementPage: React.FC = () => {
                                   {course.title}
                                 </p>
                                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">
-                                  Instrutor: {course.instructor}
+                                  Tutor: {course.instructor}
                                 </p>
                               </div>
                             </div>
@@ -986,7 +986,7 @@ const ContentManagementPage: React.FC = () => {
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                    Nome do Instrutor
+                    Nome do Tutor
                   </label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 w-4 h-4" />
@@ -1139,7 +1139,7 @@ const ContentManagementPage: React.FC = () => {
                 </h2>
                 <p className="text-xs text-slate-400 mt-2">
                   Gerencie as solicitações de exclusão de cursos feitas pelos
-                  instrutores
+                  tutores
                 </p>
               </div>
             </div>
@@ -1193,7 +1193,7 @@ const ContentManagementPage: React.FC = () => {
                           {request.courseTitle}
                         </h3>
                         <p className="text-xs text-slate-500">
-                          Instrutor:{" "}
+                          Tutor:{" "}}
                           <span className="font-bold text-slate-700">
                             {request.instructorName}
                           </span>

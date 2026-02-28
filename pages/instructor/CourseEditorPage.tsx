@@ -1,44 +1,45 @@
 import {
-    addDoc,
-    collection,
-    doc,
-    getDoc,
-    serverTimestamp,
-    updateDoc,
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 import {
-    getDownloadURL,
-    getStorage,
-    ref as sRef,
-    uploadBytes,
+  getDownloadURL,
+  getStorage,
+  ref as sRef,
+  uploadBytes,
 } from "firebase/storage";
 import {
-    ArrowLeft,
-    Check,
-    CheckCircle,
-    ChevronDown,
-    File as FileIcon,
-    FileText,
-    FileUp,
-    GripVertical,
-    Heading,
-    HelpCircle,
-    Image as ImageIcon,
-    Info,
-    Italic,
-    Layout,
-    Link as LinkIcon,
-    List,
-    ListOrdered,
-    MonitorPlay,
-    Plus,
-    PlusCircle,
-    Plus as PlusIcon,
-    Quote,
-    Save,
-    Trash2,
-    Type,
-    X
+  ArrowLeft,
+  Bold,
+  Check,
+  CheckCircle,
+  ChevronDown,
+  File as FileIcon,
+  FileText,
+  FileUp,
+  GripVertical,
+  Heading,
+  HelpCircle,
+  Image as ImageIcon,
+  Info,
+  Italic,
+  Layout,
+  Link as LinkIcon,
+  List,
+  ListOrdered,
+  MonitorPlay,
+  Plus,
+  PlusCircle,
+  Plus as PlusIcon,
+  Quote,
+  Save,
+  Trash2,
+  Type,
+  X,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -109,7 +110,17 @@ interface InteractiveExercise {
 }
 
 // Block Content Interfaces
-export type BlockType = "h1" | "h2" | "h3" | "h4" | "p" | "image" | "quote" | "list" | "list-ordered" | "file";
+export type BlockType =
+  | "h1"
+  | "h2"
+  | "h3"
+  | "h4"
+  | "p"
+  | "image"
+  | "quote"
+  | "list"
+  | "list-ordered"
+  | "file";
 
 export interface ContentBlock {
   id: string;
@@ -245,7 +256,9 @@ const LessonBlockEditor: React.FC<{
   };
 
   const toggleStyle = (blockId: string, char: string) => {
-    const el = document.getElementById(`input-block-${blockId}`) as HTMLTextAreaElement | HTMLInputElement;
+    const el = document.getElementById(`input-block-${blockId}`) as
+      | HTMLTextAreaElement
+      | HTMLInputElement;
     if (!el) return;
     const start = el.selectionStart || 0;
     const end = el.selectionEnd || 0;
@@ -453,8 +466,20 @@ const LessonBlockEditor: React.FC<{
                       className="w-full text-xl font-bold border-none outline-none focus:ring-0 placeholder:text-gray-300 pr-24"
                     />
                     <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity">
-                      <button onClick={() => toggleStyle(block.id, "**")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Negrito"><Bold size={14}/></button>
-                      <button onClick={() => toggleStyle(block.id, "*")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Itálico"><Italic size={14}/></button>
+                      <button
+                        onClick={() => toggleStyle(block.id, "**")}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400"
+                        title="Negrito"
+                      >
+                        <Bold size={14} />
+                      </button>
+                      <button
+                        onClick={() => toggleStyle(block.id, "*")}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400"
+                        title="Itálico"
+                      >
+                        <Italic size={14} />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -469,8 +494,20 @@ const LessonBlockEditor: React.FC<{
                       className="w-full text-lg font-bold border-none outline-none focus:ring-0 placeholder:text-gray-300 text-gray-700 pr-24"
                     />
                     <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity">
-                      <button onClick={() => toggleStyle(block.id, "**")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Negrito"><Bold size={14}/></button>
-                      <button onClick={() => toggleStyle(block.id, "*")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Itálico"><Italic size={14}/></button>
+                      <button
+                        onClick={() => toggleStyle(block.id, "**")}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400"
+                        title="Negrito"
+                      >
+                        <Bold size={14} />
+                      </button>
+                      <button
+                        onClick={() => toggleStyle(block.id, "*")}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400"
+                        title="Itálico"
+                      >
+                        <Italic size={14} />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -485,8 +522,20 @@ const LessonBlockEditor: React.FC<{
                       className="w-full text-base font-bold border-none outline-none focus:ring-0 placeholder:text-gray-300 text-gray-600 pr-24"
                     />
                     <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity">
-                      <button onClick={() => toggleStyle(block.id, "**")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Negrito"><Bold size={14}/></button>
-                      <button onClick={() => toggleStyle(block.id, "*")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Itálico"><Italic size={14}/></button>
+                      <button
+                        onClick={() => toggleStyle(block.id, "**")}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400"
+                        title="Negrito"
+                      >
+                        <Bold size={14} />
+                      </button>
+                      <button
+                        onClick={() => toggleStyle(block.id, "*")}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400"
+                        title="Itálico"
+                      >
+                        <Italic size={14} />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -501,8 +550,20 @@ const LessonBlockEditor: React.FC<{
                       className="w-full text-sm font-bold border-none outline-none focus:ring-0 placeholder:text-gray-300 text-gray-500 pr-24 uppercase tracking-wide"
                     />
                     <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity">
-                      <button onClick={() => toggleStyle(block.id, "**")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Negrito"><Bold size={14}/></button>
-                      <button onClick={() => toggleStyle(block.id, "*")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Itálico"><Italic size={14}/></button>
+                      <button
+                        onClick={() => toggleStyle(block.id, "**")}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400"
+                        title="Negrito"
+                      >
+                        <Bold size={14} />
+                      </button>
+                      <button
+                        onClick={() => toggleStyle(block.id, "*")}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400"
+                        title="Itálico"
+                      >
+                        <Italic size={14} />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -522,8 +583,22 @@ const LessonBlockEditor: React.FC<{
                       }}
                     />
                     <div className="absolute right-12 bottom-0 flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity mb-1">
-                      <button type="button" onClick={() => toggleStyle(block.id, "**")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Negrito"><Bold size={14}/></button>
-                      <button type="button" onClick={() => toggleStyle(block.id, "*")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Itálico"><Italic size={14}/></button>
+                      <button
+                        type="button"
+                        onClick={() => toggleStyle(block.id, "**")}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400"
+                        title="Negrito"
+                      >
+                        <Bold size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleStyle(block.id, "*")}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400"
+                        title="Itálico"
+                      >
+                        <Italic size={14} />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -538,8 +613,22 @@ const LessonBlockEditor: React.FC<{
                       rows={1}
                     />
                     <div className="absolute right-12 bottom-0 flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity mb-1">
-                      <button type="button" onClick={() => toggleStyle(block.id, "**")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Negrito"><Bold size={14}/></button>
-                      <button type="button" onClick={() => toggleStyle(block.id, "*")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Itálico"><Italic size={14}/></button>
+                      <button
+                        type="button"
+                        onClick={() => toggleStyle(block.id, "**")}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400"
+                        title="Negrito"
+                      >
+                        <Bold size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleStyle(block.id, "*")}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400"
+                        title="Itálico"
+                      >
+                        <Italic size={14} />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -560,8 +649,22 @@ const LessonBlockEditor: React.FC<{
                       }}
                     />
                     <div className="absolute right-12 bottom-0 flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity mb-1">
-                      <button type="button" onClick={() => toggleStyle(block.id, "**")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Negrito"><Bold size={14}/></button>
-                      <button type="button" onClick={() => toggleStyle(block.id, "*")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Itálico"><Italic size={14}/></button>
+                      <button
+                        type="button"
+                        onClick={() => toggleStyle(block.id, "**")}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400"
+                        title="Negrito"
+                      >
+                        <Bold size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleStyle(block.id, "*")}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400"
+                        title="Itálico"
+                      >
+                        <Italic size={14} />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -570,8 +673,12 @@ const LessonBlockEditor: React.FC<{
                     <span className="text-brand-green font-bold text-sm min-w-[20px] text-right mt-0.5">
                       {(() => {
                         // Tentar descobrir a posição na lista atual
-                        const listBlocks = blocks.filter(b => b.type === "list-ordered");
-                        const pos = listBlocks.findIndex(b => b.id === block.id);
+                        const listBlocks = blocks.filter(
+                          (b) => b.type === "list-ordered",
+                        );
+                        const pos = listBlocks.findIndex(
+                          (b) => b.id === block.id,
+                        );
                         return pos >= 0 ? `${pos + 1}.` : "1.";
                       })()}
                     </span>
@@ -589,8 +696,22 @@ const LessonBlockEditor: React.FC<{
                       }}
                     />
                     <div className="absolute right-12 bottom-0 flex items-center gap-1 opacity-0 group-hover/field:opacity-100 transition-opacity mb-1">
-                      <button type="button" onClick={() => toggleStyle(block.id, "**")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Negrito"><Bold size={14}/></button>
-                      <button type="button" onClick={() => toggleStyle(block.id, "*")} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Itálico"><Italic size={14}/></button>
+                      <button
+                        type="button"
+                        onClick={() => toggleStyle(block.id, "**")}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400"
+                        title="Negrito"
+                      >
+                        <Bold size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleStyle(block.id, "*")}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400"
+                        title="Itálico"
+                      >
+                        <Italic size={14} />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -829,7 +950,7 @@ const CourseEditorPage: React.FC = () => {
       const payload: any = {
         creator_uid: user.uid,
         instructor_uid: user.uid,
-        instructor: profile?.full_name || user.displayName || "Instrutor",
+        instructor: profile?.full_name || user.displayName || "Tutor",
         title: formData.title || "Sem título",
         category: formData.category || "Geral",
         currency: "MZM",
@@ -1691,7 +1812,8 @@ const CourseEditorPage: React.FC = () => {
                             placeholder={
                               ex.type === "quiz"
                                 ? "Título do Quiz"
-                                : ex.type === "dragdrop" || ex.type === "matching"
+                                : ex.type === "dragdrop" ||
+                                    ex.type === "matching"
                                   ? "Título do Arrastar & Soltar/Correspondência"
                                   : ex.type === "truefalse"
                                     ? "Título de Verdadeiro/Falso"
@@ -1700,17 +1822,25 @@ const CourseEditorPage: React.FC = () => {
                             className="font-bold text-slate-800 bg-transparent outline-none focus:border-b border-brand-green flex-1"
                           />
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase">Vincular à aula:</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">
+                              Vincular à aula:
+                            </span>
                             <select
                               value={ex.lessonId || ""}
-                              onChange={(e) => updateExercise(ex.id, { lessonId: e.target.value })}
+                              onChange={(e) =>
+                                updateExercise(ex.id, {
+                                  lessonId: e.target.value,
+                                })
+                              }
                               className="text-xs bg-gray-50 border border-gray-200 rounded px-2 py-1 outline-none focus:border-brand-green"
                             >
                               <option value="">(Nenhuma / Geral)</option>
-                              {formData.modules.map(m => (
+                              {formData.modules.map((m) => (
                                 <optgroup key={m.id} label={m.title}>
-                                  {m.lessons.map(l => (
-                                    <option key={l.id} value={l.id}>{l.title}</option>
+                                  {m.lessons.map((l) => (
+                                    <option key={l.id} value={l.id}>
+                                      {l.title}
+                                    </option>
                                   ))}
                                 </optgroup>
                               ))}

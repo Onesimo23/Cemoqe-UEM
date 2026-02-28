@@ -29,9 +29,9 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
   const { logout, profile, user } = useAuth();
   const { branding } = useBranding();
 
-  const instructorName = profile?.full_name || user?.displayName || "Instrutor";
+  const instructorName = profile?.full_name || user?.displayName || "Tutor";
   const instructorFirstName =
-    (instructorName || "Instrutor").split(" ")[0] || "Instrutor";
+    (instructorName || "Tutor").split(" ")[0] || "Tutor";
   const instructorAvatarUrl =
     profile?.avatar_url ||
     user?.photoURL ||
@@ -128,7 +128,7 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
               </div>
             )}
             <span className="ml-1 text-[10px] bg-brand-accent text-brand-dark px-1.5 py-0.5 rounded font-black uppercase">
-              Instrutor
+              Tutor
             </span>
           </Link>
           <button
@@ -149,7 +149,7 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
             <div>
               <p className="font-semibold text-sm">{instructorName}</p>
               <p className="text-xs text-brand-accent font-bold uppercase tracking-tighter">
-                Instrutor Sênior
+                Tutor Sênior
               </p>
             </div>
           </div>
@@ -200,7 +200,7 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
           >
             <Menu className="w-6 h-6" />
           </button>
-          <span className="font-bold text-gray-800">Painel do Instrutor</span>
+          <span className="font-bold text-gray-800">Painel do Tutor</span>
           <img
             src={instructorAvatarUrl}
             className="w-8 h-8 rounded-full object-cover"
@@ -244,7 +244,7 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
         onConfirm={handleConfirmLogout}
         onCancel={handleCancelLogout}
         title="Confirmar Saída"
-        message="Tem a certeza que deseja sair do Painel do Instrutor?"
+        message="Tem a certeza que deseja sair do Painel do Tutor?"
         isLoading={isLoggingOut}
       />
     </div>

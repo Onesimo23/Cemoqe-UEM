@@ -1,25 +1,20 @@
+import { collection, getDocs, query, where } from "firebase/firestore";
 import {
-   collection,
-   getDocs,
-   query,
-   where
-} from "firebase/firestore";
-import {
-   Activity,
-   ArrowUpRight,
-   Award,
-   BarChart3,
-   BookOpen,
-   CheckCircle,
-   DollarSign,
-   Download,
-   FileText,
-   Filter,
-   LineChart as LineChartIcon,
-   PieChart,
-   TrendingUp,
-   Users,
-   Zap
+    Activity,
+    ArrowUpRight,
+    Award,
+    BarChart3,
+    BookOpen,
+    CheckCircle,
+    DollarSign,
+    Download,
+    FileText,
+    Filter,
+    LineChart as LineChartIcon,
+    PieChart,
+    TrendingUp,
+    Users,
+    Zap,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import AdminLayout from "../../layouts/AdminLayout";
@@ -195,7 +190,7 @@ const AdminAnalyticsPage: React.FC = () => {
           .map((doc) => ({
             id: doc.id,
             title: doc.data().title || "Sem título",
-            instructor: doc.data().instructor || "Sem instrutor",
+            instructor: doc.data().instructor || "Sem tutor",
             enrollments: 0,
             revenue: 0,
             rating: doc.data().rating || 0,

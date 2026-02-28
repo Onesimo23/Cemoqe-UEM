@@ -576,7 +576,7 @@ const AdminSettingsPage: React.FC = () => {
                 <div className="space-y-4">
                   <ToggleSetting
                     label="Exigir 2FA"
-                    description="Obrigatório para administradores e instrutores logarem."
+                    description="Obrigatório para administradores e tutores logarem."
                     checked={securitySettings.require2FA}
                     onChange={(v: boolean) =>
                       setSecuritySettings((s) => ({ ...s, require2FA: v }))

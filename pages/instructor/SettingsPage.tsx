@@ -29,7 +29,7 @@ const SettingsPage: React.FC = () => {
   const [specialty, setSpecialty] = useState("");
   const [bio, setBio] = useState("");
   const instructorName =
-    fullName || profile?.full_name || user?.displayName || "Instrutor";
+    fullName || profile?.full_name || user?.displayName || "Tutor";
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -185,7 +185,7 @@ const SettingsPage: React.FC = () => {
       await updateProfile(user, { photoURL: finalUrl });
       setPreviewUrl(finalUrl);
     } catch (err) {
-      console.error("Erro ao atualizar foto do instrutor", err);
+      console.error("Erro ao atualizar foto do tutor", err);
       alert("Não foi possível atualizar a foto.");
     } finally {
       setUploading(false);
@@ -211,7 +211,7 @@ const SettingsPage: React.FC = () => {
             <SettingsTab
               active={activeTab === "profile"}
               icon={<User size={18} />}
-              label="Perfil do Instrutor"
+              label="Perfil do Tutor"
               onClick={() => setActiveTab("profile")}
             />
             <SettingsTab
@@ -257,7 +257,7 @@ const SettingsPage: React.FC = () => {
                       {instructorName}
                     </h4>
                     <p className="text-sm text-slate-400">
-                      Instrutora desde Jan 2024
+                      Tutora desde Jan 2024
                     </p>
                     <span className="mt-2 inline-flex text-[10px] font-bold bg-brand-green text-white px-2 py-0.5 rounded uppercase">
                       Verificada

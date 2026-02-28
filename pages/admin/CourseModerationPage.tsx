@@ -18,7 +18,7 @@ import {
     FileText,
     Play,
     User,
-    X
+    X,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import AdminLayout from "../../layouts/AdminLayout";
@@ -90,7 +90,7 @@ const CourseModerationPage: React.FC = () => {
           coursesList.push({
             id: doc.id,
             title: data.title || "Sem título",
-            instructor: data.instructor || "Sem instrutor",
+            instructor: data.instructor || "Sem tutor",
             category: data.category || "Geral",
             rating: data.rating || 0,
             reviewCount: data.reviewCount || 0,
@@ -124,7 +124,7 @@ const CourseModerationPage: React.FC = () => {
         setPreviewCourse({
           id: courseDoc.id,
           title: data.title || "Sem título",
-          instructor: data.instructor || "Sem instrutor",
+          instructor: data.instructor || "Sem tutor",
           category: data.category || "Geral",
           rating: data.rating || 0,
           reviewCount: data.reviewCount || 0,

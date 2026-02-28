@@ -1,31 +1,31 @@
 import {
-  Ban,
-  BookOpen,
-  Check,
-  CheckCircle,
-  ExternalLink,
-  FileCheck,
-  Filter,
-  Mail,
-  Search,
-  Star,
-  Users,
-  X,
-  XCircle,
+    Ban,
+    BookOpen,
+    Check,
+    CheckCircle,
+    ExternalLink,
+    FileCheck,
+    Filter,
+    Mail,
+    Search,
+    Star,
+    Users,
+    X,
+    XCircle,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "../../layouts/AdminLayout";
 
 import {
-  addDoc,
-  collection,
-  doc,
-  onSnapshot,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
+    addDoc,
+    collection,
+    doc,
+    onSnapshot,
+    query,
+    serverTimestamp,
+    updateDoc,
+    where,
 } from "firebase/firestore";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import { UserProfile } from "../../contexts/AuthContext";
@@ -594,7 +594,7 @@ const TutorApplicationRow: React.FC<{
         <button
           onClick={onApprove}
           className="p-2.5 bg-white text-brand-green border border-emerald-100 rounded-xl hover:bg-brand-green hover:text-white transition-all shadow-sm active:scale-95"
-          title="Aprovar Instrutor"
+          title="Aprovar Tutor"
         >
           <CheckCircle size={18} />
         </button>
