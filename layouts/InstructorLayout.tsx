@@ -67,11 +67,11 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children }) => {
       label: "Meus Cursos",
       href: "/instrutor/cursos",
     },
-    {
-      icon: <Users className="w-5 h-5" />,
-      label: "Meus Formandos",
-      href: "/instrutor/alunos",
-    },
+    // {
+    //   icon: <Users className="w-5 h-5" />,
+    //   label: "Meus Formandos",
+    //   href: "/instrutor/alunos",
+    // },
     {
       icon: <MessageSquare className="w-5 h-5" />,
       label: "Dúvidas",

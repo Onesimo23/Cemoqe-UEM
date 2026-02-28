@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import logo from "../public/login-image.jpg";
 // Added Check to the imports from lucide-react
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -146,42 +147,23 @@ const LoginPage: React.FC = () => {
     <div className="min-h-[calc(100vh-80px)] bg-gray-50 flex items-center justify-center p-4 py-12 font-sans">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row border border-gray-100">
         {/* Lado Esquerdo - Branding (Conforme imagem) */}
-        <div className="md:w-[45%] bg-brand-dark relative hidden md:flex flex-col justify-between p-12 text-white">
+        <div className="md:w-[45%] bg-brand-dark relative hidden md:flex flex-col justify-between p-12 text-white overflow-hidden">
+          <div className="absolute inset-0 bg-brand-green/30 mix-blend-overlay z-0"></div>
+          <img
+            src={logo}
+            alt="Students"
+            className="absolute inset-0 w-full h-full object-cover opacity-40 grayscale z-0"
+          />
+          
           <div className="relative z-10">
             <h2 className="text-4xl font-extrabold mb-4 leading-tight">
               Bem-vindo de volta!
             </h2>
-            <p className="text-brand-light/80 text-lg leading-relaxed">
+            <p className="text-brand-light/90 text-lg leading-relaxed">
               Continue sua jornada de aprendizado na plataforma líder em
               Moçambique.
             </p>
           </div>
-
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex -space-x-2">
-                {[1, 2, 3].map((i) => (
-                  <img
-                    key={i}
-                    src={`https://i.pravatar.cc/100?img=${10 + i}`}
-                    alt="User"
-                    className="w-10 h-10 rounded-full border-2 border-brand-dark object-cover"
-                  />
-                ))}
-              </div>
-              <p className="text-sm font-bold text-brand-light">
-                Milhares de formandos ativos
-              </p>
-            </div>
-            <div className="h-1.5 w-24 bg-brand-accent rounded-full"></div>
-          </div>
-
-          <div className="absolute inset-0 bg-brand-green/30 mix-blend-overlay"></div>
-          <img
-            src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-            alt="Students"
-            className="absolute inset-0 w-full h-full object-cover opacity-40 grayscale"
-          />
         </div>
 
         {/* Lado Direito - Formulário */}
