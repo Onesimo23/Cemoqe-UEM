@@ -18,9 +18,9 @@ import { db, storage } from "../../services/firebase";
 import { isSupabaseConfigured, supabase } from "../../services/supabase";
 
 const SettingsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<
-    "profile" | "notifications"
-  >("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "notifications">(
+    "profile",
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 

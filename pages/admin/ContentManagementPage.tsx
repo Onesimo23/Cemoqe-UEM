@@ -17,7 +17,6 @@ import {
     EyeOff,
     Filter,
     FolderPlus,
-    Hash,
     Layers,
     Plus,
     Power,
@@ -25,7 +24,7 @@ import {
     Trash2,
     TrendingUp,
     User,
-    X,
+    X
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";

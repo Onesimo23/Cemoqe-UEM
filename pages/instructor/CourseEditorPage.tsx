@@ -1,20 +1,19 @@
 import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  serverTimestamp,
-  updateDoc,
+    addDoc,
+    collection,
+    doc,
+    getDoc,
+    serverTimestamp,
+    updateDoc,
 } from "firebase/firestore";
 import {
-  getDownloadURL,
-  getStorage,
-  ref as sRef,
-  uploadBytes,
+    getDownloadURL,
+    getStorage,
+    ref as sRef,
+    uploadBytes,
 } from "firebase/storage";
 import {
     ArrowLeft,
-    Bold,
     Check,
     CheckCircle,
     ChevronDown,
@@ -38,7 +37,7 @@ import {
     Save,
     Trash2,
     Type,
-    X,
+    X
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -119,7 +118,18 @@ export interface ContentBlock {
   fileName?: string;
 }
 
-const COMMON_EMOJIS = ["💡", "📝", "🎯", "🚀", "📢", "❓", "✅", "⭐", "🔥", "💎"];
+const COMMON_EMOJIS = [
+  "💡",
+  "📝",
+  "🎯",
+  "🚀",
+  "📢",
+  "❓",
+  "✅",
+  "⭐",
+  "🔥",
+  "💎",
+];
 
 const LessonBlockEditor: React.FC<{
   blocksJson: string;
@@ -129,13 +139,17 @@ const LessonBlockEditor: React.FC<{
   const [blocks, setBlocks] = useState<ContentBlock[]>(() => {
     try {
       const parsed = JSON.parse(blocksJson);
-      return Array.isArray(parsed) ? parsed : [{ id: "1", type: "p", value: blocksJson }];
+      return Array.isArray(parsed)
+        ? parsed
+        : [{ id: "1", type: "p", value: blocksJson }];
     } catch {
       return [{ id: "1", type: "p", value: blocksJson || "" }];
     }
   });
 
-  const [activeEmojiPicker, setActiveEmojiPicker] = useState<string | null>(null);
+  const [activeEmojiPicker, setActiveEmojiPicker] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     onChange(JSON.stringify(blocks));
@@ -151,15 +165,26 @@ const LessonBlockEditor: React.FC<{
   };
 
   const updateBlock = (id: string, value: string, fileName?: string) => {
-    setBlocks(blocks.map((b) => (b.id === id ? { ...b, value, fileName: fileName || b.fileName } : b)));
+    setBlocks(
+      blocks.map((b) =>
+        b.id === id ? { ...b, value, fileName: fileName || b.fileName } : b,
+      ),
+    );
   };
 
   const updateEmoji = (id: string, emoji: string, iconUrl?: string) => {
-    setBlocks(blocks.map((b) => (b.id === id ? { ...b, emoji, iconUrl: iconUrl ?? "" } : b)));
+    setBlocks(
+      blocks.map((b) =>
+        b.id === id ? { ...b, emoji, iconUrl: iconUrl ?? "" } : b,
+      ),
+    );
     setActiveEmojiPicker(null);
   };
 
-  const handleFileUploadInBlock = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUploadInBlock = async (
+    id: string,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
@@ -170,7 +195,10 @@ const LessonBlockEditor: React.FC<{
     }
   };
 
-  const handleMiniIconUpload = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMiniIconUpload = async (
+    id: string,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
@@ -193,11 +221,17 @@ const LessonBlockEditor: React.FC<{
     const newBlocks = [...blocks];
     const targetIndex = direction === "up" ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= blocks.length) return;
-    [newBlocks[index], newBlocks[targetIndex]] = [newBlocks[targetIndex], newBlocks[index]];
+    [newBlocks[index], newBlocks[targetIndex]] = [
+      newBlocks[targetIndex],
+      newBlocks[index],
+    ];
     setBlocks(newBlocks);
   };
 
-  const handleImageUpload = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (
+    id: string,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
@@ -264,13 +298,24 @@ const LessonBlockEditor: React.FC<{
 
       <div className="space-y-3">
         {blocks.map((block, index) => (
-          <div key={block.id} className="group relative bg-white border border-gray-100 rounded-xl p-3 shadow-sm hover:border-brand-green/30 transition-all">
+          <div
+            key={block.id}
+            className="group relative bg-white border border-gray-100 rounded-xl p-3 shadow-sm hover:border-brand-green/30 transition-all"
+          >
             <div className="absolute -left-10 top-1/2 -translate-y-1/2 flex flex-col items-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <button disabled={index === 0} onClick={() => moveBlock(index, "up")} className="p-1 text-gray-400 hover:text-brand-green disabled:opacity-30">
+              <button
+                disabled={index === 0}
+                onClick={() => moveBlock(index, "up")}
+                className="p-1 text-gray-400 hover:text-brand-green disabled:opacity-30"
+              >
                 <ChevronDown size={14} className="rotate-180" />
               </button>
               <GripVertical size={14} className="text-gray-300" />
-              <button disabled={index === blocks.length - 1} onClick={() => moveBlock(index, "down")} className="p-1 text-gray-400 hover:text-brand-green disabled:opacity-30">
+              <button
+                disabled={index === blocks.length - 1}
+                onClick={() => moveBlock(index, "down")}
+                className="p-1 text-gray-400 hover:text-brand-green disabled:opacity-30"
+              >
                 <ChevronDown size={14} />
               </button>
             </div>
@@ -284,21 +329,29 @@ const LessonBlockEditor: React.FC<{
                       {block.emoji ? (
                         <span className="text-xl">{block.emoji}</span>
                       ) : (
-                        <img src={block.iconUrl} className="w-full h-full object-cover" alt="icon" />
+                        <img
+                          src={block.iconUrl}
+                          className="w-full h-full object-cover"
+                          alt="icon"
+                        />
                       )}
                     </div>
                   )}
-                  
+
                   <div className="relative">
                     <button
                       type="button"
-                      onClick={() => setActiveEmojiPicker(activeEmojiPicker === block.id ? null : block.id)}
+                      onClick={() =>
+                        setActiveEmojiPicker(
+                          activeEmojiPicker === block.id ? null : block.id,
+                        )
+                      }
                       className="p-1.5 bg-white border border-gray-100 text-gray-400 hover:text-brand-green hover:border-brand-green rounded-full shadow-sm transition-all"
                       title="Alterar Ícone"
                     >
                       <PlusIcon size={14} />
                     </button>
-                    
+
                     {activeEmojiPicker === block.id && (
                       <div className="absolute right-0 top-full mt-2 bg-white border border-gray-100 shadow-2xl rounded-2xl p-3 flex flex-col gap-3 w-56 z-[100] animate-in fade-in zoom-in duration-200">
                         <div className="flex flex-wrap gap-2">
@@ -316,7 +369,11 @@ const LessonBlockEditor: React.FC<{
                         <div className="border-t border-gray-50 pt-3">
                           <button
                             type="button"
-                            onClick={() => document.getElementById(`mini-img-${block.id}`)?.click()}
+                            onClick={() =>
+                              document
+                                .getElementById(`mini-img-${block.id}`)
+                                ?.click()
+                            }
                             className="w-full text-xs flex items-center justify-center gap-2 py-2.5 bg-gray-50 hover:bg-brand-green/10 text-brand-green rounded-xl transition-colors font-bold"
                           >
                             <ImageIcon size={14} /> Upload de Imagem
@@ -386,7 +443,9 @@ const LessonBlockEditor: React.FC<{
                 )}
                 {block.type === "list" && (
                   <div className="flex items-start gap-2">
-                    <span className="text-brand-green font-bold text-lg leading-none mt-1">·</span>
+                    <span className="text-brand-green font-bold text-lg leading-none mt-1">
+                      ·
+                    </span>
                     <textarea
                       value={block.value}
                       onChange={(e) => updateBlock(block.id, e.target.value)}
@@ -400,7 +459,11 @@ const LessonBlockEditor: React.FC<{
                   <div className="space-y-2 pr-12">
                     {block.value ? (
                       <div className="relative rounded-xl overflow-hidden border border-gray-100 shadow-lg max-w-xl mx-auto group">
-                        <img src={block.value} alt="Block image" className="w-full h-auto" />
+                        <img
+                          src={block.value}
+                          alt="Block image"
+                          className="w-full h-auto"
+                        />
                         <button
                           type="button"
                           onClick={() => updateBlock(block.id, "")}
@@ -410,9 +473,18 @@ const LessonBlockEditor: React.FC<{
                         </button>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed border-gray-100 rounded-lg hover:border-brand-green/50 cursor-pointer transition-all" onClick={() => document.getElementById(`block-img-${block.id}`)?.click()}>
+                      <div
+                        className="flex flex-col items-center justify-center py-8 border-2 border-dashed border-gray-100 rounded-lg hover:border-brand-green/50 cursor-pointer transition-all"
+                        onClick={() =>
+                          document
+                            .getElementById(`block-img-${block.id}`)
+                            ?.click()
+                        }
+                      >
                         <ImageIcon size={24} className="text-gray-300 mb-2" />
-                        <span className="text-xs text-gray-400">Clique para selecionar imagem</span>
+                        <span className="text-xs text-gray-400">
+                          Clique para selecionar imagem
+                        </span>
                         <input
                           id={`block-img-${block.id}`}
                           type="file"
@@ -433,8 +505,12 @@ const LessonBlockEditor: React.FC<{
                           <FileIcon size={20} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-slate-700 truncate">{block.fileName || "Ficheiro"}</p>
-                          <p className="text-[10px] text-gray-400 uppercase tracking-tighter">Download disponível no player</p>
+                          <p className="text-sm font-bold text-slate-700 truncate">
+                            {block.fileName || "Ficheiro"}
+                          </p>
+                          <p className="text-[10px] text-gray-400 uppercase tracking-tighter">
+                            Download disponível no player
+                          </p>
                         </div>
                         <button
                           type="button"
@@ -445,9 +521,18 @@ const LessonBlockEditor: React.FC<{
                         </button>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed border-gray-100 rounded-lg hover:border-brand-green/50 cursor-pointer transition-all" onClick={() => document.getElementById(`blk-file-${block.id}`)?.click()}>
+                      <div
+                        className="flex flex-col items-center justify-center py-8 border-2 border-dashed border-gray-100 rounded-lg hover:border-brand-green/50 cursor-pointer transition-all"
+                        onClick={() =>
+                          document
+                            .getElementById(`blk-file-${block.id}`)
+                            ?.click()
+                        }
+                      >
                         <FileUp size={24} className="text-gray-300 mb-2" />
-                        <span className="text-xs text-gray-400">Clique para anexar ficheiro (PDF, ZIP, DOCX, etc)</span>
+                        <span className="text-xs text-gray-400">
+                          Clique para anexar ficheiro (PDF, ZIP, DOCX, etc)
+                        </span>
                         <input
                           id={`blk-file-${block.id}`}
                           type="file"
@@ -2210,14 +2295,18 @@ const CourseEditorPage: React.FC = () => {
                                     .replace(/[\u0300-\u036f]/g, "")
                                     .replace(/[^a-zA-Z0-9._-]/g, "_");
                                   const filePath = `courses/${id || "temp"}/blocks/${Date.now()}_${sanitizedFileName}`;
-                                  
+
                                   if (isSupabaseConfigured) {
                                     await supabase.storage
                                       .from(SUPABASE_BUCKET)
                                       .upload(filePath, file);
-                                    const { data: signed } = await supabase.storage
-                                      .from(SUPABASE_BUCKET)
-                                      .createSignedUrl(filePath, SUPABASE_SIGNED_TTL);
+                                    const { data: signed } =
+                                      await supabase.storage
+                                        .from(SUPABASE_BUCKET)
+                                        .createSignedUrl(
+                                          filePath,
+                                          SUPABASE_SIGNED_TTL,
+                                        );
                                     return signed?.signedUrl || "";
                                   }
                                   return "";

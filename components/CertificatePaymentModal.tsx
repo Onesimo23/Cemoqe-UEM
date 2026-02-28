@@ -721,7 +721,10 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
                 {paymentMethod === "m-pesa" && paymentSettings.mpesaNumber && (
                   <div className="text-sm text-amber-800">
                     <p className="font-medium">
-                      M-Pesa: <span className="font-bold">{paymentSettings.mpesaNumber}</span>
+                      M-Pesa:{" "}
+                      <span className="font-bold">
+                        {paymentSettings.mpesaNumber}
+                      </span>
                     </p>
                     <p className="text-xs text-amber-700 mt-1">
                       Faça a transferência para este número e insira o ID da
@@ -732,7 +735,10 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
                 {paymentMethod === "e-mola" && paymentSettings.emolaNumber && (
                   <div className="text-sm text-amber-800">
                     <p className="font-medium">
-                      E-Mola: <span className="font-bold">{paymentSettings.emolaNumber}</span>
+                      E-Mola:{" "}
+                      <span className="font-bold">
+                        {paymentSettings.emolaNumber}
+                      </span>
                     </p>
                     <p className="text-xs text-amber-700 mt-1">
                       Faça a transferência para este número e insira o ID da
@@ -744,7 +750,9 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
                   <div className="text-sm text-amber-800">
                     <p className="font-medium">
                       {paymentSettings.bankName}:{" "}
-                      <span className="font-bold">{paymentSettings.accountNumber}</span>
+                      <span className="font-bold">
+                        {paymentSettings.accountNumber}
+                      </span>
                     </p>
                     {paymentSettings.accountHolder && (
                       <p className="text-xs text-amber-700 mt-1">
@@ -757,12 +765,15 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
                     </p>
                   </div>
                 )}
-                {!((paymentMethod === "m-pesa" && paymentSettings.mpesaNumber) ||
-                    (paymentMethod === "e-mola" && paymentSettings.emolaNumber) ||
-                    (paymentMethod === "bank" && paymentSettings.bankName)) && (
+                {!(
+                  (paymentMethod === "m-pesa" && paymentSettings.mpesaNumber) ||
+                  (paymentMethod === "e-mola" && paymentSettings.emolaNumber) ||
+                  (paymentMethod === "bank" && paymentSettings.bankName)
+                ) && (
                   <div className="text-sm text-amber-800">
                     <p className="text-xs text-amber-700">
-                      Dados de pagamento não configurados. Entre em contato com o administrador.
+                      Dados de pagamento não configurados. Entre em contato com
+                      o administrador.
                     </p>
                   </div>
                 )}

@@ -1,18 +1,18 @@
 import {
-  AlertTriangle,
-  AppWindow,
-  Building2,
-  CheckCircle2,
-  CreditCard,
-  Database,
-  Globe,
-  Image as ImageIcon,
-  Palette,
-  RotateCcw,
-  Save,
-  Server,
-  Shield,
-  X,
+    AlertTriangle,
+    AppWindow,
+    Building2,
+    CheckCircle2,
+    CreditCard,
+    Database,
+    Globe,
+    Image as ImageIcon,
+    Palette,
+    RotateCcw,
+    Save,
+    Server,
+    Shield,
+    X,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import AdminLayout from "../../layouts/AdminLayout";
@@ -614,7 +614,9 @@ const AdminSettingsPage: React.FC = () => {
                       Dados de Pagamento
                     </h4>
                     <p className="text-xs text-brand-dark/60 mt-1 font-medium">
-                      Configure os métodos de pagamento para os certificados. Estes dados serão utilizados pelos alunos ao solicitar certificados.
+                      Configure os métodos de pagamento para os certificados.
+                      Estes dados serão utilizados pelos alunos ao solicitar
+                      certificados.
                     </p>
                   </div>
                 </div>
