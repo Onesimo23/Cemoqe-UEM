@@ -38,8 +38,8 @@ const defaultBranding: BrandingSettings = {
     lightColor: BrandingConfig.lightColor,
     fontFamily: BrandingConfig.fontFamily,
     logoUrl: BrandingConfig.logoUrl,
-    logoText: BrandingConfig.logoText,
-    logoSubtext: BrandingConfig.logoSubtext,
+    logoText: (BrandingConfig as any).logoText,
+    logoSubtext: (BrandingConfig as any).logoSubtext,
   },
   system: BrandingConfig.system,
   security: BrandingConfig.security,
@@ -201,6 +201,30 @@ function injectBrandingStyles(
 
     .bg-brand-accent {
       background-color: var(--brand-accent) !important;
+    }
+
+    .bg-brand-dark {
+      background-color: var(--brand-dark) !important;
+    }
+
+    .bg-brand-light {
+      background-color: var(--brand-light) !important;
+    }
+
+    .brand-dark {
+      color: var(--brand-dark) !important;
+    }
+
+    .brand-light {
+      color: var(--brand-light) !important;
+    }
+
+    .text-brand-dark {
+      color: var(--brand-dark) !important;
+    }
+
+    .text-brand-light {
+      color: var(--brand-light) !important;
     }
 
     .hover\\:text-brand-accent:hover {

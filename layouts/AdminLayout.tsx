@@ -101,11 +101,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       label: "Aprovação de Certificados",
       href: "/admin/certificados",
     },
-    {
-      icon: <Key className="w-5 h-5" />,
-      label: "Gestão de Permissões",
-      href: "/admin/permissoes",
-    },
+    // {
+    //   icon: <Key className="w-5 h-5" />,
+    //   label: "Gestão de Permissões",
+    //   href: "/admin/permissoes",
+    // },
     {
       icon: <BarChart3 className="w-5 h-5" />,
       label: "Relatório e Analytics",
