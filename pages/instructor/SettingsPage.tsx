@@ -1,11 +1,9 @@
 import {
     Bell,
-    Building2,
     Camera,
     Check,
     CheckCircle,
     ChevronDown,
-    CreditCard,
     Save,
     User,
 } from "lucide-react";
@@ -21,13 +19,10 @@ import { isSupabaseConfigured, supabase } from "../../services/supabase";
 
 const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
-    "profile" | "payout" | "notifications"
+    "profile" | "notifications"
   >("profile");
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [selectedBank, setSelectedBank] = useState(
-    "BCI - Banco Comercial e de Investimentos",
-  );
 
   const { profile, user, refreshProfile } = useAuth();
   const [fullName, setFullName] = useState("");
@@ -220,12 +215,6 @@ const SettingsPage: React.FC = () => {
               onClick={() => setActiveTab("profile")}
             />
             <SettingsTab
-              active={activeTab === "payout"}
-              icon={<CreditCard size={18} />}
-              label="Dados de Pagamento"
-              onClick={() => setActiveTab("payout")}
-            />
-            <SettingsTab
               active={activeTab === "notifications"}
               icon={<Bell size={18} />}
               label="Notificações"
@@ -310,73 +299,6 @@ const SettingsPage: React.FC = () => {
                       onChange={(e) => setBio(e.target.value)}
                       placeholder="Conte sobre sua experiência e especialidades..."
                       className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-brand-green/5 focus:border-brand-green transition-all shadow-sm resize-none"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "payout" && (
-              <div className="space-y-8 animate-in fade-in duration-300">
-                <div className="p-6 bg-brand-light/30 border border-brand-green/10 rounded-2xl flex gap-4">
-                  <CreditCard
-                    size={24}
-                    className="text-brand-green flex-shrink-0"
-                  />
-                  <div>
-                    <h4 className="font-bold text-brand-dark text-sm">
-                      Transferências em MZM
-                    </h4>
-                    <p className="text-xs text-brand-dark/60 mt-1 font-medium">
-                      Seus ganhos são transferidos mensalmente para sua conta
-                      bancária moçambicana cadastrada.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                      Banco Destinatário
-                    </label>
-                    <Select
-                      className="w-full"
-                      value={selectedBank}
-                      onValueChange={setSelectedBank}
-                    >
-                      <SelectTrigger>
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-brand-green" />
-                          <SelectValue />
-                        </div>
-                      </SelectTrigger>
-                      <SelectPopover>
-                        <SelectListBox>
-                          <SelectItem value="BCI - Banco Comercial e de Investimentos">
-                            BCI - Banco Comercial e de Investimentos
-                          </SelectItem>
-                          <SelectItem value="Standard Bank Moçambique">
-                            Standard Bank Moçambique
-                          </SelectItem>
-                          <SelectItem value="Millennium bim">
-                            Millennium bim
-                          </SelectItem>
-                          <SelectItem value="Absa Bank Moçambique">
-                            Absa Bank Moçambique
-                          </SelectItem>
-                          <SelectItem value="Moza Banco">Moza Banco</SelectItem>
-                        </SelectListBox>
-                      </SelectPopover>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                      NIB (Número de Identificação Bancária)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="0000 0000 0000 0000 0000 0"
-                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-black text-slate-900 font-mono outline-none focus:ring-4 focus:ring-brand-green/5 focus:border-brand-green transition-all shadow-sm"
                     />
                   </div>
                 </div>

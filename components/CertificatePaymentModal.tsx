@@ -62,11 +62,19 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
   const [instructorUid, setInstructorUid] = useState<string | null>(null);
   const [instructorName, setInstructorName] = useState<string | null>(null);
   const [course, setCourse] = useState<any | null>(null);
+  const [paymentSettings, setPaymentSettings] = useState({
+    mpesaNumber: "",
+    emolaNumber: "",
+    bankName: "",
+    accountNumber: "",
+    accountHolder: "",
+  });
 
   useEffect(() => {
     if (isOpen && user) {
       checkExistingCertificate();
       getInstructorUid();
+      loadPaymentSettings();
     }
   }, [isOpen, user, courseId]);
 
@@ -101,6 +109,27 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
       }
     } catch (err) {
       console.error("Erro ao buscar instrutor do curso:", err);
+    }
+  };
+
+  const loadPaymentSettings = async () => {
+    try {
+      const settingsRef = doc(db, "settings", "system");
+      const settingsSnap = await getDoc(settingsRef);
+      if (settingsSnap.exists()) {
+        const data: any = settingsSnap.data();
+        if (data?.payment) {
+          setPaymentSettings({
+            mpesaNumber: data.payment.mpesaNumber || "",
+            emolaNumber: data.payment.emolaNumber || "",
+            bankName: data.payment.bankName || "",
+            accountNumber: data.payment.accountNumber || "",
+            accountHolder: data.payment.accountHolder || "",
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao carregar configurações de pagamento:", err);
     }
   };
 
@@ -689,10 +718,10 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
                 <p className="text-sm font-semibold text-amber-900 mb-2">
                   Dados para Transferência:
                 </p>
-                {paymentMethod === "m-pesa" && (
+                {paymentMethod === "m-pesa" && paymentSettings.mpesaNumber && (
                   <div className="text-sm text-amber-800">
                     <p className="font-medium">
-                      M-Pesa: <span className="font-bold">846909999</span>
+                      M-Pesa: <span className="font-bold">{paymentSettings.mpesaNumber}</span>
                     </p>
                     <p className="text-xs text-amber-700 mt-1">
                       Faça a transferência para este número e insira o ID da
@@ -700,10 +729,10 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
                     </p>
                   </div>
                 )}
-                {paymentMethod === "e-mola" && (
+                {paymentMethod === "e-mola" && paymentSettings.emolaNumber && (
                   <div className="text-sm text-amber-800">
                     <p className="font-medium">
-                      E-Mola: <span className="font-bold">(870509214)</span>
+                      E-Mola: <span className="font-bold">{paymentSettings.emolaNumber}</span>
                     </p>
                     <p className="text-xs text-amber-700 mt-1">
                       Faça a transferência para este número e insira o ID da
@@ -711,15 +740,29 @@ const CertificatePaymentModal: React.FC<CertificatePaymentModalProps> = ({
                     </p>
                   </div>
                 )}
-                {paymentMethod === "bank" && (
+                {paymentMethod === "bank" && paymentSettings.bankName && (
                   <div className="text-sm text-amber-800">
                     <p className="font-medium">
-                      BCI:{" "}
-                      <span className="font-bold">(000800000971671710113)</span>
+                      {paymentSettings.bankName}:{" "}
+                      <span className="font-bold">{paymentSettings.accountNumber}</span>
                     </p>
+                    {paymentSettings.accountHolder && (
+                      <p className="text-xs text-amber-700 mt-1">
+                        Titular: {paymentSettings.accountHolder}
+                      </p>
+                    )}
                     <p className="text-xs text-amber-700 mt-1">
                       Faça a transferência para esta conta e insira o ID da
                       transação abaixo.
+                    </p>
+                  </div>
+                )}
+                {!((paymentMethod === "m-pesa" && paymentSettings.mpesaNumber) ||
+                    (paymentMethod === "e-mola" && paymentSettings.emolaNumber) ||
+                    (paymentMethod === "bank" && paymentSettings.bankName)) && (
+                  <div className="text-sm text-amber-800">
+                    <p className="text-xs text-amber-700">
+                      Dados de pagamento não configurados. Entre em contato com o administrador.
                     </p>
                   </div>
                 )}

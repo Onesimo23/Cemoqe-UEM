@@ -3,6 +3,7 @@ import {
   AppWindow,
   Building2,
   CheckCircle2,
+  CreditCard,
   Database,
   Globe,
   Image as ImageIcon,
@@ -23,7 +24,7 @@ import { isSupabaseConfigured, supabase } from "../../services/supabase";
 
 const AdminSettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
-    "system" | "appearance" | "security"
+    "system" | "appearance" | "security" | "payment"
   >("appearance");
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -53,6 +54,14 @@ const AdminSettingsPage: React.FC = () => {
     limitedSessions: false,
   });
 
+  const [paymentSettings, setPaymentSettings] = useState({
+    mpesaNumber: "",
+    emolaNumber: "",
+    bankName: "",
+    accountNumber: "",
+    accountHolder: "",
+  });
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
@@ -68,6 +77,8 @@ const AdminSettingsPage: React.FC = () => {
             setSystemSettings((prev) => ({ ...prev, ...data.system }));
           if (data.security)
             setSecuritySettings((prev) => ({ ...prev, ...data.security }));
+          if (data.payment)
+            setPaymentSettings((prev) => ({ ...prev, ...data.payment }));
         }
       } finally {
         setLoading(false);
@@ -85,6 +96,7 @@ const AdminSettingsPage: React.FC = () => {
           appearance: brandSettings,
           system: systemSettings,
           security: securitySettings,
+          payment: paymentSettings,
           updatedAt: serverTimestamp(),
         },
         { merge: true },
@@ -289,6 +301,12 @@ const AdminSettingsPage: React.FC = () => {
               label="Segurança"
               icon={<Shield size={18} />}
               onClick={() => setActiveTab("security")}
+            />
+            <SettingBtn
+              active={activeTab === "payment"}
+              label="Dados de Pagamento"
+              icon={<CreditCard size={18} />}
+              onClick={() => setActiveTab("payment")}
             />
           </aside>
 
@@ -580,6 +598,119 @@ const AdminSettingsPage: React.FC = () => {
                       setSecuritySettings((s) => ({ ...s, limitedSessions: v }))
                     }
                   />
+                </div>
+              </div>
+            )}
+
+            {activeTab === "payment" && (
+              <div className="space-y-8 animate-in fade-in duration-300">
+                <div className="p-6 bg-brand-light/30 border border-brand-green/10 rounded-2xl flex gap-4">
+                  <CreditCard
+                    size={24}
+                    className="text-brand-green flex-shrink-0"
+                  />
+                  <div>
+                    <h4 className="font-bold text-brand-dark text-sm">
+                      Dados de Pagamento
+                    </h4>
+                    <p className="text-xs text-brand-dark/60 mt-1 font-medium">
+                      Configure os métodos de pagamento para os certificados. Estes dados serão utilizados pelos alunos ao solicitar certificados.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                      Número M-Pesa
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="+258 XX XXX XXXX"
+                      value={paymentSettings.mpesaNumber}
+                      onChange={(e) =>
+                        setPaymentSettings((s) => ({
+                          ...s,
+                          mpesaNumber: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-brand-green/5 focus:border-brand-green transition-all shadow-sm"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                      Número E-Mola
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="+258 XX XXX XXXX"
+                      value={paymentSettings.emolaNumber}
+                      onChange={(e) =>
+                        setPaymentSettings((s) => ({
+                          ...s,
+                          emolaNumber: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-brand-green/5 focus:border-brand-green transition-all shadow-sm"
+                    />
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                        Nome do Banco
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ex: BCI - Banco Comercial"
+                        value={paymentSettings.bankName}
+                        onChange={(e) =>
+                          setPaymentSettings((s) => ({
+                            ...s,
+                            bankName: e.target.value,
+                          }))
+                        }
+                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-brand-green/5 focus:border-brand-green transition-all shadow-sm"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                        Titular da Conta
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Nome da instituição"
+                        value={paymentSettings.accountHolder}
+                        onChange={(e) =>
+                          setPaymentSettings((s) => ({
+                            ...s,
+                            accountHolder: e.target.value,
+                          }))
+                        }
+                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-brand-green/5 focus:border-brand-green transition-all shadow-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                      Número de Conta / NIB
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: 0000 0000 0000 0000 0000 0"
+                      value={paymentSettings.accountNumber}
+                      onChange={(e) =>
+                        setPaymentSettings((s) => ({
+                          ...s,
+                          accountNumber: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-black text-slate-900 font-mono outline-none focus:ring-4 focus:ring-brand-green/5 focus:border-brand-green transition-all shadow-sm"
+                    />
+                  </div>
                 </div>
               </div>
             )}

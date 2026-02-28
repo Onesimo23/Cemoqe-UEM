@@ -495,7 +495,6 @@ const CourseEditorPage: React.FC = () => {
   const [formData, setFormData] = useState({
     title: id ? "UX/UI Design Moderno e Acessível" : "",
     category: "Design",
-    certificatePrice: "",
     cardDescription:
       "Domine as habilidades essenciais para se destacar no mercado de trabalho.",
     fullDescription:
@@ -544,10 +543,6 @@ const CourseEditorPage: React.FC = () => {
         const snap = await getDoc(ref);
         if (snap.exists()) {
           const data: any = snap.data();
-          // Formata o certificatePrice de número para string formatada
-          const formattedPrice = data?.certificatePrice
-            ? data.certificatePrice.toString().replace(".", ",")
-            : "0,00";
           // Remove "h" da duração se existir
           const duration = data?.duration
             ? data.duration.toString().replace("h", "")
@@ -555,7 +550,6 @@ const CourseEditorPage: React.FC = () => {
           setFormData({
             title: data?.title || "",
             category: data?.category || "Design",
-            certificatePrice: formattedPrice,
             cardDescription: data?.cardDescription || "",
             fullDescription: data?.fullDescription || "",
             language: data?.language || "Português",
@@ -590,14 +584,6 @@ const CourseEditorPage: React.FC = () => {
       showToast("Por favor, defina a duração do curso.", "error");
       return false;
     }
-    if (
-      !formData.certificatePrice ||
-      formData.certificatePrice.trim().length === 0 ||
-      parseFloat(formData.certificatePrice.replace(",", ".")) <= 0
-    ) {
-      showToast("Por favor, defina o preço do certificado.", "error");
-      return false;
-    }
     return true;
   };
 
@@ -616,10 +602,6 @@ const CourseEditorPage: React.FC = () => {
     setIsSaving(true);
     try {
       const image = previewImage || imageUrl || "";
-      const parseCertificatePrice = (val: string): number => {
-        const cleaned = val.replace(/[^\d,.-]/g, "").replace(",", ".");
-        return parseFloat(cleaned) || 0;
-      };
       const payload: any = {
         creator_uid: user.uid,
         instructor_uid: user.uid,
@@ -627,9 +609,7 @@ const CourseEditorPage: React.FC = () => {
         title: formData.title || "Sem título",
         category: formData.category || "Geral",
         currency: "MZM",
-        certificatePrice: parseCertificatePrice(
-          formData.certificatePrice || "0,00",
-        ),
+        certificatePrice: 0,
         cardDescription: formData.cardDescription || "",
         fullDescription: formData.fullDescription || "",
         language: formData.language || "Português",
@@ -1282,31 +1262,6 @@ const CourseEditorPage: React.FC = () => {
                       </SelectListBox>
                     </SelectPopover>
                   </Select>
-
-                  <InputGroup
-                    label="Preço do Certificado (MZM)"
-                    help="Defina o valor do certificado (0 = gratuito)."
-                  >
-                    <div className="relative">
-                      <input
-                        type="number"
-                        value={formData.certificatePrice.replace(",", ".")}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            certificatePrice: e.target.value.replace(".", ","),
-                          })
-                        }
-                        placeholder="250"
-                        min="0"
-                        required
-                        className="w-full pl-4 pr-16 py-3 bg-[#262626] border border-gray-700 rounded-xl text-white placeholder-gray-600 focus:ring-2 focus:ring-brand-green/30 focus:border-brand-green outline-none"
-                      />
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-gray-500 uppercase">
-                        MZM
-                      </div>
-                    </div>
-                  </InputGroup>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
@@ -2384,12 +2339,6 @@ const CourseEditorPage: React.FC = () => {
                 <p>
                   <span className="font-semibold text-slate-700">Duração:</span>{" "}
                   {formData.duration}h
-                </p>
-                <p>
-                  <span className="font-semibold text-slate-700">
-                    Preço Certificado:
-                  </span>{" "}
-                  {formData.certificatePrice} MZM
                 </p>
                 <p>
                   <span className="font-semibold text-slate-700">

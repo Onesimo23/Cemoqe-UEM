@@ -109,7 +109,7 @@ const ContentManagementPage: React.FC = () => {
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
   const [editingCourseData, setEditingCourseData] = useState({
     category: "",
-    relevanceScore: 80,
+    certificatePrice: 0,
   });
 
   // New Course Form State
@@ -117,7 +117,7 @@ const ContentManagementPage: React.FC = () => {
     title: "",
     instructor: "",
     category: "",
-    relevanceScore: 80,
+    certificatePrice: 0,
   });
 
   // Função auxiliar para recalcular contagens
@@ -457,7 +457,8 @@ const ContentManagementPage: React.FC = () => {
         rating: 5.0,
         reviewCount: 0,
         duration: "0h",
-        relevanceScore: Number(newCourse.relevanceScore),
+        relevanceScore: 0,
+        certificatePrice: Number(newCourse.certificatePrice) || 0,
         imageUrl: `https://picsum.photos/seed/${Math.random()}/800/600`,
         isActive: true,
         badgeColor: "bg-stone-100 text-stone-800",
@@ -471,7 +472,7 @@ const ContentManagementPage: React.FC = () => {
         title: "",
         instructor: "",
         category: "",
-        relevanceScore: 80,
+        certificatePrice: 0,
       });
     } catch (error) {
       console.error("Erro ao criar curso:", error);
@@ -550,7 +551,7 @@ const ContentManagementPage: React.FC = () => {
     setEditingCourseId(course.id);
     setEditingCourseData({
       category: course.category || "",
-      relevanceScore: course.relevanceScore || 80,
+      certificatePrice: course.certificatePrice || 0,
     });
   };
 
@@ -561,7 +562,7 @@ const ContentManagementPage: React.FC = () => {
     try {
       await updateDoc(doc(db, "courses", editingCourseId), {
         category: editingCourseData.category,
-        relevanceScore: Number(editingCourseData.relevanceScore),
+        certificatePrice: Number(editingCourseData.certificatePrice),
         updatedAt: serverTimestamp(),
       });
 
@@ -737,9 +738,6 @@ const ContentManagementPage: React.FC = () => {
                       <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                         Status
                       </th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">
-                        Score
-                      </th>
                       <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">
                         Ações
                       </th>
@@ -791,21 +789,6 @@ const ContentManagementPage: React.FC = () => {
                             >
                               {course.isActive ? "Ativo" : "Inativo"}
                             </span>
-                          </td>
-                          <td className="px-8 py-6 text-center">
-                            <div className="flex flex-col items-center">
-                              <span
-                                className={`text-sm font-black ${course.isActive ? "text-slate-700" : "text-slate-300"}`}
-                              >
-                                {course.relevanceScore}%
-                              </span>
-                              <div className="w-12 h-1 bg-slate-100 rounded-full mt-1 overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full transition-all ${course.isActive ? "bg-brand-green" : "bg-slate-300"}`}
-                                  style={{ width: `${course.relevanceScore}%` }}
-                                ></div>
-                              </div>
-                            </div>
                           </td>
                           <td className="px-8 py-6 text-right">
                             <div className="flex items-center justify-end gap-2 transition-opacity">
@@ -1045,17 +1028,16 @@ const ContentManagementPage: React.FC = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1">
-                      <Hash size={10} /> Score de Relevância
+                      💰 Preço do Certificado (MZM)
                     </label>
                     <input
                       type="number"
                       min="0"
-                      max="100"
-                      value={newCourse.relevanceScore}
+                      value={newCourse.certificatePrice || 0}
                       onChange={(e) =>
                         setNewCourse({
                           ...newCourse,
-                          relevanceScore: Number(e.target.value),
+                          certificatePrice: Number(e.target.value),
                         })
                       }
                       className="w-full px-5 h-12 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-brand-green"
@@ -1387,25 +1369,20 @@ const ContentManagementPage: React.FC = () => {
 
                 <div>
                   <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">
-                    Score de Relevância: {editingCourseData.relevanceScore}%
+                    💰 Preço do Certificado (MZM)
                   </label>
                   <input
-                    type="range"
+                    type="number"
                     min="0"
-                    max="100"
-                    value={editingCourseData.relevanceScore}
+                    value={editingCourseData.certificatePrice || 0}
                     onChange={(e) =>
                       setEditingCourseData({
                         ...editingCourseData,
-                        relevanceScore: Number(e.target.value),
+                        certificatePrice: Number(e.target.value),
                       })
                     }
-                    className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-brand-green"
+                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-brand-green"
                   />
-                  <div className="flex justify-between text-xs text-slate-500 font-bold mt-2">
-                    <span>0%</span>
-                    <span>100%</span>
-                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-4">
