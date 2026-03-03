@@ -1,12 +1,4 @@
 import {
-    collection,
-    doc,
-    getDoc,
-    onSnapshot,
-    query,
-    where,
-} from "firebase/firestore";
-import {
     Activity,
     Ban,
     Check,
@@ -26,7 +18,7 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
-import { db } from "../../services/firebase";
+import api from "../../services/api";
 
 interface Student {
   id: string;

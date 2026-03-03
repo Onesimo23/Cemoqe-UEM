@@ -1,12 +1,4 @@
 import {
-    collection,
-    doc,
-    getDoc,
-    onSnapshot,
-    query,
-    where,
-} from "firebase/firestore";
-import {
     ArrowDownRight,
     ArrowUpRight,
     BookOpen,
@@ -19,7 +11,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
-import { db } from "../../services/firebase";
+import api from "../../services/api";
 
 const ReportsPage: React.FC = () => {
   const { user } = useAuth();

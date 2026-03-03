@@ -8,8 +8,8 @@ import { randomUUID } from "crypto";
 import { createPool, PoolConnection } from "mysql2/promise";
 
 const adminData = {
-  email: "admin@eduprimes.mz",
-  password: "AdminEduPrime@2024",
+  email: "admin@gmail.com",
+  password: "12345678",
   full_name: "Administrador Principal",
   name: "Administrador",
 };

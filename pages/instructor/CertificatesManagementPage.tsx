@@ -1,20 +1,9 @@
-import {
-    collection,
-    doc,
-    getDocs,
-    limit,
-    onSnapshot,
-    query,
-    Timestamp,
-    updateDoc,
-    where,
-} from "firebase/firestore";
 import { AlertCircle, Check, Clock, Search, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
 import { cacheService } from "../../services/cacheService";
-import { db } from "../../services/firebase";
+import api from "../../services/api";
 
 interface Certificate {
   id: string;

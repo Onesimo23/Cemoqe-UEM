@@ -1,16 +1,4 @@
 import {
-    addDoc,
-    collection,
-    doc,
-    increment,
-    onSnapshot,
-    orderBy,
-    query,
-    serverTimestamp,
-    updateDoc,
-    where,
-} from "firebase/firestore";
-import {
     BookOpen,
     Clock,
     MessageCircle,
@@ -21,7 +9,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
-import { db } from "../../services/firebase";
+import api from "../../services/api";
 
 const QuestionsPage: React.FC = () => {
   const { user } = useAuth();

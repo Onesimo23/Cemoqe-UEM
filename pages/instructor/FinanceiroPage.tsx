@@ -1,10 +1,4 @@
 import {
-  collection,
-  onSnapshot,
-  query,
-  where
-} from "firebase/firestore";
-import {
   AlertCircle,
   ArrowDownRight,
   ArrowUpRight,
@@ -21,7 +15,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
-import { db } from "../../services/firebase";
+import api from "../../services/api";
 
 interface Transaction {
   id: string;

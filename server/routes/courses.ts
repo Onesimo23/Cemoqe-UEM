@@ -60,28 +60,27 @@ router.post("/", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Missing required fields" });
 
     console.log("🔑 Generating course ID...");
-    const id = `course_${Date.now()}_${randomBytes(6).toString("hex")}`;
-    console.log("✅ Course ID generated:", id);
+    try {
+      const id = `course_${Date.now()}_${randomBytes(6).toString("hex")}`;
+      console.log("✅ Course ID generated:", id);
 
-    console.log("💾 Inserting course into database...");
-    await db.run(
-      "INSERT INTO courses (id, instructor_uid, title, description, image_url, category, level, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-      [
-        id,
-        instructor_uid,
-        title,
-        description,
-        image_url,
-        category,
-        level,
-        price,
-      ],
-    );
-    console.log("✅ Course inserted successfully");
+      console.log("💾 Inserting course into database...");
+      await db.run(
+        "INSERT INTO courses (id, instructor_uid, title, description, image_url, category, level, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          id,
+          instructor_uid,
+          title,
+          description,
+          image_url,
+          category,
+          level,
+          price,
+        ],
+      );
+      console.log("✅ Course inserted successfully");
 
-    res
-      .status(201)
-      .json({
+      res.status(201).json({
         id,
         instructor_uid,
         title,
@@ -91,9 +90,16 @@ router.post("/", async (req: Request, res: Response) => {
         level,
         price,
       });
+    } catch (innerErr: any) {
+      console.error("❌ Inner error:", innerErr.message);
+      throw innerErr;
+    }
   } catch (err: any) {
-    console.error("❌ Error in POST /courses:", err);
-    res.status(500).json({ error: err.message });
+    console.error("❌ Error in POST /courses:", {
+      message: err.message,
+      stack: err.stack,
+    });
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 

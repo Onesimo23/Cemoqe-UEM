@@ -1,16 +1,4 @@
 import {
-    addDoc,
-    collection,
-    doc,
-    getDocs,
-    limit,
-    onSnapshot,
-    query,
-    serverTimestamp,
-    updateDoc,
-    where,
-} from "firebase/firestore";
-import {
     AlertTriangle,
     BookOpen,
     Check,
@@ -32,8 +20,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
 import { cacheService } from "../../services/cacheService";
-import { db } from "../../services/firebase";
-// Added Course import to fix interface extension error
+import api from "../../services/api";
 import { Course } from "../../types";
 
 // Interface local para gerenciar o estado dos cursos no painel
@@ -73,8 +60,7 @@ const InstructorCoursesPage: React.FC = () => {
     setTimeout(() => setToast(null), 3500);
   };
 
-  // Carrega cursos rapidamente SEM aguardar sub-coleções
-  // Depois carrega métricas em background
+  // Carrega cursos da API MySQL quando o usuário faz login
   useEffect(() => {
     if (!user?.uid) {
       setCourses([]);
@@ -82,177 +68,65 @@ const InstructorCoursesPage: React.FC = () => {
       return;
     }
 
-    // Tentar carregar do cache primeiro
-    const cached = cacheService.get(`instructor_courses_${user.uid}`);
-    if (cached) {
-      setCourses(cached);
-      setLoading(false);
-    }
-
-    // Query rápida: apenas dados básicos dos cursos
-    const q = query(
-      collection(db, "courses"),
-      where("instructor_uid", "==", user.uid),
-      limit(100), // Limita a 100 cursos
-    );
-
-    const unsub = onSnapshot(q, async (snap) => {
-      const list: InstructorCourse[] = [];
-
-      // Primeiro: Carrega dados básicos RAPIDAMENTE
-      for (const d of snap.docs) {
-        const data: any = d.data();
-        const status: "Publicado" | "Rascunho" =
-          data?.status === "Publicado" ? "Publicado" : "Rascunho";
-
-        // Dados imediatos (sem awaits)
-        const basicCourse: InstructorCourse = {
-          id: d.id,
-          title: data?.title || "Sem título",
-          instructor: data?.instructor || "",
-          category: data?.category || "Geral",
-          rating: typeof data?.rating === "number" ? data.rating : 0,
-          reviewCount:
-            typeof data?.reviewCount === "number" ? data.reviewCount : 0,
-          duration: data?.duration || "0h",
-          relevanceScore:
-            typeof data?.relevanceScore === "number" ? data.relevanceScore : 0,
-          imageUrl:
-            data?.imageUrl ||
-            "https://images.unsplash.com/photo-1529101091764-c3526daf38fe?w=400&q=80&auto=format&fit=crop",
-          badgeColor: data?.badgeColor || "blue",
-          isActive: status === "Publicado",
-          status,
-          approvalStatus: data?.approvalStatus || "pending",
-          // Dados agregados (com valores padrão do banco)
-          enrollmentCount: data?.enrollmentCount || 0,
-          revenue: data?.totalRevenue || 0,
-          totalLessons: data?.totalLessons || 0,
-          moduleCount: data?.moduleCount || 0,
-          completionRate: data?.completionRate || 0,
-        } as InstructorCourse;
-
-        list.push(basicCourse);
-
-        // Carregar métricas em background (não bloqueia UI)
-        loadCourseMetrics(d.id, user.uid);
-      }
-
-      // Ordena por data
-      list.sort((a, b) => {
-        const aTime = new Date(a.id).getTime() || 0;
-        const bTime = new Date(b.id).getTime() || 0;
-        return bTime - aTime;
-      });
-
-      setCourses(list);
-      // Cache com TTL de 30 minutos
-      cacheService.set(`instructor_courses_${user.uid}`, list, 30);
-      setLoading(false);
-    });
-
-    return () => unsub();
-  }, [user?.uid]);
-
-  // Carrega métricas em background, separado da renderização
-  const loadCourseMetrics = async (courseId: string, instructorUid: string) => {
-    try {
-      // Se já temos em cache, use
-      const cacheKey = `course_metrics_${courseId}`;
-      let metrics: any = cacheService.get(cacheKey);
-
-      if (!metrics) {
-        let totalLessons = 0;
-        let moduleCount = 0;
-
-        // Contar módulos e aulas (apenas se não estiver em cache)
-        const modulesSnap = await getDocs(
-          collection(db, "courses", courseId, "modules"),
-        );
-        moduleCount = modulesSnap.size;
-
-        // Apenas contar lições se houver módulos
-        if (moduleCount > 0) {
-          for (const moduleDoc of modulesSnap.docs) {
-            const lessonsSnap = await getDocs(
-              collection(
-                db,
-                "courses",
-                courseId,
-                "modules",
-                moduleDoc.id,
-                "lessons",
-              ),
-            );
-            totalLessons += lessonsSnap.size;
-          }
+    const loadCourses = async () => {
+      try {
+        // Tentar carregar do cache primeiro
+        const cached = cacheService.get(`instructor_courses_${user.uid}`);
+        if (cached) {
+          setCourses(cached);
         }
 
-        // Contar inscrições e calcular métricas
-        const enrollmentsQ = query(
-          collection(db, "enrollments"),
-          where("course_id", "==", courseId),
-          limit(1000), // Limite para segurança
+        // Carregar cursos do servidor
+        const response = await api.get("/courses");
+        const allCourses = response.data || [];
+        
+        // Filtrar apenas cursos do instrutor atual
+        const instructorCourses = allCourses.filter(
+          (c: any) => c.instructor_uid === user.uid
         );
-        const enrollmentsSnap = await getDocs(enrollmentsQ);
-        const enrollmentCount = enrollmentsSnap.size;
 
-        let completedEnrollments = 0;
-        let totalRevenue = 0;
+        // Mapear para InstructorCourse
+        const mappedCourses: InstructorCourse[] = instructorCourses.map((c: any) => ({
+          id: c.id,
+          title: c.title || "Sem título",
+          instructor: c.instructor_name || "",
+          category: c.category || "Geral",
+          rating: c.rating || 0,
+          reviewCount: c.review_count || 0,
+          duration: c.duration ? `${c.duration}h` : "0h",
+          relevanceScore: c.relevance_score || 0,
+          imageUrl: c.image_url || "https://images.unsplash.com/photo-1529101091764-c3526daf38fe?w=400&q=80&auto=format&fit=crop",
+          badgeColor: c.badge_color || "blue",
+          isActive: c.is_active === 1 || c.is_active === true,
+          status: c.is_active === 1 || c.is_active === true ? "Publicado" : "Rascunho",
+          approvalStatus: "approved",
+          enrollmentCount: c.enrollment_count || 0,
+          revenue: c.total_revenue || 0,
+          totalLessons: c.total_lessons || 0,
+          moduleCount: c.module_count || 0,
+          completionRate: c.completion_rate || 0,
+        }));
 
-        enrollmentsSnap.forEach((enrollDoc) => {
-          const enrollData: any = enrollDoc.data();
-          if (enrollData?.certificatePaid) {
-            const certificatePrice = enrollData?.certificatePrice || 0;
-            totalRevenue +=
-              typeof certificatePrice === "string"
-                ? parseFloat(
-                    certificatePrice.replace(/\./g, "").replace(",", "."),
-                  ) || 0
-                : certificatePrice;
-          }
-          if (enrollData?.progress === 100) {
-            completedEnrollments++;
-          }
+        // Ordenar por data de criação (mais recentes primeiro)
+        mappedCourses.sort((a, b) => {
+          const timeA = new Date(a.id).getTime() || 0;
+          const timeB = new Date(b.id).getTime() || 0;
+          return timeB - timeA;
         });
 
-        const completionRate =
-          enrollmentCount > 0
-            ? Math.round((completedEnrollments / enrollmentCount) * 100)
-            : 0;
-
-        metrics = {
-          totalLessons,
-          moduleCount,
-          enrollmentCount,
-          revenue: totalRevenue,
-          completionRate,
-        };
-
-        // Cache com TTL de 60 minutos
-        cacheService.set(cacheKey, metrics, 60);
+        setCourses(mappedCourses);
+        // Cache com TTL de 30 minutos
+        cacheService.set(`instructor_courses_${user.uid}`, mappedCourses, 30);
+        setLoading(false);
+      } catch (err) {
+        console.error("Erro ao carregar cursos:", err);
+        showToast("Erro ao carregar cursos", "error");
+        setLoading(false);
       }
+    };
 
-      // Atualiza o curso com as métricas
-      courseMetricsRef.current[courseId] = metrics;
-      setCourses((prev) =>
-        prev.map((c) =>
-          c.id === courseId
-            ? {
-                ...c,
-                totalLessons: metrics.totalLessons,
-                moduleCount: metrics.moduleCount,
-                enrollmentCount: metrics.enrollmentCount,
-                revenue: metrics.revenue,
-                completionRate: metrics.completionRate,
-              }
-            : c,
-        ),
-      );
-    } catch (err) {
-      console.error("Erro ao carregar métricas do curso:", err);
-    }
-  };
+    loadCourses();
+  }, [user?.uid]);
 
   const [filterValue, setFilterValue] = useState("Mais recentes");
   const [searchValue, setSearchValue] = useState("");
@@ -287,20 +161,9 @@ const InstructorCoursesPage: React.FC = () => {
     const current = courses.find((c) => c.id === id);
     if (!current) return;
 
-    // Verificar se o curso foi aprovado pelo admin
-    if (
-      current.status === "Rascunho" &&
-      current.approvalStatus !== "approved"
-    ) {
-      showToast(
-        "Você não pode ativar este curso. Aguarde a aprovação do administrador.",
-        "error",
-      );
-      return;
-    }
-
     const newStatus: "Publicado" | "Rascunho" =
       current.status === "Publicado" ? "Rascunho" : "Publicado";
+    
     // Atualiza UI otimisticamente
     setCourses((prev) =>
       prev.map((c) =>
@@ -309,12 +172,17 @@ const InstructorCoursesPage: React.FC = () => {
           : c,
       ),
     );
+    
     try {
-      await updateDoc(doc(db, "courses", id), {
-        status: newStatus,
-        isActive: newStatus === "Publicado",
-        updatedAt: serverTimestamp(),
+      await api.put(`/courses/${id}`, {
+        is_active: newStatus === "Publicado" ? 1 : 0,
       });
+      
+      // Invalida cache
+      if (user?.uid) {
+        cacheService.remove(`instructor_courses_${user.uid}`);
+      }
+      showToast("Status do curso atualizado com sucesso!", "success");
     } catch (e) {
       // Reverte em caso de erro
       setCourses((prev) =>
@@ -329,6 +197,7 @@ const InstructorCoursesPage: React.FC = () => {
         ),
       );
       console.error("Falha ao alterar status do curso:", e);
+      showToast("Erro ao atualizar status do curso", "error");
     }
   };
 
@@ -337,34 +206,12 @@ const InstructorCoursesPage: React.FC = () => {
 
     setIsDeleting(true);
     try {
-      // 1. Desativar o curso automaticamente
-      await updateDoc(doc(db, "courses", courseToDelete.id), {
-        status: "Rascunho",
-        isActive: false,
-        deletionRequestedAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
+      // Usar a API para deletar o curso
+      await api.delete(`/courses/${courseToDelete.id}`);
 
-      // 2. Criar solicitação de exclusão
-      await addDoc(collection(db, "courseDeletionRequests"), {
-        courseId: courseToDelete.id,
-        courseTitle: courseToDelete.title,
-        instructorId: user.uid,
-        instructorName: user.displayName || "Tutor",
-        status: "pending", // pending, approved, rejected
-        requestedAt: serverTimestamp(),
-        approvedAt: null,
-        approvedBy: null,
-        rejectionReason: null,
-      });
-
-      // 3. Atualizar UI localmente
+      // Atualizar UI localmente
       setCourses((prev) =>
-        prev.map((c) =>
-          c.id === courseToDelete.id
-            ? { ...c, status: "Rascunho", isActive: false }
-            : c,
-        ),
+        prev.filter((c) => c.id !== courseToDelete.id)
       );
 
       // Remove do cache
@@ -372,12 +219,12 @@ const InstructorCoursesPage: React.FC = () => {
         cacheService.remove(`instructor_courses_${user.uid}`);
       }
 
-      // Fecha o modal de confirmação e abre o de sucesso
+      // Fecha o modal de confirmação e mostra sucesso
       setShowDeleteModal(false);
-      setShowDeleteRequestModal(true);
+      showToast("Curso excluído com sucesso!", "success");
     } catch (e) {
-      console.error("Falha ao solicitar exclusão do curso:", e);
-      alert("Não foi possível solicitar a exclusão do curso. Tente novamente.");
+      console.error("Falha ao excluir o curso:", e);
+      showToast("Não foi possível excluir o curso. Tente novamente.", "error");
     } finally {
       setIsDeleting(false);
     }

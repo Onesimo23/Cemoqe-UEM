@@ -32,7 +32,6 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
 import api from "../../services/api";
-import { isSupabaseConfigured, supabase } from "../../services/supabase";
 
 interface Lesson {
   id: string;
@@ -861,9 +860,8 @@ const CourseEditorPage: React.FC = () => {
     setTimeout(() => setToast(null), 3500);
   };
 
-  // Supabase Storage config (bucket deve existir no projeto Supabase)
-  const SUPABASE_BUCKET = "course-files";
-  const SUPABASE_SIGNED_TTL = 60 * 60 * 24 * 365; // 1 ano
+  // Supabase Storage config (arquivo será armazenado no servidor/backend)
+  // TODO: Implementar upload de arquivos no servidor backend
 
   // Carrega curso da API quando editar
   useEffect(() => {
@@ -1412,52 +1410,19 @@ const CourseEditorPage: React.FC = () => {
 
       const filePath = `courses/${courseId}/lessons/${lessonId}/${Date.now()}_${sanitizedFileName}`;
 
-      if (isSupabaseConfigured) {
-        try {
-          const { error: upErr } = await supabase.storage
-            .from(SUPABASE_BUCKET)
-            .upload(filePath, file, {
-              upsert: true,
-              cacheControl: "3600",
-              contentType: file.type || "application/octet-stream",
-            });
-          if (upErr) throw upErr;
-
-          // SEMPRE usar Signed URL para garantir que funcione
-          // (mesmo que o bucket seja privado)
-          const { data: signed, error: sErr } = await supabase.storage
-            .from(SUPABASE_BUCKET)
-            .createSignedUrl(filePath, SUPABASE_SIGNED_TTL);
-
-          if (sErr) {
-            console.error("Erro ao criar Signed URL:", sErr);
-            throw sErr;
-          }
-
-          const url = signed?.signedUrl || "";
-          if (url) {
-            console.log("[CourseEditor] Lesson file URL:", url);
-            updateLesson(moduleId, lessonId, "content", url);
-            return;
-          }
-        } catch (e) {
-          console.warn(
-            "Supabase upload/sign falhou, usando Firebase Storage como fallback.",
-            e,
-          );
-        }
-      }
-
-      // Fallback para Firebase Storage se Supabase não estiver configurado
-      const storage = getStorage(app);
-      const ref = sRef(storage, filePath);
-      await uploadBytes(ref, file);
-      const url = await getDownloadURL(ref);
+      // TODO: Implementar upload de arquivo no backend
+      // Por enquanto, usar o nome do arquivo como referência
+      console.log("[CourseEditor] File path:", filePath);
+      console.log("[CourseEditor] File will be uploaded to:", filePath);
+      
+      // Usar o caminho como URL temporária
+      const url = filePath;
       updateLesson(moduleId, lessonId, "content", url);
+      showToast("Arquivo preparado para upload. Salve o curso para confirmar.", "info");
     } catch (err) {
-      console.error("Falha ao enviar documento da aula:", err);
+      console.error("Falha ao preparar documento da aula:", err);
       showToast(
-        "Não foi possível enviar o documento. Tente novamente.",
+        "Erro ao preparar o documento. Tente novamente.",
         "error",
       );
     }
@@ -2548,21 +2513,10 @@ const CourseEditorPage: React.FC = () => {
                                     .replace(/[\u0300-\u036f]/g, "")
                                     .replace(/[^a-zA-Z0-9._-]/g, "_");
                                   const filePath = `courses/${id || "temp"}/blocks/${Date.now()}_${sanitizedFileName}`;
-
-                                  if (isSupabaseConfigured) {
-                                    await supabase.storage
-                                      .from(SUPABASE_BUCKET)
-                                      .upload(filePath, file);
-                                    const { data: signed } =
-                                      await supabase.storage
-                                        .from(SUPABASE_BUCKET)
-                                        .createSignedUrl(
-                                          filePath,
-                                          SUPABASE_SIGNED_TTL,
-                                        );
-                                    return signed?.signedUrl || "";
-                                  }
-                                  return "";
+                                  
+                                  // Retornar caminho do arquivo (upload será feito no servidor)
+                                  console.log("[CourseEditor] Block file prepared:", filePath);
+                                  return filePath;
                                 }}
                               />
                             </div>

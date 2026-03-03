@@ -10,12 +10,7 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
-
-import { updateProfile } from "firebase/auth";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { db, storage } from "../../services/firebase";
-import { isSupabaseConfigured, supabase } from "../../services/supabase";
+import api from "../../services/api";
 
 const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"profile" | "notifications">(
@@ -55,20 +50,12 @@ const SettingsPage: React.FC = () => {
     setIsSaving(true);
     try {
       if (!user?.uid) return;
-      // Salvar no Firestore
-      await setDoc(
-        doc(db, "profiles", user.uid),
-        {
-          full_name: fullName,
-          specialty: specialty,
-          bio: bio,
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true },
-      );
-      // Atualizar também o displayName no Firebase Auth
-      await updateProfile(user, { displayName: fullName });
-      // Recarregar perfil do contexto
+      // TODO: Implementar API call: api.put("/users/profile", {...})
+      await api.put("/users/profile", {
+        full_name: fullName,
+        specialty: specialty,
+        bio: bio,
+      });
       await refreshProfile();
       setShowSuccessModal(true);
       setTimeout(() => setShowSuccessModal(false), 3000);
@@ -101,89 +88,13 @@ const SettingsPage: React.FC = () => {
       setUploading(true);
       const localUrl = URL.createObjectURL(file);
       setPreviewUrl(localUrl);
-      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-      const ts = Date.now();
-      const storagePath = `profiles/${user.uid}/avatar_${ts}.${ext}`;
-      let finalUrl: string | null = null;
-      const preferSupabase =
-        isSupabaseConfigured ||
-        (import.meta as any)?.env?.VITE_STORAGE_PROVIDER === "supabase";
-
-      if (preferSupabase) {
-        try {
-          const supaPath = `${user.uid}/avatar_${ts}.${ext}`;
-          const buckets = ["profiles", "PROFILES"];
-          for (const b of buckets) {
-            const { error: upErr } = await supabase.storage
-              .from(b as any)
-              .upload(supaPath, file, { upsert: true, contentType: file.type });
-            if (!upErr) {
-              const { data: pub } = supabase.storage
-                .from(b as any)
-                .getPublicUrl(supaPath);
-              finalUrl = pub?.publicUrl || null;
-              break;
-            }
-          }
-        } catch (se) {
-          console.warn("Upload no Supabase falhou, tentando Firebase...", se);
-        }
-        if (!finalUrl) {
-          try {
-            const storageRef = ref(storage, storagePath);
-            await uploadBytes(storageRef, file, { contentType: file.type });
-            finalUrl = await getDownloadURL(storageRef);
-          } catch (fe) {
-            console.error(
-              "Falha nos dois provedores (Supabase e Firebase).",
-              fe,
-            );
-          }
-        }
-      } else {
-        try {
-          const storageRef = ref(storage, storagePath);
-          await uploadBytes(storageRef, file, { contentType: file.type });
-          finalUrl = await getDownloadURL(storageRef);
-        } catch (fe) {
-          console.warn("Upload no Firebase falhou, tentando Supabase...", fe);
-        }
-        if (!finalUrl && isSupabaseConfigured) {
-          try {
-            const supaPath = `${user.uid}/avatar_${ts}.${ext}`;
-            const buckets = ["profiles", "PROFILES"];
-            for (const b of buckets) {
-              const { error: upErr } = await supabase.storage
-                .from(b as any)
-                .upload(supaPath, file, {
-                  upsert: true,
-                  contentType: file.type,
-                });
-              if (!upErr) {
-                const { data: pub } = supabase.storage
-                  .from(b as any)
-                  .getPublicUrl(supaPath);
-                finalUrl = pub?.publicUrl || null;
-                break;
-              }
-            }
-          } catch (se) {
-            console.error(
-              "Falha nos dois provedores (Firebase e Supabase).",
-              se,
-            );
-          }
-        }
-      }
-
-      if (!finalUrl) throw new Error("Falha ao obter URL final do avatar.");
-      await setDoc(
-        doc(db, "profiles", user.uid),
-        { avatar_url: finalUrl, updatedAt: serverTimestamp() },
-        { merge: true },
-      );
-      await updateProfile(user, { photoURL: finalUrl });
-      setPreviewUrl(finalUrl);
+      // TODO: Implementar upload via API: POST /files/upload
+      // const formData = new FormData();
+      // formData.append('file', file);
+      // const response = await api.post('/files/upload', formData);
+      // const finalUrl = response.data.url;
+      await refreshProfile();
+      setPreviewUrl(localUrl);
     } catch (err) {
       console.error("Erro ao atualizar foto do tutor", err);
       alert("Não foi possível atualizar a foto.");

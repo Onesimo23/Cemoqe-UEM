@@ -1,17 +1,9 @@
-import {
-    collection,
-    getDocs,
-    limit,
-    onSnapshot,
-    query,
-    where,
-} from "firebase/firestore";
 import { Download, TrendingUp, Users } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
 import { cacheService } from "../../services/cacheService";
-import { db } from "../../services/firebase";
+import api from "../../services/api";
 
 interface StudentProgress {
   student_uid: string;
