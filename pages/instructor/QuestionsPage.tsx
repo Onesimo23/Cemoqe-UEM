@@ -24,21 +24,9 @@ const QuestionsPage: React.FC = () => {
       setQuestions([]);
       return;
     }
-    const qRef = query(
-      collection(db, "questions"),
-      where("instructor_uid", "==", user.uid),
-    );
-    const unsub = onSnapshot(qRef, (snap) => {
-      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      list.sort((a: any, b: any) => {
-        const ad = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
-        const bd = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
-        return bd - ad;
-      });
-      setQuestions(list);
-      if (!activeQuestion && list.length) setActiveQuestion(list[0]);
-    });
-    return () => unsub();
+    // TODO: Implement API call: api.get("/questions", { instructor_uid: user.uid })
+    setQuestions([]);
+    return;
   }, [user?.uid]);
 
   useEffect(() => {
@@ -55,27 +43,15 @@ const QuestionsPage: React.FC = () => {
         const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setAnswers(list);
       });
-      return () => unsub();
+      return;
     } catch {}
   }, [activeQuestion?.id]);
 
   const handleSendReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reply.trim() || !activeQuestion?.id || !user?.uid) return;
-    try {
-      await addDoc(collection(db, "questions", activeQuestion.id, "answers"), {
-        text: reply.trim(),
-        author_uid: user.uid,
-        author_role: "instructor",
-        createdAt: serverTimestamp(),
-      });
-      await updateDoc(doc(db, "questions", activeQuestion.id), {
-        status: "answered",
-        repliesCount: increment(1),
-        lastReplyAt: serverTimestamp(),
-      });
-      setReply("");
-    } catch {}
+    // TODO: api.post(`/questions/${activeQuestion.id}/answers`, { text: reply })
+    setReply("");
   };
 
   const filtered = questions.filter((q) =>
