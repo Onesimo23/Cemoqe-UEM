@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { randomBytes } from 'crypto';
 import { db } from '../db/connection.js';
 
 const router = Router();
@@ -48,18 +49,24 @@ router.get('/:id', async (req: Request, res: Response) => {
 // POST create course (instructor only)
 router.post('/', async (req: Request, res: Response) => {
   try {
+    console.log("📝 [POST /courses] Creating course:", req.body);
     const { instructor_uid, title, description, image_url, category, level, price } = req.body;
     if (!instructor_uid || !title) return res.status(400).json({ error: 'Missing required fields' });
 
-    const id = require('crypto').randomUUID();
+    console.log("🔑 Generating course ID...");
+    const id = `course_${Date.now()}_${randomBytes(6).toString('hex')}`;
+    console.log("✅ Course ID generated:", id);
 
+    console.log("💾 Inserting course into database...");
     await db.run(
       'INSERT INTO courses (id, instructor_uid, title, description, image_url, category, level, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [id, instructor_uid, title, description, image_url, category, level, price]
     );
+    console.log("✅ Course inserted successfully");
 
     res.status(201).json({ id, instructor_uid, title, description, image_url, category, level, price });
   } catch (err: any) {
+    console.error("❌ Error in POST /courses:", err);
     res.status(500).json({ error: err.message });
   }
 });

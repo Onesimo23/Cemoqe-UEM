@@ -15,12 +15,8 @@ import {
     X,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import api from "../../services/api";
 import AdminLayout from "../../layouts/AdminLayout";
-
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { db, storage } from "../../services/firebase";
-import { isSupabaseConfigured, supabase } from "../../services/supabase";
 
 const AdminSettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
@@ -68,18 +64,9 @@ const AdminSettingsPage: React.FC = () => {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const snap = await getDoc(doc(db, "settings", "system"));
-        if (snap.exists()) {
-          const data: any = snap.data();
-          if (data.appearance)
-            setBrandSettings((prev) => ({ ...prev, ...data.appearance }));
-          if (data.system)
-            setSystemSettings((prev) => ({ ...prev, ...data.system }));
-          if (data.security)
-            setSecuritySettings((prev) => ({ ...prev, ...data.security }));
-          if (data.payment)
-            setPaymentSettings((prev) => ({ ...prev, ...data.payment }));
-        }
+        // Settings can be loaded from localStorage or API if implemented
+        // For now, just use default values
+        setLoading(false);
       } finally {
         setLoading(false);
       }
@@ -90,17 +77,12 @@ const AdminSettingsPage: React.FC = () => {
   const handleSave = async () => {
     try {
       setIsSaving(true);
-      await setDoc(
-        doc(db, "settings", "system"),
-        {
-          appearance: brandSettings,
-          system: systemSettings,
-          security: securitySettings,
-          payment: paymentSettings,
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true },
-      );
+      // Save settings to localStorage or API
+      localStorage.setItem("brandSettings", JSON.stringify(brandSettings));
+      localStorage.setItem("systemSettings", JSON.stringify(systemSettings));
+      localStorage.setItem("securitySettings", JSON.stringify(securitySettings));
+      localStorage.setItem("paymentSettings", JSON.stringify(paymentSettings));
+      
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     } finally {
@@ -133,20 +115,11 @@ const AdminSettingsPage: React.FC = () => {
         limitedSessions: false,
       });
 
-      await setDoc(doc(db, "settings", "system"), {
-        appearance: defaultSettings,
-        system: {
-          maintenanceMode: false,
-          publicSignups: true,
-          dynamicCache: true,
-        },
-        security: {
-          require2FA: true,
-          auditLogs: true,
-          limitedSessions: false,
-        },
-        updatedAt: serverTimestamp(),
-      });
+      // Clear localStorage
+      localStorage.removeItem("brandSettings");
+      localStorage.removeItem("systemSettings");
+      localStorage.removeItem("securitySettings");
+      localStorage.removeItem("paymentSettings");
 
       setShowResetConfirm(false);
       setShowSuccess(true);
@@ -175,85 +148,14 @@ const AdminSettingsPage: React.FC = () => {
       }
       setUploadingLogo(true);
       try {
-        const ts = Date.now();
-        const ext = (file.name.split(".").pop() || "png").toLowerCase();
-        const supaPath = `branding/logo_${ts}.${ext}`;
-        const storagePath = `branding/logo_${ts}.${ext}`;
-        let finalUrl: string | null = null;
-        const preferSupabase =
-          isSupabaseConfigured ||
-          (import.meta as any)?.env?.VITE_STORAGE_PROVIDER === "supabase";
-
-        if (preferSupabase) {
-          try {
-            const buckets = ["branding", "profiles", "public", "PUBLIC"];
-            for (const b of buckets) {
-              const { error } = await supabase.storage
-                .from(b as any)
-                .upload(supaPath, file, {
-                  upsert: true,
-                  contentType: file.type,
-                });
-              if (!error) {
-                const { data } = supabase.storage
-                  .from(b as any)
-                  .getPublicUrl(supaPath);
-                finalUrl = data?.publicUrl || null;
-                break;
-              }
-            }
-          } catch (se) {
-            console.warn("Upload no Supabase falhou, tentando Firebase...", se);
-          }
-          if (!finalUrl) {
-            try {
-              const storageRef = ref(storage, storagePath);
-              await uploadBytes(storageRef, file, { contentType: file.type });
-              finalUrl = await getDownloadURL(storageRef);
-            } catch (fe) {
-              console.error(
-                "Falha nos dois provedores (Supabase e Firebase).",
-                fe,
-              );
-            }
-          }
-        } else {
-          try {
-            const storageRef = ref(storage, storagePath);
-            await uploadBytes(storageRef, file, { contentType: file.type });
-            finalUrl = await getDownloadURL(storageRef);
-          } catch (fe) {
-            console.warn("Upload no Firebase falhou, tentando Supabase...", fe);
-          }
-          if (!finalUrl && isSupabaseConfigured) {
-            try {
-              const buckets = ["branding", "profiles", "public", "PUBLIC"];
-              for (const b of buckets) {
-                const { error } = await supabase.storage
-                  .from(b as any)
-                  .upload(supaPath, file, {
-                    upsert: true,
-                    contentType: file.type,
-                  });
-                if (!error) {
-                  const { data } = supabase.storage
-                    .from(b as any)
-                    .getPublicUrl(supaPath);
-                  finalUrl = data?.publicUrl || null;
-                  break;
-                }
-              }
-            } catch (se) {
-              console.error(
-                "Falha nos dois provedores (Firebase e Supabase).",
-                se,
-              );
-            }
-          }
-        }
-
-        if (!finalUrl) throw new Error("Falha ao obter URL do logo.");
-        setBrandSettings({ ...brandSettings, logoUrl: finalUrl });
+        // For now, use Data URL for logo storage (works without external storage)
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target?.result as string;
+          setBrandSettings({ ...brandSettings, logoUrl: dataUrl });
+          localStorage.setItem("brandSettings", JSON.stringify({ ...brandSettings, logoUrl: dataUrl }));
+        };
+        reader.readAsDataURL(file);
       } finally {
         setUploadingLogo(false);
       }

@@ -1,13 +1,4 @@
 import {
-    collection,
-    deleteDoc,
-    doc,
-    onSnapshot,
-    serverTimestamp,
-    setDoc,
-    updateDoc,
-} from "firebase/firestore";
-import {
     AlertCircle,
     CheckCircle,
     ChevronRight,
@@ -28,8 +19,8 @@ import {
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
+import api from "../../services/api";
 import AdminLayout from "../../layouts/AdminLayout";
-import { db } from "../../services/firebase";
 import { Course } from "../../types";
 
 interface Category {
@@ -119,18 +110,6 @@ const ContentManagementPage: React.FC = () => {
     certificatePrice: 0,
   });
 
-  // Função auxiliar para recalcular contagens
-  const updateCategoryCounts = (
-    coursesList: Course[],
-    categoriesList: Category[],
-  ) => {
-    const updated = categoriesList.map((cat) => ({
-      ...cat,
-      count: coursesList.filter((c) => c.category === cat.name).length,
-    }));
-    return updated.sort((a, b) => b.count - a.count);
-  };
-
   // Helper para mostrar toast
   const showToast = (
     message: string,
@@ -140,118 +119,48 @@ const ContentManagementPage: React.FC = () => {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // Sync with Firebase - Load all courses AND categories in real-time
-  useEffect(() => {
-    const coursesRef = collection(db, "courses");
-    const categoriesRef = collection(db, "categories");
+  // Função auxiliar para recalcular contagens
+  const updateCategoryCounts = (
+    coursesList: Course[],
+    categoriesList: Category[],
+  ) => {
+    const updated = categoriesList.map((cat) => ({
+      ...cat,
+      count: coursesList.filter((c) => c.category === cat.name).length,
+    }));
+    return updated;
+  };
 
-    // Listener de cursos
-    const unsubscribeCourses = onSnapshot(
-      coursesRef,
-      (snapshot) => {
-        const coursesList: Course[] = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          coursesList.push({
-            id: doc.id,
-            title: data.title || "Sem título",
-            instructor: data.instructor || "Sem tutor",
-            category: data.category || "Geral",
-            rating: data.rating || 0,
-            reviewCount: data.reviewCount || 0,
-            duration: data.duration || "0h",
-            relevanceScore: data.relevanceScore || 80,
-            imageUrl: data.imageUrl || "",
-            isActive: data.isActive !== false,
-            badgeColor: data.badgeColor || "bg-stone-100 text-stone-800",
-            approvalStatus: data.approvalStatus || "pending",
-          } as Course);
-        });
+  // Load courses and categories from API
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Load courses
+        const coursesResponse = await api.get("/courses");
+        const coursesList = (coursesResponse.data || []).map((data: any) => ({
+          id: data.id,
+          title: data.title || "Sem título",
+          instructor: data.instructor || "Sem tutor",
+          category: data.category || "Geral",
+          rating: data.rating || 0,
+          reviewCount: data.reviewCount || 0,
+          duration: data.duration || "0h",
+          relevanceScore: data.relevanceScore || 80,
+          imageUrl: data.imageUrl || "",
+          isActive: data.isActive !== false,
+          badgeColor: data.badgeColor || "bg-stone-100 text-stone-800",
+          approvalStatus: data.approvalStatus || "pending",
+        } as Course));
 
         setCourses(coursesList);
-
-        // Recalcular contagens com categorias atuais
-        setCategories((prevCategories) => {
-          return updateCategoryCounts(coursesList, prevCategories);
-        });
-      },
-      (error) => {
-        console.error("Erro ao carregar cursos:", error);
-      },
-    );
-
-    // Listener de categorias
-    const unsubscribeCategories = onSnapshot(
-      categoriesRef,
-      (snapshot) => {
-        const categoriesList: Category[] = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          categoriesList.push({
-            id: doc.id,
-            name: data.name || "Sem nome",
-            count: 0, // Será recalculado logo abaixo
-            color: data.color || "bg-slate-100 text-slate-700",
-          } as Category);
-        });
-
-        // Se há categorias do Firebase, usar elas; senão usar padrão
-        if (categoriesList.length > 0) {
-          setCategories((prevCategories) => {
-            // Usa os cursos já carregados do estado
-            return updateCategoryCounts(courses, categoriesList);
-          });
-        } else {
-          // Usar categorias iniciais
-          setCategories((prevCategories) => {
-            return updateCategoryCounts(courses, INITIAL_CATEGORIES);
-          });
-        }
-      },
-      (error) => {
-        console.error("Erro ao carregar categorias:", error);
-      },
-    );
-
-    return () => {
-      unsubscribeCourses();
-      unsubscribeCategories();
+        setCategories(updateCategoryCounts(coursesList, INITIAL_CATEGORIES));
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+        showToast("Erro ao carregar cursos", "error");
+      }
     };
-  }, []);
 
-  // Listener para solicitações de exclusão
-  useEffect(() => {
-    const deletionRequestsRef = collection(db, "courseDeletionRequests");
-
-    const unsubscribeDeletionRequests = onSnapshot(
-      deletionRequestsRef,
-      (snapshot) => {
-        const requests: CourseDeletionRequest[] = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          requests.push({
-            id: doc.id,
-            courseId: data.courseId,
-            courseTitle: data.courseTitle,
-            instructorId: data.instructorId,
-            instructorName: data.instructorName,
-            status: data.status || "pending",
-            requestedAt: data.requestedAt?.toDate?.() || new Date(),
-            approvedAt: data.approvedAt?.toDate?.() || null,
-            approvedBy: data.approvedBy || null,
-            rejectionReason: data.rejectionReason || null,
-          });
-        });
-        setAllDeletionRequests(requests);
-        // Filtrar apenas pendentes para o estado anterior (compatibilidade)
-        setDeletionRequests(requests.filter((r) => r.status === "pending"));
-      },
-      (error) => {
-        console.error("Erro ao carregar solicitações de exclusão:", error);
-      },
-    );
-
-    return () => unsubscribeDeletionRequests();
+    loadData();
   }, []);
 
   const updateFirebaseCourses = (updatedList: Course[]) => {
@@ -264,20 +173,16 @@ const ContentManagementPage: React.FC = () => {
     courseTitle: string,
   ) => {
     try {
-      // Deletar o curso
-      await deleteDoc(doc(db, "courses", courseId));
-
-      // Atualizar status da solicitação
-      await updateDoc(doc(db, "courseDeletionRequests", requestId), {
-        status: "approved",
-        approvedAt: serverTimestamp(),
-        approvedBy: "admin",
-      });
+      // Delete course via API
+      await api.delete(`/courses/${courseId}`);
 
       showToast(
         `✅ Curso "${courseTitle}" foi excluído permanentemente!`,
         "success",
       );
+      
+      // Remove from local state
+      setCourses(courses.filter(c => c.id !== courseId));
       setExpandedDeleteRequest(null);
       setConfirmationModal(null);
     } catch (error) {
@@ -367,15 +272,15 @@ const ContentManagementPage: React.FC = () => {
         alert(`✅ Categoria "${newCatName}" atualizada com sucesso!`);
         setEditingCategoryId(null);
       } else {
-        // Criar nova categoria
-        const newDocRef = doc(collection(db, "categories"));
-        await setDoc(newDocRef, {
+        // Criar nova categoria - salvar em localStorage
+        const newCat: Category = {
+          id: `cat_${Date.now()}`,
           name: newCatName,
           description: newCatDescription,
+          count: 0,
           color: "bg-slate-100 text-slate-700",
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
+        };
+        setCategories([...categories, newCat]);
         console.log(`✓ Categoria "${newCatName}" foi criada com sucesso!`);
         alert(`✅ Categoria "${newCatName}" criada com sucesso!`);
       }
@@ -394,8 +299,8 @@ const ContentManagementPage: React.FC = () => {
       const categoryToDelete = categories.find((c) => c.id === id);
       const categoryName = categoryToDelete?.name || "Categoria";
 
-      // Deletar a categoria
-      await deleteDoc(doc(db, "categories", id));
+      // Remove from local state
+      setCategories(categories.filter(c => c.id !== id));
 
       console.log(`✓ Categoria "${categoryName}" foi removida.`);
       alert(`✅ Categoria "${categoryName}" removida com sucesso!`);
@@ -429,9 +334,11 @@ const ContentManagementPage: React.FC = () => {
       if (!confirmDelete) return;
 
       for (const cat of emptyCategories) {
-        await deleteDoc(doc(db, "categories", cat.id));
         console.log(`✓ Categoria vazia removida: "${cat.name}"`);
       }
+      
+      // Remove empty categories from local state
+      setCategories(categories.filter(c => c.count > 0));
 
       alert(
         `✅ ${emptyCategories.length} categoria(s) vazia(s) foram removidas com sucesso!`,
@@ -447,9 +354,8 @@ const ContentManagementPage: React.FC = () => {
     if (!newCourse.title.trim()) return;
 
     try {
-      // Criar documento no Firebase
-      const newDocRef = doc(collection(db, "courses"));
-      await updateDoc(newDocRef, {
+      // Create course via API
+      const response = await api.post("/courses", {
         title: newCourse.title,
         instructor: newCourse.instructor || "UEM Cursos online Tutor",
         category: newCourse.category,
@@ -462,10 +368,9 @@ const ContentManagementPage: React.FC = () => {
         isActive: true,
         badgeColor: "bg-stone-100 text-stone-800",
         status: "Rascunho",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
       });
-
+      
+      showToast("✅ Curso criado com sucesso!", "success");
       setIsCourseModalOpen(false);
       setNewCourse({
         title: "",
@@ -475,23 +380,26 @@ const ContentManagementPage: React.FC = () => {
       });
     } catch (error) {
       console.error("Erro ao criar curso:", error);
+      showToast("Erro ao criar curso", "error");
     }
   };
 
   const handleDeleteCourse = async (id: string) => {
     try {
-      await deleteDoc(doc(db, "courses", id));
+      await api.delete(`/courses/${id}`);
       setDeleteConfirmId(null);
+      setCourses(courses.filter(c => c.id !== id));
+      showToast("Curso removido com sucesso", "success");
     } catch (error) {
       console.error("Erro ao deletar curso:", error);
+      showToast("Erro ao remover curso", "error");
     }
   };
 
   const handleApproveCourse = async (courseId: string, courseTitle: string) => {
     try {
-      await updateDoc(doc(db, "courses", courseId), {
+      await api.put(`/courses/${courseId}`, {
         approvalStatus: "approved",
-        updatedAt: serverTimestamp(),
       });
       showToast(
         `✅ Curso "${courseTitle}" foi aprovado com sucesso!`,

@@ -1,12 +1,4 @@
 import {
-    collection,
-    doc,
-    getDoc,
-    onSnapshot,
-    serverTimestamp,
-    updateDoc,
-} from "firebase/firestore";
-import {
     AlertCircle,
     ArrowLeft,
     Award,
@@ -21,8 +13,8 @@ import {
     X,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import api from "../../services/api";
 import AdminLayout from "../../layouts/AdminLayout";
-import { db } from "../../services/firebase";
 import { Course } from "../../types";
 
 interface Lesson {
@@ -76,19 +68,17 @@ const CourseModerationPage: React.FC = () => {
     instructor: string;
   } | null>(null);
 
-  // Listener em tempo real para cursos
+  // Load courses from API
   useEffect(() => {
-    setLoading(true);
-    const coursesRef = collection(db, "courses");
-
-    const unsubscribe = onSnapshot(
-      coursesRef,
-      (snapshot) => {
-        const coursesList: Course[] = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          coursesList.push({
-            id: doc.id,
+    const loadCourses = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get("/courses");
+        const coursesList = response.data || [];
+        
+        setCourses(
+          coursesList.map((data: any) => ({
+            id: data.id,
             title: data.title || "Sem título",
             instructor: data.instructor || "Sem tutor",
             category: data.category || "Geral",
@@ -100,46 +90,42 @@ const CourseModerationPage: React.FC = () => {
             isActive: data.isActive !== false,
             badgeColor: data.badgeColor || "bg-stone-100 text-stone-800",
             approvalStatus: data.approvalStatus || "pending",
-          } as Course);
-        });
-
-        setCourses(coursesList);
-        setLoading(false);
-      },
-      (error) => {
+          } as Course)),
+        );
+      } catch (error) {
         console.error("Erro ao carregar cursos:", error);
+      } finally {
         setLoading(false);
-      },
-    );
+      }
+    };
 
-    return () => unsubscribe();
+    loadCourses();
   }, []);
 
   const handleViewCourse = async (courseId: string) => {
     setPreviewLoading(true);
     try {
-      const courseDoc = await getDoc(doc(db, "courses", courseId));
-      if (courseDoc.exists()) {
-        const data = courseDoc.data();
-        setPreviewCourse({
-          id: courseDoc.id,
-          title: data.title || "Sem título",
-          instructor: data.instructor || "Sem tutor",
-          category: data.category || "Geral",
-          rating: data.rating || 0,
-          reviewCount: data.reviewCount || 0,
-          duration: data.duration || "0h",
-          relevanceScore: data.relevanceScore || 0,
-          imageUrl: data.imageUrl || "",
-          cardDescription: data.cardDescription || "",
-          fullDescription: data.fullDescription || "",
-          language: data.language || "Português",
-          learningOutcomes: data.learningOutcomes || [],
-          modules: data.modules || [],
-          interactiveExercises: data.interactiveExercises || [],
-          approvalStatus: data.approvalStatus || "pending",
-        } as CourseWithDetails);
-      }
+      const response = await api.get(`/courses/${courseId}`);
+      const data = response.data;
+      
+      setPreviewCourse({
+        id: courseId,
+        title: data.title || "Sem título",
+        instructor: data.instructor || "Sem tutor",
+        category: data.category || "Geral",
+        rating: data.rating || 0,
+        reviewCount: data.reviewCount || 0,
+        duration: data.duration || "0h",
+        relevanceScore: data.relevanceScore || 0,
+        imageUrl: data.imageUrl || "",
+        cardDescription: data.cardDescription || "",
+        fullDescription: data.fullDescription || "",
+        language: data.language || "Português",
+        learningOutcomes: data.learningOutcomes || [],
+        modules: data.modules || [],
+        interactiveExercises: data.interactiveExercises || [],
+        approvalStatus: data.approvalStatus || "pending",
+      } as CourseWithDetails);
     } catch (error) {
       console.error("Erro ao carregar detalhes do curso:", error);
       showToast("Erro ao carregar curso", "error");
@@ -158,12 +144,30 @@ const CourseModerationPage: React.FC = () => {
 
   const handleApproveCourse = async (courseId: string, courseTitle: string) => {
     try {
-      await updateDoc(doc(db, "courses", courseId), {
+      await api.put(`/courses/${courseId}`, {
         approvalStatus: "approved",
-        updatedAt: serverTimestamp(),
       });
       showToast(`✅ Curso "${courseTitle}" aprovado!`, "success");
       setApprovalModal(null);
+      
+      // Reload courses
+      const response = await api.get("/courses");
+      setCourses(
+        (response.data || []).map((data: any) => ({
+          id: data.id,
+          title: data.title,
+          instructor: data.instructor,
+          category: data.category,
+          rating: data.rating,
+          reviewCount: data.reviewCount,
+          duration: data.duration,
+          relevanceScore: data.relevanceScore,
+          imageUrl: data.imageUrl,
+          isActive: data.isActive,
+          badgeColor: data.badgeColor,
+          approvalStatus: data.approvalStatus,
+        })),
+      );
     } catch (error) {
       console.error("Erro ao aprovar:", error);
       showToast("Erro ao aprovar curso.", "error");
@@ -173,12 +177,30 @@ const CourseModerationPage: React.FC = () => {
 
   const handleRejectCourse = async (courseId: string, courseTitle: string) => {
     try {
-      await updateDoc(doc(db, "courses", courseId), {
+      await api.put(`/courses/${courseId}`, {
         approvalStatus: "rejected",
-        updatedAt: serverTimestamp(),
       });
       showToast(`✗ Curso "${courseTitle}" rejeitado.`, "success");
       setApprovalModal(null);
+      
+      // Reload courses
+      const response = await api.get("/courses");
+      setCourses(
+        (response.data || []).map((data: any) => ({
+          id: data.id,
+          title: data.title,
+          instructor: data.instructor,
+          category: data.category,
+          rating: data.rating,
+          reviewCount: data.reviewCount,
+          duration: data.duration,
+          relevanceScore: data.relevanceScore,
+          imageUrl: data.imageUrl,
+          isActive: data.isActive,
+          badgeColor: data.badgeColor,
+          approvalStatus: data.approvalStatus,
+        })),
+      );
     } catch (error) {
       console.error("Erro ao rejeitar:", error);
       showToast("Erro ao rejeitar curso.", "error");

@@ -1,18 +1,4 @@
 import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  serverTimestamp,
-  updateDoc,
-} from "firebase/firestore";
-import {
-  getDownloadURL,
-  getStorage,
-  ref as sRef,
-  uploadBytes,
-} from "firebase/storage";
-import {
   ArrowLeft,
   Bold,
   Check,
@@ -45,7 +31,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
-import app, { db } from "../../services/firebase";
+import api from "../../services/api";
 import { isSupabaseConfigured, supabase } from "../../services/supabase";
 
 interface Lesson {
@@ -879,15 +865,14 @@ const CourseEditorPage: React.FC = () => {
   const SUPABASE_BUCKET = "course-files";
   const SUPABASE_SIGNED_TTL = 60 * 60 * 24 * 365; // 1 ano
 
-  // Carrega curso do Firestore quando editar
+  // Carrega curso da API quando editar
   useEffect(() => {
     const load = async () => {
       if (!id) return;
       try {
-        const ref = doc(db, "courses", id);
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          const data: any = snap.data();
+        const response = await api.get(`/courses/${id}`);
+        const data = response.data;
+        if (data) {
           // Remove "h" da duração se existir
           const duration = data?.duration
             ? data.duration.toString().replace("h", "")
@@ -895,8 +880,8 @@ const CourseEditorPage: React.FC = () => {
           setFormData({
             title: data?.title || "",
             category: data?.category || "Design",
-            cardDescription: data?.cardDescription || "",
-            fullDescription: data?.fullDescription || "",
+            cardDescription: data?.cardDescription || data?.description || "",
+            fullDescription: data?.fullDescription || data?.description || "",
             language: data?.language || "Português",
             duration: duration,
             learningOutcomes: Array.isArray(data?.learningOutcomes)
@@ -907,13 +892,14 @@ const CourseEditorPage: React.FC = () => {
               ? data.interactiveExercises
               : [],
           });
-          const imgUrl = data?.imageUrl || "";
+          const imgUrl = data?.image_url || data?.imageUrl || "";
           setImageUrl(imgUrl);
           // Define previewImage com a URL da imagem para exibição
           setPreviewImage(imgUrl);
         }
       } catch (e) {
         console.error("Falha ao carregar curso:", e);
+        showToast("Erro ao carregar curso", "error");
       }
     };
     load();
@@ -948,46 +934,25 @@ const CourseEditorPage: React.FC = () => {
     try {
       const image = previewImage || imageUrl || "";
       const payload: any = {
-        creator_uid: user.uid,
         instructor_uid: user.uid,
-        instructor: profile?.full_name || user.displayName || "Tutor",
         title: formData.title || "Sem título",
         category: formData.category || "Geral",
-        currency: "MZM",
-        certificatePrice: 0,
-        cardDescription: formData.cardDescription || "",
-        fullDescription: formData.fullDescription || "",
-        language: formData.language || "Português",
-        duration: formData.duration ? `${formData.duration}h` : "0h",
-        learningOutcomes: Array.isArray(formData.learningOutcomes)
-          ? formData.learningOutcomes
-              .filter((s) => s && s.trim().length > 0)
-              .slice(0, 12)
-          : [],
-        modules: formData.modules,
-        interactiveExercises: Array.isArray(formData.interactiveExercises)
-          ? formData.interactiveExercises
-          : [],
-        imageUrl: image,
-        status: "Rascunho",
-        rating: 0,
-        reviewCount: 0,
-        relevanceScore: 0,
-        badgeColor: "blue",
-        isActive: false,
-        approvalStatus: "pending", // Novos cursos começam pendentes de aprovação
-        updatedAt: serverTimestamp(),
+        description: formData.cardDescription || "",
+        image_url: image,
+        level: "beginner",
+        price: 0,
       };
 
       if (id) {
-        await updateDoc(doc(db, "courses", id), payload);
+        // Atualizar curso existente
+        await api.put(`/courses/${id}`, payload);
       } else {
-        const ref = collection(db, "courses");
-        await addDoc(ref, { ...payload, createdAt: serverTimestamp() });
+        // Criar novo curso
+        await api.post("/courses", payload);
       }
 
       showToast("Curso salvo com sucesso!", "success");
-      navigate("/instrutor/cursos");
+      setTimeout(() => navigate("/instrutor/cursos"), 1500);
     } catch (e) {
       console.error("Erro ao salvar curso:", e);
       showToast("Não foi possível salvar o curso.", "error");
