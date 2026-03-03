@@ -19,8 +19,8 @@ import {
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
-import api from "../../services/api";
 import AdminLayout from "../../layouts/AdminLayout";
+import api from "../../services/api";
 import { Course } from "../../types";
 
 interface Category {
@@ -137,20 +137,23 @@ const ContentManagementPage: React.FC = () => {
       try {
         // Load courses
         const coursesResponse = await api.get("/courses");
-        const coursesList = (coursesResponse.data || []).map((data: any) => ({
-          id: data.id,
-          title: data.title || "Sem título",
-          instructor: data.instructor || "Sem tutor",
-          category: data.category || "Geral",
-          rating: data.rating || 0,
-          reviewCount: data.reviewCount || 0,
-          duration: data.duration || "0h",
-          relevanceScore: data.relevanceScore || 80,
-          imageUrl: data.imageUrl || "",
-          isActive: data.isActive !== false,
-          badgeColor: data.badgeColor || "bg-stone-100 text-stone-800",
-          approvalStatus: data.approvalStatus || "pending",
-        } as Course));
+        const coursesList = (coursesResponse.data || []).map(
+          (data: any) =>
+            ({
+              id: data.id,
+              title: data.title || "Sem título",
+              instructor: data.instructor || "Sem tutor",
+              category: data.category || "Geral",
+              rating: data.rating || 0,
+              reviewCount: data.reviewCount || 0,
+              duration: data.duration || "0h",
+              relevanceScore: data.relevanceScore || 80,
+              imageUrl: data.imageUrl || "",
+              isActive: data.isActive !== false,
+              badgeColor: data.badgeColor || "bg-stone-100 text-stone-800",
+              approvalStatus: data.approvalStatus || "pending",
+            }) as Course,
+        );
 
         setCourses(coursesList);
         setCategories(updateCategoryCounts(coursesList, INITIAL_CATEGORIES));
@@ -180,9 +183,9 @@ const ContentManagementPage: React.FC = () => {
         `✅ Curso "${courseTitle}" foi excluído permanentemente!`,
         "success",
       );
-      
+
       // Remove from local state
-      setCourses(courses.filter(c => c.id !== courseId));
+      setCourses(courses.filter((c) => c.id !== courseId));
       setExpandedDeleteRequest(null);
       setConfirmationModal(null);
     } catch (error) {
@@ -300,7 +303,7 @@ const ContentManagementPage: React.FC = () => {
       const categoryName = categoryToDelete?.name || "Categoria";
 
       // Remove from local state
-      setCategories(categories.filter(c => c.id !== id));
+      setCategories(categories.filter((c) => c.id !== id));
 
       console.log(`✓ Categoria "${categoryName}" foi removida.`);
       alert(`✅ Categoria "${categoryName}" removida com sucesso!`);
@@ -336,9 +339,9 @@ const ContentManagementPage: React.FC = () => {
       for (const cat of emptyCategories) {
         console.log(`✓ Categoria vazia removida: "${cat.name}"`);
       }
-      
+
       // Remove empty categories from local state
-      setCategories(categories.filter(c => c.count > 0));
+      setCategories(categories.filter((c) => c.count > 0));
 
       alert(
         `✅ ${emptyCategories.length} categoria(s) vazia(s) foram removidas com sucesso!`,
@@ -369,7 +372,7 @@ const ContentManagementPage: React.FC = () => {
         badgeColor: "bg-stone-100 text-stone-800",
         status: "Rascunho",
       });
-      
+
       showToast("✅ Curso criado com sucesso!", "success");
       setIsCourseModalOpen(false);
       setNewCourse({
@@ -388,7 +391,7 @@ const ContentManagementPage: React.FC = () => {
     try {
       await api.delete(`/courses/${id}`);
       setDeleteConfirmId(null);
-      setCourses(courses.filter(c => c.id !== id));
+      setCourses(courses.filter((c) => c.id !== id));
       showToast("Curso removido com sucesso", "success");
     } catch (error) {
       console.error("Erro ao deletar curso:", error);

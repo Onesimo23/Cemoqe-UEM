@@ -15,10 +15,9 @@ import {
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../services/api";
-import AdminLayout from "../../layouts/AdminLayout";
 import ConfirmationModal from "../../components/ConfirmationModal";
-import { UserProfile } from "../../contexts/AuthContext";
+import AdminLayout from "../../layouts/AdminLayout";
+import api from "../../services/api";
 
 interface TutorApplication {
   id: string;
@@ -62,22 +61,28 @@ const AdminTutorsPage: React.FC = () => {
         setLoading(true);
         const response = await api.get("/users");
         const users = response.data || [];
-        
+
         // Filter only instructors
         const list = users
           .filter((u: any) => u.role === "instructor")
-          .map((data: any) => ({
-            id: data.id,
-            name: data.full_name || "Tutor",
-            email: data.email || "N/A",
-            specialty: data.specialty || "—",
-            courses: typeof data.courses === "number" ? data.courses : 0,
-            students: typeof data.students === "string" ? data.students : "0",
-            rating: typeof data.rating === "number" ? data.rating : 0,
-            joinedAt: data.created_at ? new Date(data.created_at).toLocaleDateString() : "—",
-            status: data.status || "Ativo",
-          } as ActiveTutor));
-        
+          .map(
+            (data: any) =>
+              ({
+                id: data.id,
+                name: data.full_name || "Tutor",
+                email: data.email || "N/A",
+                specialty: data.specialty || "—",
+                courses: typeof data.courses === "number" ? data.courses : 0,
+                students:
+                  typeof data.students === "string" ? data.students : "0",
+                rating: typeof data.rating === "number" ? data.rating : 0,
+                joinedAt: data.created_at
+                  ? new Date(data.created_at).toLocaleDateString()
+                  : "—",
+                status: data.status || "Ativo",
+              }) as ActiveTutor,
+          );
+
         setTutors(list.sort((a, b) => a.name.localeCompare(b.name)));
       } catch (error) {
         console.error("Erro ao carregar instrutores:", error);

@@ -49,17 +49,26 @@ const UsersManagementPage: React.FC = () => {
     const loadUsers = async () => {
       try {
         setLoading(true);
-        console.log("🔵 [UsersManagementPage] Iniciando carregamento de utilizadores...");
+        console.log(
+          "🔵 [UsersManagementPage] Iniciando carregamento de utilizadores...",
+        );
         const response = await api.get("/users");
         const usersList = response.data || [];
-        console.log("✅ [UsersManagementPage] Utilizadores carregados:", usersList.length, usersList);
+        console.log(
+          "✅ [UsersManagementPage] Utilizadores carregados:",
+          usersList.length,
+          usersList,
+        );
         setUsers(
           usersList.sort((a: UserProfile, b: UserProfile) =>
             (a.full_name || "").localeCompare(b.full_name || ""),
           ),
         );
       } catch (error) {
-        console.error("❌ [UsersManagementPage] Erro ao carregar utilizadores:", error);
+        console.error(
+          "❌ [UsersManagementPage] Erro ao carregar utilizadores:",
+          error,
+        );
       } finally {
         setLoading(false);
       }

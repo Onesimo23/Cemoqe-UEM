@@ -13,8 +13,8 @@ import {
     X,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import api from "../../services/api";
 import AdminLayout from "../../layouts/AdminLayout";
+import api from "../../services/api";
 import { Course } from "../../types";
 
 interface Lesson {
@@ -75,22 +75,25 @@ const CourseModerationPage: React.FC = () => {
         setLoading(true);
         const response = await api.get("/courses");
         const coursesList = response.data || [];
-        
+
         setCourses(
-          coursesList.map((data: any) => ({
-            id: data.id,
-            title: data.title || "Sem título",
-            instructor: data.instructor || "Sem tutor",
-            category: data.category || "Geral",
-            rating: data.rating || 0,
-            reviewCount: data.reviewCount || 0,
-            duration: data.duration || "0h",
-            relevanceScore: data.relevanceScore || 0,
-            imageUrl: data.imageUrl || "",
-            isActive: data.isActive !== false,
-            badgeColor: data.badgeColor || "bg-stone-100 text-stone-800",
-            approvalStatus: data.approvalStatus || "pending",
-          } as Course)),
+          coursesList.map(
+            (data: any) =>
+              ({
+                id: data.id,
+                title: data.title || "Sem título",
+                instructor: data.instructor || "Sem tutor",
+                category: data.category || "Geral",
+                rating: data.rating || 0,
+                reviewCount: data.reviewCount || 0,
+                duration: data.duration || "0h",
+                relevanceScore: data.relevanceScore || 0,
+                imageUrl: data.imageUrl || "",
+                isActive: data.isActive !== false,
+                badgeColor: data.badgeColor || "bg-stone-100 text-stone-800",
+                approvalStatus: data.approvalStatus || "pending",
+              }) as Course,
+          ),
         );
       } catch (error) {
         console.error("Erro ao carregar cursos:", error);
@@ -107,7 +110,7 @@ const CourseModerationPage: React.FC = () => {
     try {
       const response = await api.get(`/courses/${courseId}`);
       const data = response.data;
-      
+
       setPreviewCourse({
         id: courseId,
         title: data.title || "Sem título",
@@ -149,7 +152,7 @@ const CourseModerationPage: React.FC = () => {
       });
       showToast(`✅ Curso "${courseTitle}" aprovado!`, "success");
       setApprovalModal(null);
-      
+
       // Reload courses
       const response = await api.get("/courses");
       setCourses(
@@ -182,7 +185,7 @@ const CourseModerationPage: React.FC = () => {
       });
       showToast(`✗ Curso "${courseTitle}" rejeitado.`, "success");
       setApprovalModal(null);
-      
+
       // Reload courses
       const response = await api.get("/courses");
       setCourses(

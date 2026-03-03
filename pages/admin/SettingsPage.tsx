@@ -15,7 +15,6 @@ import {
     X,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
-import api from "../../services/api";
 import AdminLayout from "../../layouts/AdminLayout";
 
 const AdminSettingsPage: React.FC = () => {
@@ -80,9 +79,12 @@ const AdminSettingsPage: React.FC = () => {
       // Save settings to localStorage or API
       localStorage.setItem("brandSettings", JSON.stringify(brandSettings));
       localStorage.setItem("systemSettings", JSON.stringify(systemSettings));
-      localStorage.setItem("securitySettings", JSON.stringify(securitySettings));
+      localStorage.setItem(
+        "securitySettings",
+        JSON.stringify(securitySettings),
+      );
       localStorage.setItem("paymentSettings", JSON.stringify(paymentSettings));
-      
+
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     } finally {
@@ -153,7 +155,10 @@ const AdminSettingsPage: React.FC = () => {
         reader.onload = (e) => {
           const dataUrl = e.target?.result as string;
           setBrandSettings({ ...brandSettings, logoUrl: dataUrl });
-          localStorage.setItem("brandSettings", JSON.stringify({ ...brandSettings, logoUrl: dataUrl }));
+          localStorage.setItem(
+            "brandSettings",
+            JSON.stringify({ ...brandSettings, logoUrl: dataUrl }),
+          );
         };
         reader.readAsDataURL(file);
       } finally {

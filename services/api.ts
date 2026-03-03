@@ -3,7 +3,9 @@ import { Course } from "../types";
 
 // Detectar porta da API dinamicamente
 const API_PORT = import.meta.env.VITE_API_PORT || "3005";
-const API_BASE_URL = import.meta.env.DEV ? `http://localhost:${API_PORT}/api` : "/api";
+const API_BASE_URL = import.meta.env.DEV
+  ? `http://localhost:${API_PORT}/api`
+  : "/api";
 
 class ApiClient {
   private client: AxiosInstance;
