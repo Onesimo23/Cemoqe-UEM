@@ -1,6 +1,7 @@
 # ✅ RESUMO FINAL - MIGRAÇÃO DO SISTEMA DE CURSOS PARA MYSQL
 
 ## 🎯 Objetivo Concluso
+
 Todos os componentes da criação de cursos para instrutores foram migrados de **Firebase/Firestore** para usar exclusivamente **MySQL** via API Node.js/Express.
 
 ---
@@ -8,7 +9,9 @@ Todos os componentes da criação de cursos para instrutores foram migrados de *
 ## 📝 ARQUIVOS MODIFICADOS
 
 ### 1. **pages/instructor/MyCoursesPage.tsx**
+
 **O que mudou:**
+
 - ❌ Removidas todas as importações do Firebase:
   - `from "firebase/firestore"`
   - `from "../../services/firebase"`
@@ -22,7 +25,9 @@ Todos os componentes da criação de cursos para instrutores foram migrados de *
 ---
 
 ### 2. **pages/instructor/CourseEditorPage.tsx**
+
 **O que mudou:**
+
 - ❌ Removidas importações do Supabase:
   - `from "../../services/supabase"`
 - ❌ Removida lógica de upload do Supabase Storage
@@ -35,7 +40,9 @@ Todos os componentes da criação de cursos para instrutores foram migrados de *
 ---
 
 ### 3. **server/routes/courses.ts** (Verificado ✅)
+
 **Status:** Já estava usando MySQL corretamente.
+
 - `GET /courses` – Lista cursos ativos
 - `GET /courses/:id` – Retorna curso com módulos
 - `POST /courses` – Cria novo curso
@@ -45,13 +52,16 @@ Todos os componentes da criação de cursos para instrutores foram migrados de *
 ---
 
 ### 4. **server/db/connection.ts** (Verificado ✅)
+
 **Status:** Pool MySQL corretamente configurado.
+
 - Usa variáveis de ambiente: `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
 - Suporta pool de conexões com limite de 10 conexões
 
 ---
 
 ### 5. **services/api.ts** (Verificado ✅)
+
 **Status:** Endpoints de curso já implementados corretamente.
 
 ---
@@ -59,10 +69,11 @@ Todos os componentes da criação de cursos para instrutores foram migrados de *
 ## 🔄 FLUXO OPERACIONAL
 
 ### Criar Curso
+
 ```
-Usuário → "Criar Novo Curso" 
+Usuário → "Criar Novo Curso"
   ↓
-CourseEditorPage (formData) 
+CourseEditorPage (formData)
   ↓
 POST /api/courses {instructor_uid, title, ...}
   ↓
@@ -72,6 +83,7 @@ MySQL: INSERT into courses
 ```
 
 ### Atualizar Curso
+
 ```
 Usuário → CourseEditorPage (editar)
   ↓
@@ -85,6 +97,7 @@ Cache invalidado
 ```
 
 ### Publicar Curso
+
 ```
 Usuário → ícone de status em MyCoursesPage
   ↓
@@ -98,6 +111,7 @@ MySQL: UPDATE courses SET is_active=1
 ```
 
 ### Deletar Curso
+
 ```
 Usuário → "Deletar" em MyCoursesPage
   ↓
@@ -135,6 +149,7 @@ CORS_ORIGIN=http://localhost:5173,http://localhost:3000
 ### Banco de Dados
 
 Execute os commands:
+
 ```bash
 npm run db:create      # Cria estrutura do banco
 npm run db:migrate     # Executa migrações
@@ -158,6 +173,7 @@ npm run db:seed        # Popula dados iniciais
 ## 🧪 COMO TESTAR
 
 ### Teste Via Interface (Recomendado)
+
 1. Abra `http://localhost:5173/instrutor/cursos`
 2. Clique em "Criar Novo Curso"
 3. Preencha informações básicas
@@ -205,18 +221,21 @@ curl -X DELETE http://localhost:3005/api/courses/course_id \
 ## 🚀 PRÓXIMAS ETAPAS
 
 ### Prioritário
+
 - [ ] Testar fluxo completo de criação de curso
 - [ ] Verificar se métricas são calculadas corretamente
 - [ ] Implementar upload de imagens de curso
 - [ ] Implementar upload de documentos de aulas
 
 ### Médio Prazo
+
 - [ ] Adicionar validações de campos obrigatórios no servidor
 - [ ] Implementar versionamento de cursos
 - [ ] Adicionar auditoria de alterações (who/when/what)
 - [ ] Implementar soft-delete com recuperação
 
 ### Longo Prazo
+
 - [ ] Migração de dados históricos de Firebase
 - [ ] Backup automático de cursos
 - [ ] Export de cursos em PDF
@@ -227,13 +246,17 @@ curl -X DELETE http://localhost:3005/api/courses/course_id \
 ## 🐛 TROUBLESHOOTING
 
 ### ❌ "Cannot GET /api/courses"
+
 **Solução:** Verificar se o servidor está rodando em `http://localhost:3005`
+
 ```bash
 curl http://localhost:3005/health  # Deve retornar {"status":"ok"}
 ```
 
 ### ❌ "Database connection error"
+
 **Solução:** Verificar MySQL
+
 ```bash
 # Linux/Mac
 mysql -u root -p -e "SELECT 1;"
@@ -243,19 +266,25 @@ mysql -u root -p
 ```
 
 ### ❌ "Table courses not found"
+
 **Solução:** Executar migrações
+
 ```bash
 npm run db:migrate
 ```
 
 ### ❌ "Cursos não aparecem"
+
 **Solução:** Verificar dados no banco
+
 ```bash
 mysql -u root -p cemoque -e "SELECT * FROM courses WHERE is_active=1;"
 ```
 
 ### ❌ "401 Unauthorized"
+
 **Solução:** Verificar token de autenticação
+
 ```bash
 # Token deve estar no localStorage como 'auth_token'
 localStorage.getItem('auth_token')
@@ -266,6 +295,7 @@ localStorage.getItem('auth_token')
 ## 📊 ESTRUTURA DO BANCO DE DADOS
 
 ### Tabela `courses`
+
 ```sql
 CREATE TABLE courses (
   id VARCHAR(255) PRIMARY KEY,
@@ -283,6 +313,7 @@ CREATE TABLE courses (
 ```
 
 ### Tabela `modules`
+
 ```sql
 CREATE TABLE modules (
   id VARCHAR(255) PRIMARY KEY,
@@ -295,6 +326,7 @@ CREATE TABLE modules (
 ```
 
 ### Tabela `lessons`
+
 ```sql
 CREATE TABLE lessons (
   id VARCHAR(255) PRIMARY KEY,
@@ -312,11 +344,10 @@ CREATE TABLE lessons (
 
 ## 📞 CONTATO E SUPORTE
 
-**Data de Conclusão:** 3 de março de 2026  
-**Status:** ✅ COMPLETO - Pronto para Testes  
-**Versão:** 1.0  
+**Data de Conclusão:** 3 de março de 2026
+**Status:** ✅ COMPLETO - Pronto para Testes
+**Versão:** 1.0
 
 ---
 
 **⚠️ IMPORTANTE:** Faça backup do banco de dados antes de usar em produção!
-

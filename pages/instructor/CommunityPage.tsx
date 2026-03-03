@@ -1,19 +1,18 @@
 import {
-  Filter,
-  Heart,
-  MessageCircle,
-  MessageSquare,
-  Plus,
-  Search,
-  Send,
-  TrendingUp,
-  Users,
-  X,
+    Filter,
+    Heart,
+    MessageCircle,
+    MessageSquare,
+    Plus,
+    Search,
+    Send,
+    TrendingUp,
+    Users,
+    X,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
-import api from "../../services/api";
 
 interface Topic {
   id: string;

@@ -1,21 +1,20 @@
 import {
-  AlertCircle,
-  ArrowDownRight,
-  ArrowUpRight,
-  CheckCircle2,
-  ChevronRight,
-  Clock,
-  DollarSign,
-  Download,
-  Filter,
-  MoreVertical,
-  TrendingUp,
-  Wallet
+    AlertCircle,
+    ArrowDownRight,
+    ArrowUpRight,
+    CheckCircle2,
+    ChevronRight,
+    Clock,
+    DollarSign,
+    Download,
+    Filter,
+    MoreVertical,
+    TrendingUp,
+    Wallet,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
-import api from "../../services/api";
 
 interface Transaction {
   id: string;

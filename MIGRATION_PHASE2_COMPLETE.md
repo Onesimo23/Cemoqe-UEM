@@ -1,6 +1,6 @@
 # 🎯 MIGRAÇÃO COMPLETA: Firebase → MySQL
 
-**Data:** Março 2026  
+**Data:** Março 2026
 **Status:** ✅ **MIGRAÇÃO FASE 2 COMPLETA** - 16 páginas migradas, build funcionando
 
 ---
@@ -10,29 +10,32 @@
 Conclusão da migração completa de **16 páginas** de Firebase/Supabase para **MySQL**:
 
 ### Páginas do Instrutor (8 total)
-| Página | Status | Imports | Listeners |
-|--------|--------|---------|-----------|
-| MyCoursesPage.tsx | ✅ Completo | Removido | Removido |
-| CourseEditorPage.tsx | ✅ Completo | Removido | Removido |
-| **DashboardPage.tsx** | ✅ **Corrigido** | Removido | Removido |
-| SettingsPage.tsx | ✅ Migrado | Removido | Inativo |
-| FinanceiroPage.tsx | ✅ Migrado | Removido | Inativo |
-| StudentsProgressPage.tsx | ✅ Migrado | Removido | Inativo |
-| QuestionsPage.tsx | ✅ Migrado | Removido | Inativo |
-| ReportsPage.tsx | ✅ Migrado | Removido | Inativo |
-| MyStudentsPage.tsx | ✅ Migrado | Removido | Inativo |
-| CommunityPage.tsx | ✅ Migrado | Removido | Inativo |
-| CertificatesManagementPage.tsx | ✅ Migrado | Removido | Inativo |
+
+| Página                         | Status           | Imports  | Listeners |
+| ------------------------------ | ---------------- | -------- | --------- |
+| MyCoursesPage.tsx              | ✅ Completo      | Removido | Removido  |
+| CourseEditorPage.tsx           | ✅ Completo      | Removido | Removido  |
+| **DashboardPage.tsx**          | ✅ **Corrigido** | Removido | Removido  |
+| SettingsPage.tsx               | ✅ Migrado       | Removido | Inativo   |
+| FinanceiroPage.tsx             | ✅ Migrado       | Removido | Inativo   |
+| StudentsProgressPage.tsx       | ✅ Migrado       | Removido | Inativo   |
+| QuestionsPage.tsx              | ✅ Migrado       | Removido | Inativo   |
+| ReportsPage.tsx                | ✅ Migrado       | Removido | Inativo   |
+| MyStudentsPage.tsx             | ✅ Migrado       | Removido | Inativo   |
+| CommunityPage.tsx              | ✅ Migrado       | Removido | Inativo   |
+| CertificatesManagementPage.tsx | ✅ Migrado       | Removido | Inativo   |
 
 ### Identificadas para Migração Futura (8 páginas)
+
 - Student pages: 7 (SettingsPage, HistoryPage, ForumPage, EnrollmentPage, FeedbackPage, CoursePlayerPage, CertificateViewPage, CertificatesPage, CommunityPage)
-- Admin pages: 1+ 
+- Admin pages: 1+
 
 ---
 
 ## 🔧 O Que Foi Feito - Fase 2
 
 ### Etapa 1: Removidos Importações Firebase (Todos 8 arquivos)
+
 ```
 ✅ SettingsPage: updateProfile(), setDoc(), getDownloadURL(), uploadBytes(), storage, db removidos
 ✅ FinanceiroPage: collection(), onSnapshot(), query(), where() removidos
@@ -45,12 +48,14 @@ Conclusão da migração completa de **16 páginas** de Firebase/Supabase para *
 ```
 
 ### Etapa 2: Listeners Firestore Inativados
+
 ```
 ✅ SettingsPage: handleSave(), handleChangeFile() agora usam api.put() ou deixam como TODO
 ✅ QuestionsPage: useEffect listeners substituídos por TODO comments + api stubs
 ```
 
 ### Etapa 3: Importação API Adicionada
+
 ```
 ✅ Todos 8 arquivos agora importam: import api from "../../services/api";
 ```
@@ -87,12 +92,14 @@ npm run build ✅ SUCCESS - Sem erros de TypeScript
 Deixadas como **TODO comments** para futura implementação:
 
 ### SettingsPage.tsx
+
 ```typescript
 // TODO: Implementar API call: api.put("/users/profile", {...})
 // TODO: Implementar upload via API: POST /files/upload
 ```
 
 ### QuestionsPage.tsx
+
 ```typescript
 // TODO: Implement API call: api.get("/questions", { instructor_uid: user.uid })
 // TODO: Implement API call: api.get(`/questions/${activeQuestion.id}/answers`)
@@ -100,6 +107,7 @@ Deixadas como **TODO comments** para futura implementação:
 ```
 
 ### Outras 5 páginas
+
 - **FinanceiroPage**: Precisa implementar api.get("/financeiro")
 - **StudentsProgressPage**: Precisa implementar api.get("/students/progress")
 - **ReportsPage**: Precisa implementar api.get("/reports")
@@ -112,11 +120,13 @@ Deixadas como **TODO comments** para futura implementação:
 ## 🔐 Dados em Segurança
 
 ### ✅ Não Deletados
+
 - ❌ Firebase Firestore data: Ainda existe (offline)
 - ❌ Supabase Storage: Ainda existe (offline)
 - ✅ MySQL database: Criada e pronta em uso
 
 ### Recomendação
+
 1. Backup de Firestore completo
 2. Migração lenta dados (background job)
 3. Manter Firestore como fallback temporário
@@ -125,23 +135,24 @@ Deixadas como **TODO comments** para futura implementação:
 
 ## 📅 Timeline
 
-| Data | Ação |
-|------|------|
-| Fase 1 | ✅ Migração inicial MyCoursesPage + CourseEditorPage |
-| Fase 1 | ✅ Correção DashboardPage (erro Firebase descoberto em teste) |
-| **Fase 2** | ✅ **Imports removidos de 8 páginas** |
-| **Fase 2** | ✅ **Listeners inativados** |
-| Fase 2 | ✅ **Build passing** |
-| Próxima | 🔄 Implementar endpoints API para as 8 páginas |
-| Próxima | 🔄 Testar cada página em runtime |
-| Próxima | 🔄 Migrar 8 páginas student/admin |
-| Próxima | 🔄 E2E tests |
+| Data       | Ação                                                          |
+| ---------- | ------------------------------------------------------------- |
+| Fase 1     | ✅ Migração inicial MyCoursesPage + CourseEditorPage          |
+| Fase 1     | ✅ Correção DashboardPage (erro Firebase descoberto em teste) |
+| **Fase 2** | ✅ **Imports removidos de 8 páginas**                         |
+| **Fase 2** | ✅ **Listeners inativados**                                   |
+| Fase 2     | ✅ **Build passing**                                          |
+| Próxima    | 🔄 Implementar endpoints API para as 8 páginas                |
+| Próxima    | 🔄 Testar cada página em runtime                              |
+| Próxima    | 🔄 Migrar 8 páginas student/admin                             |
+| Próxima    | 🔄 E2E tests                                                  |
 
 ---
 
 ## 🎯 Como Testar
 
 ### Verificar Compilação
+
 ```bash
 npm run build
 # ✓ 1942 modules transformed
@@ -149,12 +160,14 @@ npm run build
 ```
 
 ### Iniciar Servidor
+
 ```bash
 npm run dev
 # Frontend: http://localhost:4201/
 ```
 
 ### Testar Páginas Migradas
+
 ```
 1. Login: http://localhost:4201/login
 2. Dashboard instructor: http://localhost:4201/instrutor/dashboard
@@ -181,18 +194,21 @@ npm run dev
 ## ⚠️ Próximas Prioridades
 
 ### Alta Prioridade 🔴
+
 1. [ ] Implementar endpoints API para SettingsPage (profile update)
-2. [ ] Implementar endpoints API para QuestionsPage  
+2. [ ] Implementar endpoints API para QuestionsPage
 3. [ ] Implementar endpoints API para FinanceiroPage
 4. [ ] Testar login → Dashboard (runtime test)
 
 ### Média Prioridade 🟡
+
 5. [ ] Implementar endpoints API para 5 páginas restantes
 6. [ ] Migrar 8 páginas student
 7. [ ] Migrar 1+ páginas admin
 8. [ ] End-to-end tests completos
 
 ### Baixa Prioridade 🟢
+
 9. [ ] Remover Firestore completamente (após backup)
 10. [ ] Performance optimization
 11. [ ] Database cleanup
@@ -202,6 +218,7 @@ npm run dev
 ## 📚 Arquivos Modificados
 
 ### Páginas Instrutor (11 total)
+
 - `pages/instructor/MyCoursesPage.tsx` - COMPLETO
 - `pages/instructor/CourseEditorPage.tsx` - COMPLETO
 - `pages/instructor/DashboardPage.tsx` - COMPLETO
@@ -215,6 +232,7 @@ npm run dev
 - `pages/instructor/CertificatesManagementPage.tsx` - MIGRADO
 
 ### Páginas que ainda usam Firebase (8 ou mais)
+
 - `pages/student/SettingsPage.tsx`
 - `pages/student/HistoryPage.tsx`
 - `pages/student/ForumPage.tsx`
@@ -226,6 +244,7 @@ npm run dev
 - `pages/admin/DashboardPage.tsx` (e possivelmente mais)
 
 ### Backend (Pronto)
+
 - `server/routes/courses.ts` - ✅ Pronto (MySQL)
 - `server/routes/enrollments.ts` - ✅ Pronto (MySQL)
 - `server/routes/lessons.ts` - ✅ Pronto (MySQL)
@@ -262,6 +281,6 @@ npm run dev
 
 ---
 
-**Responsável:** GitHub Copilot  
-**Tempo Estimado para Conclusão:** 4-6 horas (implementação endpoints + testes)  
+**Responsável:** GitHub Copilot
+**Tempo Estimado para Conclusão:** 4-6 horas (implementação endpoints + testes)
 **Git Branch:** feature/onesimo_branch

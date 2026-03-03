@@ -18,7 +18,7 @@ function make_request() {
     local token=$4
 
     echo "📤 $method $endpoint"
-    
+
     if [ -z "$token" ]; then
         curl -s -X "$method" \
             -H "Content-Type: application/json" \
@@ -130,4 +130,3 @@ echo "  ✅ Busca de curso"
 echo "  ✅ Atualização de curso"
 echo "  ✅ Listagem de cursos"
 echo "  ✅ Deleção de curso"
-

@@ -18,7 +18,6 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
-import api from "../../services/api";
 
 interface Student {
   id: string;

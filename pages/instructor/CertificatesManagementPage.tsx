@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
 import { cacheService } from "../../services/cacheService";
-import api from "../../services/api";
 
 interface Certificate {
   id: string;

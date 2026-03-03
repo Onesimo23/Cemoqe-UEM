@@ -59,6 +59,27 @@ router.post("/", async (req: Request, res: Response) => {
     if (!instructor_uid || !title)
       return res.status(400).json({ error: "Missing required fields" });
 
+    // Sync user if not exists (handle legacy Firebase users)
+    try {
+      const existingUser = await db.get(
+        "SELECT id FROM users WHERE uid = ?",
+        [instructor_uid]
+      );
+      if (!existingUser) {
+        console.log("⚠️ User not found, creating sync record for:", instructor_uid);
+        const { randomUUID } = await import("crypto");
+        await db.run(
+          `INSERT INTO users (id, uid, email, name, role, status, created_at)
+           VALUES (?, ?, ?, ?, 'instructor', 'Ativo', NOW())`,
+          [randomUUID(), instructor_uid, `${instructor_uid}@sync.local`, "Instrutor"]
+        );
+        console.log("✅ User sync record created");
+      }
+    } catch (syncErr: any) {
+      console.warn("⚠️ Could not sync user:", syncErr.message);
+      // Continue anyway, might already exist
+    }
+
     console.log("🔑 Generating course ID...");
     try {
       const id = `course_${Date.now()}_${randomBytes(6).toString("hex")}`;

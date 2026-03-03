@@ -1414,17 +1414,17 @@ const CourseEditorPage: React.FC = () => {
       // Por enquanto, usar o nome do arquivo como referência
       console.log("[CourseEditor] File path:", filePath);
       console.log("[CourseEditor] File will be uploaded to:", filePath);
-      
+
       // Usar o caminho como URL temporária
       const url = filePath;
       updateLesson(moduleId, lessonId, "content", url);
-      showToast("Arquivo preparado para upload. Salve o curso para confirmar.", "info");
+      showToast(
+        "Arquivo preparado para upload. Salve o curso para confirmar.",
+        "info",
+      );
     } catch (err) {
       console.error("Falha ao preparar documento da aula:", err);
-      showToast(
-        "Erro ao preparar o documento. Tente novamente.",
-        "error",
-      );
+      showToast("Erro ao preparar o documento. Tente novamente.", "error");
     }
   };
 
@@ -2513,9 +2513,12 @@ const CourseEditorPage: React.FC = () => {
                                     .replace(/[\u0300-\u036f]/g, "")
                                     .replace(/[^a-zA-Z0-9._-]/g, "_");
                                   const filePath = `courses/${id || "temp"}/blocks/${Date.now()}_${sanitizedFileName}`;
-                                  
+
                                   // Retornar caminho do arquivo (upload será feito no servidor)
-                                  console.log("[CourseEditor] Block file prepared:", filePath);
+                                  console.log(
+                                    "[CourseEditor] Block file prepared:",
+                                    filePath,
+                                  );
                                   return filePath;
                                 }}
                               />

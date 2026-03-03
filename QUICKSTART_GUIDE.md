@@ -11,11 +11,13 @@
 ## 🔧 CONFIGURAÇÃO INICIAL
 
 ### 1. Instalar Dependências
+
 ```bash
 npm install
 ```
 
 ### 2. Configurar Variáveis de Ambiente
+
 Criar ou editar arquivo `.env.local` na raiz do projeto:
 
 ```env
@@ -38,6 +40,7 @@ ENABLE_OFFLINE_MODE=false
 ```
 
 ### 3. Criar Banco de Dados MySQL
+
 ```bash
 # Conectar ao MySQL
 mysql -u root -p
@@ -48,6 +51,7 @@ EXIT;
 ```
 
 ### 4. Executar Migrações
+
 ```bash
 npm run db:create      # Cria tabelas
 npm run db:migrate     # Executa migrações
@@ -59,24 +63,30 @@ npm run db:seed        # Insere dados iniciais (opcional)
 ## ▶️ RODANDO O PROJETO
 
 ### Opção 1: Desenvolvimento (Frontend + Backend Concorrentes)
+
 ```bash
 npm run dev
 ```
 
 Isso iniciará:
+
 - **Frontend:** http://localhost:5173
 - **Backend:** http://localhost:3005
 
 ### Opção 2: Apenas Frontend
+
 ```bash
 npm run dev:frontend
 ```
+
 - Acesse: http://localhost:5173
 
 ### Opção 3: Apenas Backend
+
 ```bash
 npm run dev:backend
 ```
+
 - Backend estará em: http://localhost:3005
 
 ---
@@ -84,12 +94,14 @@ npm run dev:backend
 ## 🧪 TESTANDO O SISTEMA
 
 ### Verificar Saúde do Backend
+
 ```bash
 curl http://localhost:3005/health
 # Resposta: {"status":"ok","timestamp":"..."}
 ```
 
 ### Teste 1: Login do Admin
+
 ```bash
 curl -X POST http://localhost:3005/api/auth/login \
   -H "Content-Type: application/json" \
@@ -100,6 +112,7 @@ curl -X POST http://localhost:3005/api/auth/login \
 ```
 
 **Resposta esperada:**
+
 ```json
 {
   "token": "eyJ...",
@@ -112,6 +125,7 @@ curl -X POST http://localhost:3005/api/auth/login \
 ```
 
 ### Teste 2: Listar Cursos
+
 ```bash
 curl http://localhost:3005/api/courses
 ```
@@ -119,6 +133,7 @@ curl http://localhost:3005/api/courses
 **Resposta esperada:** Array de cursos
 
 ### Teste 3: Criar Curso
+
 ```bash
 # 1. Obter token (veja Teste 1)
 TOKEN="eyJ..."
@@ -181,16 +196,19 @@ curl -X POST http://localhost:3005/api/courses \
 ## 🔍 VERIFICANDO DADOS NO BANCO
 
 ### Listar cursos criados
+
 ```bash
 mysql -u root -p cemoque -e "SELECT id, title, is_active FROM courses LIMIT 10;"
 ```
 
 ### Ver estrutura da tabela
+
 ```bash
 mysql -u root -p cemoque -e "DESCRIBE courses;"
 ```
 
 ### Ver tudo em uma tabela específica
+
 ```bash
 mysql -u root -p cemoque -e "SELECT * FROM courses WHERE is_active = 1;"
 ```
@@ -200,6 +218,7 @@ mysql -u root -p cemoque -e "SELECT * FROM courses WHERE is_active = 1;"
 ## 🔗 ENDPOINTS DA API
 
 ### Cursos
+
 - `GET /api/courses` – Listar cursos ativos
 - `GET /api/courses/:id` – Obter curso específico
 - `POST /api/courses` – Criar novo curso
@@ -207,16 +226,19 @@ mysql -u root -p cemoque -e "SELECT * FROM courses WHERE is_active = 1;"
 - `DELETE /api/courses/:id` – Deletar curso
 
 ### Autenticação
+
 - `POST /api/auth/login` – Login
 - `POST /api/auth/register` – Registrar usuário
 - `GET /api/auth/me` – Obter usuário atual
 
 ### Inscrições
+
 - `POST /api/enrollments` – Inscrever em curso
 - `GET /api/enrollments/user/:uid` – Cursos do usuário
 - `GET /api/enrollments/course/:id` – Inscrições do curso
 
 ### Usuários
+
 - `GET /api/users` – Listar usuários (admin)
 - `GET /api/users/:uid/profile` – Perfil do usuário
 - `PUT /api/users/:uid/profile` – Atualizar perfil
@@ -226,6 +248,7 @@ mysql -u root -p cemoque -e "SELECT * FROM courses WHERE is_active = 1;"
 ## 📊 MONITORAMENTO
 
 ### Logs do Backend
+
 Verifique os logs no console do terminal onde rodou `npm run dev:backend`:
 
 ```
@@ -238,6 +261,7 @@ Verifique os logs no console do terminal onde rodou `npm run dev:backend`:
 ```
 
 ### Logs do Navegador
+
 Abra DevTools (F12) → Console para ver logs do frontend.
 
 ---
@@ -245,6 +269,7 @@ Abra DevTools (F12) → Console para ver logs do frontend.
 ## ⚠️ PROBLEMAS COMUNS
 
 ### Erro: "Can't reach database"
+
 ```bash
 # Verificar se MySQL está rodando
 # Windows: Services → MySQL
@@ -253,14 +278,17 @@ Abra DevTools (F12) → Console para ver logs do frontend.
 ```
 
 ### Erro: "Table courses not found"
+
 ```bash
 npm run db:migrate
 ```
 
 ### Erro: "CORS Error"
+
 Verificar se `CORS_ORIGIN` em `.env.local` inclui sua URL do frontend.
 
 ### API não responde
+
 ```bash
 curl http://localhost:3005/health
 # Se não funcionar, backend não está rodando
@@ -268,6 +296,7 @@ npm run dev:backend
 ```
 
 ### Cursos não aparecem
+
 1. Verificar se `is_active = 1` no banco
 2. Verificar se o `instructor_uid` está correto
 3. Limpar cache: DevTools → Application → Clear storage → Clear all
@@ -277,12 +306,14 @@ npm run dev:backend
 ## 🛑 PARAR O PROJETO
 
 ### Parar tudo
+
 ```bash
 # No terminal onde rodou "npm run dev", pressione Ctrl+C
 ^C
 ```
 
 ### Encerrar MySQL
+
 ```bash
 # Linux/Mac
 sudo service mysql stop
@@ -351,7 +382,7 @@ d:\Amec\Cemoqe-UEM\
 ---
 
 **Qualquer dúvida, revise os arquivos:**
+
 - `COURSE_MIGRATION_SUMMARY.md` – Resumo técnico
 - `MIGRATION_MYSQL_INSTRUCTOR.md` – Detalhes da migração
 - `README.md` – Documentação geral do projeto
-

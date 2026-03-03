@@ -97,17 +97,17 @@ const InstructorDashboardPage: React.FC = () => {
         const coursesResponse = await api.get("/courses");
         const allCourses = coursesResponse.data || [];
         const instructorCourses = allCourses.filter(
-          (c: any) => c.instructor_uid === user.uid && c.is_active === 1
+          (c: any) => c.instructor_uid === user.uid && c.is_active === 1,
         );
 
         // Buscar inscrições do instrutor
         const enrollmentsResponse = await api.get("/enrollments");
         const allEnrollments = enrollmentsResponse.data || [];
-        
+
         // Filtrar inscrições para os cursos do instrutor
         const courseIds = instructorCourses.map((c: any) => c.id);
-        const instructorEnrollments = allEnrollments.filter(
-          (e: any) => courseIds.includes(e.course_id)
+        const instructorEnrollments = allEnrollments.filter((e: any) =>
+          courseIds.includes(e.course_id),
         );
 
         // Processar dados
@@ -115,19 +115,24 @@ const InstructorDashboardPage: React.FC = () => {
         let totalStudents = new Set<string>();
         let ratingSum = 0;
         let ratingCount = 0;
-        let activeCount = instructorCourses.filter((c: any) => c.is_active === 1).length;
+        let activeCount = instructorCourses.filter(
+          (c: any) => c.is_active === 1,
+        ).length;
 
         const courseMetricsData: any[] = [];
 
         instructorCourses.forEach((course: any) => {
           const courseEnrollments = instructorEnrollments.filter(
-            (e: any) => e.course_id === course.id
+            (e: any) => e.course_id === course.id,
           );
-          
+
           const students = courseEnrollments.length;
-          const completed = courseEnrollments.filter((e: any) => e.completed).length;
-          const avgCompletion = students > 0 ? Math.round((completed / students) * 100) : 0;
-          
+          const completed = courseEnrollments.filter(
+            (e: any) => e.completed,
+          ).length;
+          const avgCompletion =
+            students > 0 ? Math.round((completed / students) * 100) : 0;
+
           courseEnrollments.forEach((e: any) => {
             totalStudents.add(e.user_uid);
           });
@@ -152,11 +157,12 @@ const InstructorDashboardPage: React.FC = () => {
 
         const avgRating = ratingCount ? ratingSum / ratingCount : 0;
         const paidCerts = instructorEnrollments.filter(
-          (e: any) => e.certificate_paid === 1
+          (e: any) => e.certificate_paid === 1,
         ).length;
-        const conversionRate = totalStudents.size > 0 
-          ? Math.round((paidCerts / totalStudents.size) * 100) 
-          : 0;
+        const conversionRate =
+          totalStudents.size > 0
+            ? Math.round((paidCerts / totalStudents.size) * 100)
+            : 0;
 
         // Simular série de dados (últimos 7 dias)
         const end = new Date();
@@ -173,9 +179,15 @@ const InstructorDashboardPage: React.FC = () => {
           activeCourses: activeCount,
           totalStudents: totalStudents.size,
           avgRating,
-          completionRate: courseMetricsData.length > 0 
-            ? Math.round(courseMetricsData.reduce((a: any, c: any) => a + c.avgCompletion, 0) / courseMetricsData.length)
-            : 0,
+          completionRate:
+            courseMetricsData.length > 0
+              ? Math.round(
+                  courseMetricsData.reduce(
+                    (a: any, c: any) => a + c.avgCompletion,
+                    0,
+                  ) / courseMetricsData.length,
+                )
+              : 0,
           monthlyRevenue: totalRevenue,
           conversionRate,
           activeStudents: totalStudents.size,
@@ -190,7 +202,7 @@ const InstructorDashboardPage: React.FC = () => {
             label: c.title,
             count: c.students,
             revenue: c.revenue,
-          }))
+          })),
         );
         setSeries(seriesData);
       } catch (err) {

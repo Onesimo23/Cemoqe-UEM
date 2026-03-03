@@ -9,14 +9,17 @@ Seu sistema de gerenciamento de cursos foi **completamente migrado** do Firebase
 ## 📝 Mudanças Principais
 
 ### ✅ Página de Meus Cursos
+
 - **Antes:** Usava Firestore listeners em tempo real
 - **Depois:** Usa API REST MySQL
 
 ### ✅ Editor de Cursos
+
 - **Antes:** Upload via Supabase Storage
 - **Depois:** Preparação local (upload será no servidor)
 
 ### ✅ API Backend
+
 - **Antes:** Múltiplos providers
 - **Depois:** Apenas MySQL via Express.js
 
@@ -25,11 +28,13 @@ Seu sistema de gerenciamento de cursos foi **completamente migrado** do Firebase
 ## 🚀 Como Começar
 
 ### 1. Instalar
+
 ```bash
 npm install
 ```
 
 ### 2. Configurar .env.local
+
 ```env
 DB_HOST=localhost
 DB_PORT=3306
@@ -40,12 +45,14 @@ API_PORT=3005
 ```
 
 ### 3. Executar Migrações
+
 ```bash
 npm run db:create
 npm run db:migrate
 ```
 
 ### 4. Rodar Projeto
+
 ```bash
 npm run dev
 ```
@@ -55,6 +62,7 @@ npm run dev
 ## ✅ Teste Rápido
 
 ### Via Interface
+
 1. Vá para `http://localhost:5173`
 2. Faça login como admin
 3. Vá a "Meus Cursos"
@@ -63,6 +71,7 @@ npm run dev
 6. Veja o curso na lista!
 
 ### Via Terminal
+
 ```bash
 # Criar curso
 curl -X POST http://localhost:3005/api/courses \
@@ -82,14 +91,14 @@ curl http://localhost:3005/api/courses
 
 ## 📊 Status Final
 
-| Item | Status |
-|------|--------|
-| Remoção de Firebase | ✅ |
-| Remoção de Supabase | ✅ |
-| MySQL API operacional | ✅ |
-| Zero erros TypeScript | ✅ |
-| Documentação | ✅ |
-| Testes iniciais | ⏳ Em breve |
+| Item                  | Status      |
+| --------------------- | ----------- |
+| Remoção de Firebase   | ✅          |
+| Remoção de Supabase   | ✅          |
+| MySQL API operacional | ✅          |
+| Zero erros TypeScript | ✅          |
+| Documentação          | ✅          |
+| Testes iniciais       | ⏳ Em breve |
 
 ---
 
@@ -122,6 +131,7 @@ curl http://localhost:3005/api/courses
 ## 🎓 Resumo Técnico
 
 **Arquitetura Nova:**
+
 ```
 React Components
     ↓
@@ -146,12 +156,12 @@ MySQL Database
 O sistema está pronto. Agora é só testar e usar. A migração foi limpa e profissional.
 
 **Próximo comando:**
+
 ```bash
 npm run dev
 ```
 
 ---
 
-**Dúvidas?** Veja os arquivos `.md` criados.  
+**Dúvidas?** Veja os arquivos `.md` criados.
 **Tudo funcionando?** Parabéns! 🎉
-

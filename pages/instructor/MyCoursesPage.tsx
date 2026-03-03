@@ -19,8 +19,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
-import { cacheService } from "../../services/cacheService";
 import api from "../../services/api";
+import { cacheService } from "../../services/cacheService";
 import { Course } from "../../types";
 
 // Interface local para gerenciar o estado dos cursos no painel
@@ -79,33 +79,40 @@ const InstructorCoursesPage: React.FC = () => {
         // Carregar cursos do servidor
         const response = await api.get("/courses");
         const allCourses = response.data || [];
-        
+
         // Filtrar apenas cursos do instrutor atual
         const instructorCourses = allCourses.filter(
-          (c: any) => c.instructor_uid === user.uid
+          (c: any) => c.instructor_uid === user.uid,
         );
 
         // Mapear para InstructorCourse
-        const mappedCourses: InstructorCourse[] = instructorCourses.map((c: any) => ({
-          id: c.id,
-          title: c.title || "Sem título",
-          instructor: c.instructor_name || "",
-          category: c.category || "Geral",
-          rating: c.rating || 0,
-          reviewCount: c.review_count || 0,
-          duration: c.duration ? `${c.duration}h` : "0h",
-          relevanceScore: c.relevance_score || 0,
-          imageUrl: c.image_url || "https://images.unsplash.com/photo-1529101091764-c3526daf38fe?w=400&q=80&auto=format&fit=crop",
-          badgeColor: c.badge_color || "blue",
-          isActive: c.is_active === 1 || c.is_active === true,
-          status: c.is_active === 1 || c.is_active === true ? "Publicado" : "Rascunho",
-          approvalStatus: "approved",
-          enrollmentCount: c.enrollment_count || 0,
-          revenue: c.total_revenue || 0,
-          totalLessons: c.total_lessons || 0,
-          moduleCount: c.module_count || 0,
-          completionRate: c.completion_rate || 0,
-        }));
+        const mappedCourses: InstructorCourse[] = instructorCourses.map(
+          (c: any) => ({
+            id: c.id,
+            title: c.title || "Sem título",
+            instructor: c.instructor_name || "",
+            category: c.category || "Geral",
+            rating: c.rating || 0,
+            reviewCount: c.review_count || 0,
+            duration: c.duration ? `${c.duration}h` : "0h",
+            relevanceScore: c.relevance_score || 0,
+            imageUrl:
+              c.image_url ||
+              "https://images.unsplash.com/photo-1529101091764-c3526daf38fe?w=400&q=80&auto=format&fit=crop",
+            badgeColor: c.badge_color || "blue",
+            isActive: c.is_active === 1 || c.is_active === true,
+            status:
+              c.is_active === 1 || c.is_active === true
+                ? "Publicado"
+                : "Rascunho",
+            approvalStatus: "approved",
+            enrollmentCount: c.enrollment_count || 0,
+            revenue: c.total_revenue || 0,
+            totalLessons: c.total_lessons || 0,
+            moduleCount: c.module_count || 0,
+            completionRate: c.completion_rate || 0,
+          }),
+        );
 
         // Ordenar por data de criação (mais recentes primeiro)
         mappedCourses.sort((a, b) => {
@@ -163,7 +170,7 @@ const InstructorCoursesPage: React.FC = () => {
 
     const newStatus: "Publicado" | "Rascunho" =
       current.status === "Publicado" ? "Rascunho" : "Publicado";
-    
+
     // Atualiza UI otimisticamente
     setCourses((prev) =>
       prev.map((c) =>
@@ -172,12 +179,12 @@ const InstructorCoursesPage: React.FC = () => {
           : c,
       ),
     );
-    
+
     try {
       await api.put(`/courses/${id}`, {
         is_active: newStatus === "Publicado" ? 1 : 0,
       });
-      
+
       // Invalida cache
       if (user?.uid) {
         cacheService.remove(`instructor_courses_${user.uid}`);
@@ -210,9 +217,7 @@ const InstructorCoursesPage: React.FC = () => {
       await api.delete(`/courses/${courseToDelete.id}`);
 
       // Atualizar UI localmente
-      setCourses((prev) =>
-        prev.filter((c) => c.id !== courseToDelete.id)
-      );
+      setCourses((prev) => prev.filter((c) => c.id !== courseToDelete.id));
 
       // Remove do cache
       if (user?.uid) {

@@ -23,7 +23,7 @@ FAILED=0
 check_file() {
     local file=$1
     local description=$2
-    
+
     if [ -f "$file" ]; then
         echo -e "${GREEN}✅${NC} $description"
         ((PASSED++))
@@ -38,7 +38,7 @@ check_content() {
     local file=$1
     local content=$2
     local description=$3
-    
+
     if grep -q "$content" "$file" 2>/dev/null; then
         echo -e "${GREEN}✅${NC} $description"
         ((PASSED++))
@@ -53,7 +53,7 @@ check_no_content() {
     local file=$1
     local content=$2
     local description=$3
-    
+
     if ! grep -q "$content" "$file" 2>/dev/null; then
         echo -e "${GREEN}✅${NC} $description"
         ((PASSED++))

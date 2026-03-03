@@ -1,0 +1,54 @@
+
+> eduprime-learning-platform@0.0.0 dev:backend
+> tsx server/index.ts
+
+✅ MySQL database connected successfully
+📊 Database: cemoque @ localhost:3306
+🔄 Running database migrations...
+✅ MySQL database connected successfully
+📊 Database: cemoque @ localhost:3306
+⚠️ Columns already exist or ALTER failed (expected)
+✅ Database migrations completed successfully
+🚀 Starting migration from SQLite to MySQL...
+
+✅ MySQL database connected successfully
+📊 Database: cemoque @ localhost:3306
+✅ Old SQLite database found: D:\Amec\Cemoqe-UEM\data\cemoque.db
+  ℹ️  users: 0 records
+  ℹ️  profiles: 0 records
+  ℹ️  courses: 0 records
+  ℹ️  modules: 0 records
+  ℹ️  lessons: 0 records
+  ℹ️  enrollments: 0 records
+  ℹ️  lesson_completions: 0 records
+  ℹ️  submissions: 0 records
+  ℹ️  questions: 0 records
+  ℹ️  answers: 0 records
+  ℹ️  certificates: 0 records
+  ℹ️  feedback: 0 records
+  ℹ️  sync_queue: 0 records
+
+✅ Migration completed! Total records migrated: 0
+📝 Note: SQLite database at: D:\Amec\Cemoqe-UEM\data\cemoque.db
+💡 You can delete it if migration was successful
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3005
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at app.listen (D:\Amec\Cemoqe-UEM\node_modules\express\lib\application.js:635:24)
+    at start (D:\Amec\Cemoqe-UEM\server\index.ts:111:9)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3005
+}
+
+Node.js v24.13.1

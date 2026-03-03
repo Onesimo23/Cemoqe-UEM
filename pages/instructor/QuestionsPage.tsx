@@ -9,7 +9,6 @@ import {
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import InstructorLayout from "../../layouts/InstructorLayout";
-import api from "../../services/api";
 
 const QuestionsPage: React.FC = () => {
   const { user } = useAuth();
